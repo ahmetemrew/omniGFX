@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OmniGFX</string>
+
+    <!-- Home -->
+    <string name="home_title">OmniGFX</string>
+    <string name="home_subtitle">Oyun konfigürasyon merkezi</string>
+    <string name="home_empty_title">Henüz oyun eklemedin</string>
+    <string name="home_empty_description">Kendi oyununu ve ayar şemanı oluştur. Her oyun için ayrı profiller kaydedebilirsin.</string>
+    <string name="home_add_game">Oyun Ekle</string>
+    <string name="home_my_games">Oyunlarım</string>
+    <string name="home_sync_error">Senkronizasyon hatası: %1$s</string>
+
+    <!-- Shizuku -->
+    <string name="shizuku_ready">Shizuku hazır</string>
+    <string name="shizuku_permission_required">Shizuku izni gerekli</string>
+    <string name="shizuku_not_running">Shizuku çalışmıyor</string>
+    <string name="shizuku_checking">Shizuku durumu kontrol ediliyor</string>
+    <string name="shizuku_permission_denied">Shizuku izni reddedildi.</string>
+    <string name="shizuku_guide_title">Shizuku Kurulumu</string>
+    <string name="shizuku_guide_description">OmniGFX, oyun ayarlarını root olmadan değiştirmek için Shizuku\'yu kullanır.</string>
+    <string name="shizuku_guide_step1">Adım 1: Shizuku uygulamasını indirin.</string>
+    <string name="shizuku_guide_step2">Adım 2: Bilgisayardan şu komutu bir kez çalıştırın:</string>
+    <string name="shizuku_guide_step3">Adım 3: OmniGFX\'e izin verin.</string>
+    <string name="shizuku_download">Shizuku\'yu İndir</string>
+    <string name="shizuku_command_copied">Komut kopyalandı</string>
+    <string name="shizuku_close">Kapat</string>
+    <string name="shizuku_setup_welcome">OmniGFX\'e Hoş Geldin</string>
+    <string name="shizuku_setup_description">Cihazındaki dosyalara erişebilmemiz için Shizuku altyapısına ihtiyacımız var.</string>
+    <string name="shizuku_setup_install">Shizuku\'yu Yükle</string>
+    <string name="shizuku_setup_install_desc">Önce Shizuku uygulamasını telefonunuza kurun.</string>
+    <string name="shizuku_setup_start">Servisi Başlat</string>
+    <string name="shizuku_setup_start_desc">Shizuku uygulamasını açıp \"Start\" butonuna basın. Bilgisayarınız varsa ADB komutu ile de başlatabilirsiniz.</string>
+    <string name="shizuku_setup_open">Shizuku\'yu Aç</string>
+    <string name="shizuku_setup_how">Nasıl yapılır?</string>
+    <string name="shizuku_setup_recheck">Tekrar Kontrol Et</string>
+    <string name="shizuku_setup_request_permission">İzin İste</string>
+    <string name="shizuku_setup_launch">OmniGFX\'i Başlat</string>
+
+    <!-- Wizard -->
+    <string name="wizard_pick_app">Oyun Seçin</string>
+    <string name="wizard_pick_app_desc">Konfigürasyon eklenecek uygulamayı seçin.</string>
+    <string name="wizard_search_hint">Uygulama ara…</string>
+    <string name="wizard_clear">Temizle</string>
+    <string name="wizard_game_setup_title">Oyun Ekle</string>
+    <string name="wizard_game_info">Oyun Bilgileri</string>
+    <string name="wizard_game_name">Oyun Adı</string>
+    <string name="wizard_package_name">Paket Adı</string>
+    <string name="wizard_target_file">Hedef Dosya</string>
+    <string name="wizard_file_path">Dosya Yolu</string>
+    <string name="wizard_parser">Parser</string>
+    <string name="wizard_parser_regex">Regex (Metin değiştirme)</string>
+    <string name="wizard_parser_ini">INI / Properties</string>
+    <string name="wizard_parser_json">JSON / JSONPath</string>
+    <string name="wizard_components">Ayar Bileşenleri</string>
+    <string name="wizard_add_component">Ekle</string>
+    <string name="wizard_no_components">Henüz bileşen eklenmedi. Sağ üstten + butonu ile slider, liste veya aç/kapa seçeneği ekleyin.</string>
+    <string name="wizard_component_label">Etiket</string>
+    <string name="wizard_component_label_hint">Örn: FPS Sınırı</string>
+    <string name="wizard_min">Min</string>
+    <string name="wizard_max">Max</string>
+    <string name="wizard_step">Step</string>
+    <string name="wizard_value_labels">Değer Etiketleri (virgülle)</string>
+    <string name="wizard_value_labels_hint">30, 45, 60, 90, 120, 144, 165, Limitsiz</string>
+    <string name="wizard_options">Seçenekler (virgülle)</string>
+    <string name="wizard_options_hint">Düşük, Orta, Yüksek</string>
+    <string name="wizard_option_values">Seçenek Değerleri (virgülle, opsiyonel)</string>
+    <string name="wizard_option_values_hint">0, 1, 2</string>
+    <string name="wizard_injection_rule">Enjeksiyon Kuralı</string>
+    <string name="wizard_pattern">Pattern</string>
+    <string name="wizard_replacement">Replacement</string>
+    <string name="wizard_save_finish">Kaydet ve Bitir</string>
+    <string name="wizard_save_error">Oyun adı, hedef dosya ve en az bir bileşen gerekli.</string>
+    <string name="wizard_save_failed">Kaydetme hatası: %1$s</string>
+    <string name="wizard_back">Geri</string>
+    <string name="wizard_remove">Kaldır</string>
+    <string name="wizard_component_type">Bileşen Tipi</string>
+    <string name="wizard_type_slider">Slider</string>
+    <string name="wizard_type_dropdown">Açılır Liste</string>
+    <string name="wizard_type_toggle">Aç / Kapa</string>
+
+    <!-- File Explorer -->
+    <string name="explorer_title">Dosya Gezgini</string>
+    <string name="explorer_up">Up</string>
+    <string name="explorer_error">Dizin listelenemedi: %1$s</string>
+
+    <!-- File Inspector -->
+    <string name="inspector_title">Dosya İnceleyici (Wizard)</string>
+    <string name="inspector_target_file">Hedef Dosya (Remote Path)</string>
+    <string name="inspector_pull">Dosyayı Çek ve İncele (Pull)</string>
+    <string name="inspector_content">Dosya İçeriği:</string>
+    <string name="inspector_regex_test">Kural Testi (Regex)</string>
+    <string name="inspector_regex_pattern">Regex Pattern</string>
+    <string name="inspector_test">Test Et</string>
+    <string name="inspector_result">Test Sonucu:\n%1$s</string>
+    <string name="inspector_save_schema">Şema Olarak Kaydet</string>
+    <string name="inspector_pull_error">Hata: Dosya çekilemedi veya okunamadı. Shizuku iznini kontrol edin.</string>
+    <string name="inspector_match_found">Eşleşme Bulundu: %1$s\nGrup 1: %2$s</string>
+    <string name="inspector_no_match">Eşleşme bulunamadı.</string>
+    <string name="inspector_invalid_regex">Geçersiz Regex Hatası: %1$s</string>
+    <string name="inspector_schema_saved">Şema başarıyla veritabanına kaydedildi!</string>
+    <string name="inspector_schema_failed">Şema kaydedilemedi: %1$s</string>
+
+    <!-- Config -->
+    <string name="config_title">%1$s Ayarları</string>
+    <string name="config_settings">Ayarlar</string>
+    <string name="config_target_file">Hedef Dosya</string>
+    <string name="config_empty_schema_title">Şema boş</string>
+    <string name="config_empty_schema_desc">Bu oyun için tanımlanmış ayar bileşeni yok. Önce sihirbazı kullanarak şema oluştur.</string>
+    <string name="config_saved_profiles">Kayıtlı Profiller</string>
+    <string name="config_save_profile">Profil Kaydet</string>
+    <string name="config_apply">Uygula</string>
+    <string name="config_apply_running">Uygulanıyor…</string>
+    <string name="config_apply_success">Başarıyla uygulandı!</string>
+    <string name="config_apply_no_change">Değişiklik yok — dosya zaten güncel.</string>
+    <string name="config_apply_error">Hata: %1$s</string>
+    <string name="config_pull">Dosya çekiliyor…</string>
+    <string name="config_decode">Config ayrıştırılıyor…</string>
+    <string name="config_modify">Değişiklikler uygulanıyor…</string>
+    <string name="config_push">Dosya yazılıyor…</string>
+    <string name="config_verify">Doğrulanıyor…</string>
+    <string name="config_profile_loaded">Profil \'%1$s\' yüklendi.</string>
+    <string name="config_profile_load_error">Profil yüklenirken hata: %1$s</string>
+    <string name="config_profile_saved">Profil \'%1$s\' kaydedildi!</string>
+    <string name="config_profile_save_failed">Profil kaydedilemedi: %1$s</string>
+    <string name="config_schema_load_error">Şema yüklenemedi: %1$s</string>
+    <string name="config_schema_parse_error">Hata: Şema parse edilemedi.</string>
+    <string name="config_save_dialog_title">Profil Kaydet</string>
+    <string name="config_profile_name">Profil Adı</string>
+    <string name="config_save">Kaydet</string>
+    <string name="config_cancel">İptal</string>
+
+    <!-- Profiles -->
+    <string name="profiles_title">Profiller</string>
+    <string name="profiles_empty_title">Henüz profil yok</string>
+    <string name="profiles_empty_desc">Bir oyunun ayarlarını kaydettiğinde burada listelenecek. Her oyun için istediğin kadar profil oluşturabilirsin.</string>
+    <string name="profiles_load">Yükle</string>
+    <string name="profiles_delete">Sil</string>
+    <string name="profiles_error">Hata</string>
+    <string name="profiles_ok">Tamam</string>
+    <string name="profiles_backups">Backups</string>
+    <string name="profiles_marketplace">Marketplace</string>
+    <string name="profiles_sync">Sync</string>
+    <string name="profiles_shizuku_setup">Shizuku Ayarı</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_version">Sürüm 2.0.0-PRO</string>
+    <string name="settings_shizuku_title">Shizuku</string>
+    <string name="settings_shizuku_desc">Gelişmiş dosya erişimi için Shizuku servisi gerekli. Bağlantı sorunu yaşıyorsanız kurulum ekranını açın.</string>
+    <string name="settings_shizuku_button">Shizuku Kurulumu</string>
+
+    <!-- Navigation -->
+    <string name="nav_games">Oyunlar</string>
+    <string name="nav_profiles">Profiller</string>
+    <string name="nav_settings">Ayarlar</string>
+    <string name="nav_add_game">Oyun ekle</string>
+    <string name="nav_back">Geri</string>
+
+    <!-- Backup Manager -->
+    <string name="backup_title">Backup Manager</string>
+    <string name="backup_select_profile">Profil seç</string>
+    <string name="backup_refresh">Yenile</string>
+    <string name="backup_clean">Eski Backupları Temizle</string>
+    <string name="backup_none">Backup bulunamadı.</string>
+    <string name="backup_restore">Restore</string>
+    <string name="backup_delete">Delete</string>
+    <string name="backup_target">Target: %1$s</string>
+    <string name="backup_date">Date: %1$s</string>
+
+    <!-- Marketplace -->
+    <string name="marketplace_title">Profile Marketplace</string>
+    <string name="marketplace_json_label">Profile JSON</string>
+    <string name="marketplace_analyze">Analyze</string>
+    <string name="marketplace_import">Import</string>
+    <string name="marketplace_score">Score: %1$d/100</string>
+    <string name="marketplace_risk">Risk: %1$s</string>
+    <string name="marketplace_findings">Findings</string>
+
+    <!-- Sync -->
+    <string name="sync_title">Profile Sync</string>
+    <string name="sync_refresh">Refresh</string>
+    <string name="sync_local">Local Profiles</string>
+    <string name="sync_remote">Remote Profiles</string>
+    <string name="sync_publish">Publish</string>
+    <string name="sync_import">Import</string>
+    <string name="sync_delete">Delete</string>
+    <string name="sync_version">Version: %1$d</string>
+    <string name="sync_updated">Updated: %1$s</string>
+
+    <!-- Diff -->
+    <string name="diff_title">Config Diff Preview</string>
+    <string name="diff_close">Kapat</string>
+
+    <!-- Apply -->
+    <string name="apply_title">Apply Durumu</string>
+    <string name="apply_running">İşlem devam ediyor…</string>
+    <string name="apply_success">İşlem başarılı.</string>
+    <string name="apply_path">Path: %1$s</string>
+    <string name="apply_changed">Changed: %1$s</string>
+    <string name="apply_dry_run">DryRun: %1$s</string>
+    <string name="apply_backup">Remote backup: %1$s</string>
+    <string name="apply_verify_success">Verify success: %1$s</string>
+    <string name="apply_verify_message">Verify message: %1$s</string>
+    <string name="apply_warnings">Warnings:</string>
+    <string name="apply_failed">İşlem başarısız: %1$s</string>
+    <string name="apply_rolled_back">Otomatik rollback yapıldı.</string>
+    <string name="apply_steps">İşlem Adımları</string>
+    <string name="apply_close">Kapat</string>
+
+    <!-- Profile Editor -->
+    <string name="editor_title">Profil Editörü</string>
+    <string name="editor_back">Geri</string>
+    <string name="editor_name">Profil adı</string>
+    <string name="editor_package">Package name</string>
+    <string name="editor_target_path">Target path template</string>
+    <string name="editor_browse">Browse</string>
+    <string name="editor_format">Format</string>
+    <string name="editor_patches">Patch Listesi</string>
+    <string name="editor_add_patch">Patch Ekle</string>
+    <string name="editor_options">Seçenekler</string>
+    <string name="editor_save">Kaydet</string>
+    <string name="editor_path_test">Path Test</string>
+    <string name="editor_apply">Apply</string>
+    <string name="editor_dry_run">Dry Run</string>
+    <string name="editor_diff_preview">Diff Preview</string>
+    <string name="editor_path">Path</string>
+    <string name="editor_value">Value</string>
+    <string name="editor_value_type">Value Type</string>
+    <string name="editor_delete_patch">Patch sil</string>
+
+    <!-- Remote Path Picker -->
+    <string name="picker_title">Remote Path Seç</string>
+    <string name="picker_current">Current: %1$s</string>
+    <string name="picker_up">Üst Dizin</string>
+    <string name="picker_select_dir">Bu Dizini Seç</string>
+    <string name="picker_selected">Selected: %1$s</string>
+    <string name="picker_confirm">Seç</string>
+    <string name="picker_cancel">İptal</string>
+
+    <!-- Profile Engine Events -->
+    <string name="event_started">İşlem başlatıldı</string>
+    <string name="event_validating">Profil doğrulanıyor</string>
+    <string name="event_resolving_paths">Path adayları üretiliyor</string>
+    <string name="event_security_check">Güvenlik kontrolü yapılıyor</string>
+    <string name="event_capability_check">Shizuku yetkisi kontrol ediliyor</string>
+    <string name="event_path_probing">Dosya erişimi test ediliyor</string>
+    <string name="event_preparing">İşlem hazırlanıyor</string>
+    <string name="event_force_stopping">Oyun durduruluyor</string>
+    <string name="event_creating_remote_backup">Remote backup alınıyor</string>
+    <string name="event_pulling_file">Dosya çekiliyor</string>
+    <string name="event_creating_local_backup">Local backup alınıyor</string>
+    <string name="event_parsing_config">Config parse ediliyor</string>
+    <string name="event_applying_patches">Patch uygulanıyor</string>
+    <string name="event_serializing_config">Config serialize ediliyor</string>
+    <string name="event_pushing_file">Dosya hedefe yazılıyor</string>
+    <string name="event_restoring_metadata">İzinler geri yükleniyor</string>
+    <string name="event_verifying">Doğrulama yapılıyor</string>
+    <string name="event_rolling_back">Rollback yapılıyor</string>
+    <string name="event_cleaning_backups">Eski backuplar temizleniyor</string>
+    <string name="event_launching_game">Oyun başlatılıyor</string>
+    <string name="event_completed">İşlem tamamlandı</string>
+</resources>

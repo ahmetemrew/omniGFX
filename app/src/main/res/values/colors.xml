@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Derin Cyber/Neon Mor Temeli -->
+    <color name="premium_dark_bg">#090514</color>
+    <color name="premium_dark_top">#120A24</color>
+    <color name="premium_card">#170D30</color>
+    <color name="surface_highlight">#25154D</color>
+    <color name="premium_border">#381F72</color>
+
+    <!-- Neon Vurgu Renkleri -->
+    <color name="accent_blue">#00F0FF</color>         <!-- Neon Cyan -->
+    <color name="accent_blue_glow">#3000F0FF</color>
+    <color name="accent_orange">#FF007F</color>       <!-- Neon Pink/Fuchsia -->
+    <color name="accent_gold">#FFD700</color>
+    <color name="accent_purple">#A020F0</color>       <!-- Neon Purple -->
+    <color name="accent_teal">#00FFCC</color>
+    <color name="accent_green">#39FF14</color>        <!-- Neon Green -->
+    <color name="accent_red">#FF3131</color>          <!-- Neon Red -->
+
+    <!-- Metin Renkleri -->
+    <color name="text_primary">#F5F0FF</color>
+    <color name="text_secondary">#BCA7E8</color>
+    <color name="text_muted">#7F66B3</color>
+
+    <!-- Gradyanlar -->
+    <color name="grad_start">#160830</color>
+    <color name="grad_end">#090514</color>
+
+    <!-- Cam Efektleri (Glassmorphism) -->
+    <color name="glass_white">#12FFFFFF</color>
+    <color name="glass_blue">#2500F0FF</color>
+    <color name="glass_orange">#26FF007F</color>
+    <color name="glass_gold">#26FFD700</color>
+    <color name="glass_green">#2639FF14</color>
+
+    <color name="cyber_dark">@color/premium_dark_bg</color>
+    <color name="cyber_card">@color/premium_card</color>
+    <color name="cyber_border">@color/premium_border</color>
+    <color name="cyber_text_glow">@color/text_secondary</color>
+    <color name="neon_cyan">@color/accent_blue</color>
+    <color name="neon_cyan_glow">@color/accent_blue_glow</color>
+    <color name="neon_purple">@color/accent_orange</color>
+    <color name="neon_purple_glow">#40FF007F</color>
+    <color name="neon_green">@color/accent_teal</color>
+    <color name="neon_red">@color/accent_red</color>
+</resources>

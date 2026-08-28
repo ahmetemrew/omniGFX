@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_preview_title"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:cardBackgroundColor="@color/surface_highlight"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/premium_border"
+            app:strokeWidth="1dp">
+
+            <FrameLayout
+                android:id="@+id/overlayPreviewStage"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:padding="18dp">
+
+                <com.basitce.gfx.OverlayBadgeView
+                    android:id="@+id/overlayPreviewBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <com.basitce.gfx.CrosshairView
+                    android:id="@+id/overlayPreviewCrosshair"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/overlayPreviewHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:gravity="center"
+                    android:text="@string/overlay_preview_hint"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/overlayShowLatencyCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/overlay_customize_show_latency" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/overlayShowFpsCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_show_fps" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/overlayShowTemperatureCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_show_temperature" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/overlayShowSignalStrengthCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_show_signal" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/overlayShowCrosshairCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_enable_crosshair" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="14dp"
+            android:background="@color/premium_border" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_crosshair_section"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayCrosshairTypeButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/overlay_customize_crosshair_type" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayCrosshairColorButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/overlay_customize_crosshair_color" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayCrosshairSizeButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/overlay_customize_crosshair_size" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayCrosshairThicknessButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/overlay_customize_crosshair_thickness" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="14dp"
+            android:background="@color/premium_border" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_customize_style_section"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayOutlineColorButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/overlay_customize_outline_picker" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayBackgroundColorButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/overlay_customize_surface_picker" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayPrimaryTextColorButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/overlay_customize_primary_picker" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlaySecondaryTextColorButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/overlay_customize_secondary_picker" />
+    </LinearLayout>
+</ScrollView>

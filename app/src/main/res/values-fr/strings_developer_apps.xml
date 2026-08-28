@@ -1,0 +1,7 @@
+<resources>
+    <string name="settings_developer_apps_title">Browse more apps from the developer</string>
+    <string name="settings_developer_apps_desc">Tap an app to open it if it is installed, or jump to its Google Play page.</string>
+    <string name="settings_developer_app_mobai_voice_name">MobAI Voice: Canl\u0131 AI Asistan</string>
+    <string name="settings_developer_app_mobai_chat_name">MobAI Chat - OFFLINE AI</string>
+    <string name="settings_developer_app_snake_name">24 Kilobyte Game: Snake</string>
+</resources>

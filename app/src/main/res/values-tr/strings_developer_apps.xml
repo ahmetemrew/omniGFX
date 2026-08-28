@@ -1,0 +1,7 @@
+<resources>
+    <string name="settings_developer_apps_title">Yap\u0131mc\u0131n\u0131n di\u011fer uygulamalar\u0131na g\u00f6z at</string>
+    <string name="settings_developer_apps_desc">Bir uygulamaya dokundu\u011funda y\u00fckl\u00fcyse a\u00e7\u0131l\u0131r, de\u011filse Google Play sayfas\u0131 a\u00e7\u0131l\u0131r.</string>
+    <string name="settings_developer_app_mobai_voice_name">MobAI Voice: Canl\u0131 AI Asistan</string>
+    <string name="settings_developer_app_mobai_chat_name">MobAI Chat - OFFLINE AI</string>
+    <string name="settings_developer_app_snake_name">24 Kilobyte Game: Snake</string>
+</resources>

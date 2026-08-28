@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="8dp">
+
+    <TextView
+        android:id="@+id/batteryPermissionBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/battery_permission_prompt_body"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/batteryPermissionSkipCheck"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:checked="false"
+        android:text="@string/notification_permission_skip"
+        android:textColor="@color/text_primary"
+        app:buttonTint="@color/accent_blue" />
+</LinearLayout>

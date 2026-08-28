@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="36dp" />
+            <gradient
+                android:angle="315"
+                android:endColor="#0D1423"
+                android:startColor="#4B2058" />
+        </shape>
+    </item>
+
+    <item
+        android:gravity="end|top"
+        android:height="142dp"
+        android:width="142dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="45"
+                android:endColor="#12FFFFFF"
+                android:startColor="#40F5C958" />
+        </shape>
+    </item>
+
+    <item
+        android:gravity="start|top"
+        android:height="92dp"
+        android:width="92dp">
+        <shape android:shape="oval">
+            <solid android:color="#227E78FF" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="16dp"
+        android:gravity="start|bottom"
+        android:left="28dp"
+        android:height="20dp"
+        android:width="20dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/accent_gold" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="28dp"
+        android:gravity="end|bottom"
+        android:right="30dp"
+        android:height="14dp"
+        android:width="14dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/accent_orange" />
+        </shape>
+    </item>
+
+    <item
+        android:gravity="center"
+        android:height="138dp"
+        android:width="138dp">
+        <shape android:shape="oval">
+            <stroke
+                android:color="#66F5C958"
+                android:width="2dp" />
+            <solid android:color="#10000000" />
+        </shape>
+    </item>
+
+    <item
+        android:gravity="center"
+        android:height="98dp"
+        android:width="98dp"
+        android:drawable="@drawable/ic_premium_crown" />
+</layer-list>
