@@ -44,11 +44,35 @@ class ProfileApplyViewModel @Inject constructor(
     private val _applyState = MutableStateFlow(ProfileApplyUiState())
     val applyState: StateFlow<ProfileApplyUiState> = _applyState.asStateFlow()
 
+    val components = MutableStateFlow<List<JSONObject>>(emptyList())
+    val values = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    fun prepare(profile: ProfileEntity) {
+        if (_applyState.value.isApplying) return
+        _applyState.value = ProfileApplyUiState()
+        values.value = runCatching {
+            val json = JSONObject(profile.userValuesJson)
+            json.keys().asSequence().associateWith { json.get(it).toString() }
+        }.getOrDefault(emptyMap())
+        viewModelScope.launch {
+            val schema = schemaDao.getSchemaById(profile.schemaId)
+            components.value = runCatching {
+                val array = JSONObject(schema?.jsonSchema ?: "{}").optJSONArray("uiComponents") ?: org.json.JSONArray()
+                (0 until array.length()).map { array.getJSONObject(it) }
+            }.getOrDefault(emptyList())
+        }
+    }
+
+    fun updateValue(path: String, value: String) {
+        values.value = values.value + (path to value)
+    }
+
     fun applyProfile(profile: ProfileEntity) {
+        if (_applyState.value.isApplying) return
         if (profile.isManual) {
             applyManualProfile(profile)
         } else {
-            applyDynamicProfile(profile)
+            applyDynamicProfile(profile.copy(userValuesJson = JSONObject(values.value).toString()))
         }
     }
 
@@ -75,46 +99,13 @@ class ProfileApplyViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _applyState.update {
-                ProfileApplyUiState(
-                    isApplying = true,
-                    progressMessage = "Ham dosya Shizuku ile yazılıyor..."
-                )
-            }
+            _applyState.value = ProfileApplyUiState(isApplying = true, progressMessage = "Yedekleniyor ve doğrulanarak yazılıyor...")
             try {
-                val cacheFile = File(
-                    context.cacheDir,
-                    "manual_apply_${System.currentTimeMillis()}"
-                )
-                withContext(Dispatchers.IO) {
-                    cacheFile.writeText(content, Charsets.UTF_8)
-                }
-                val metadata = try {
-                    pmpEngine.stat(profile.targetFilePath)
-                } catch (e: Exception) {
-                    null
-                }
-                val success = if (pmpEngine.supportsAtomicPush) {
-                    pmpEngine.pushAtomic(cacheFile, profile.targetFilePath, metadata, true)
-                } else {
-                    pmpEngine.push(cacheFile, profile.targetFilePath)
-                }
-                withContext(Dispatchers.IO) { cacheFile.delete() }
-                if (success) {
-                    _applyState.update {
-                        it.copy(
-                            isApplying = false,
-                            isSuccess = true,
-                            message = "Ham dosya başarıyla hedefe yazıldı."
-                        )
-                    }
-                } else {
-                    _applyState.update {
-                        it.copy(
-                            isApplying = false,
-                            isSuccess = false,
-                            message = "Dosya hedefe yazılamadı. Shizuku iznini kontrol et."
-                        )
+                pmpPipeline.execute(PmpRequest(profile.targetFilePath, emptyList(), replacementContent = content)).collect { event ->
+                    when (event) {
+                        is PmpEvent.Completed -> _applyState.value = ProfileApplyUiState(isSuccess = true, message = "Ham profil uygulandı ve doğrulandı.")
+                        is PmpEvent.Failed -> _applyState.value = ProfileApplyUiState(isSuccess = false, message = event.message)
+                        else -> Unit
                     }
                 }
             } catch (e: Exception) {
@@ -148,8 +139,7 @@ class ProfileApplyViewModel @Inject constructor(
                 )
             }
             try {
-                val schemas = schemaDao.getSchemasForGame("").firstOrNull()
-                val schema = schemas?.firstOrNull { it.id == profile.schemaId }
+                val schema = schemaDao.getSchemaById(profile.schemaId)
                 val regexRules = parseRegexRulesFromSchema(schema?.jsonSchema)
 
                 val patches = buildPatchesFromProfile(profile, regexRules)

@@ -71,7 +71,7 @@ class RemoteFileBrowser @Inject constructor(
             "(\\S+)\\s+" +
             "(\\S+)\\s+" +
             "(\\d+)\\s+" +
-            "(\\S+\\s+\\S+\\s+\\S+)\\s+" +
+            "((?:\\d{4}-\\d{2}-\\d{2}|\\S+\\s+\\d{1,2})\\s+\\S+)\\s+" +
             "(.+)$"
         )
     }
@@ -87,6 +87,7 @@ class RemoteFileBrowser @Inject constructor(
         }
 
         val entries = mutableListOf<RemoteFileSystemEntry>()
+        var unparsed = false
 
         result.stdout
             .lines()
@@ -124,8 +125,12 @@ class RemoteFileBrowser @Inject constructor(
                             modifiedDate = dateStr
                         )
                     )
+                } else {
+                    unparsed = true
                 }
             }
+
+        if (unparsed) return listSimple(targetPath, quotedPath)
 
         return RemoteListResult(
             path = targetPath,

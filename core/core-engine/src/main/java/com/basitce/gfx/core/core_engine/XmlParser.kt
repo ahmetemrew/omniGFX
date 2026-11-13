@@ -572,6 +572,14 @@ class XmlParser @Inject constructor() : ConfigParser {
             )
 
             // 1) Mevcut key'i bul ve güncelle.
+            val matchingIndices = items.indices.filter { index ->
+                val entry = items[index] as? IniItem.Entry
+                entry != null && entry.section.equals(normalizedSection, ignoreCase = true) &&
+                    entry.key.equals(key, ignoreCase = true)
+            }
+            if (matchingIndices.size > 1) {
+                throw ConfigParserException("Tekrarlanan INI anahtarı belirsiz: $normalizedSection/$key. Ham dosya profili kullanın.")
+            }
             val existingIndex = items.indexOfFirst { item ->
                 (item as? IniItem.Entry)?.let { entry ->
                     entry.section.equals(normalizedSection, ignoreCase = true) &&

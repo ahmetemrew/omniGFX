@@ -31,9 +31,4 @@
         <item name="cornerRadius">20dp</item>
         <item name="android:textAllCaps">false</item>
     </style>
-
-    <style name="ShapeAppearanceOverlay.App.Cornered" parent="">
-        <item name="cornerSize">20dp</item>
-        <item name="cornerFamily">rounded</item>
-    </style>
 </resources>

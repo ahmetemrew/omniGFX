@@ -27,6 +27,10 @@ import com.basitce.gfx.core.core_engine.workflow.WorkflowDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import com.basitce.gfx.core.core_engine.pipeline.PmpPipeline
+import com.basitce.gfx.core.core_engine.pipeline.PmpRequest
+import com.basitce.gfx.core.core_engine.pipeline.PmpEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +48,7 @@ import javax.inject.Inject
 class SetupWizardViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pmpEngine: PmpEngine,
+    private val pmpPipeline: PmpPipeline,
     private val parserFactory: ConfigParserFactory,
     private val remoteFileBrowser: RemoteFileBrowser,
     private val gameProcessManager: GameProcessManager,
@@ -78,6 +83,7 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun init(packageName: String, gameName: String = "") {
+        if (_state.value.packageName == packageName) return
         val pm = context.packageManager
         val resolvedName = if (gameName.isNotBlank()) {
             gameName
@@ -85,11 +91,15 @@ class SetupWizardViewModel @Inject constructor(
             try {
                 val appInfo = pm.getApplicationInfo(packageName, 0)
                 pm.getApplicationLabel(appInfo).toString()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 packageName
             }
         }
 
+        undoStack.clear()
+        redoStack.clear()
         _state.update {
             SetupWizardState(
                 packageName = packageName,
@@ -97,7 +107,7 @@ class SetupWizardViewModel @Inject constructor(
             )
         }
 
-        val startPath = "/data/data/$packageName"
+        val startPath = "/sdcard/Android/data/$packageName"
         _browserPath.value = startPath
         browseTo(startPath)
 
@@ -123,6 +133,8 @@ class SetupWizardViewModel @Inject constructor(
                     _browserEntries.value = result.entries
                     _state.update { it.copy(isBrowsing = false) }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -149,7 +161,8 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun proceedToStep2() {
-        val path = _state.value.targetFilePath
+        val path = _state.value.targetFilePath.trim()
+        _state.update { it.copy(targetFilePath = path) }
         if (path.isBlank()) {
             _state.update { it.copy(error = "Önce bir dosya seçmelisin.") }
             return
@@ -188,6 +201,11 @@ class SetupWizardViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     isPulling = true,
+                    fileContent = "",
+                    configNodes = emptyList(),
+                    pinnedVariables = emptyMap(),
+                    fileMetadata = null,
+                    draftId = null,
                     error = null,
                     pullProgressMessage = "Shizuku bağlantısı kontrol ediliyor...",
                     pathProbeMessages = emptyList(),
@@ -245,7 +263,9 @@ class SetupWizardViewModel @Inject constructor(
                 }
                 val metadata = try {
                     pmpEngine.stat(remotePath)
-                } catch (e: Exception) {
+                } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                     null
                 }
 
@@ -297,7 +317,11 @@ class SetupWizardViewModel @Inject constructor(
                     it.copy(pullProgressMessage = "İçerik okunuyor...")
                 }
                 val content = withContext(Dispatchers.IO) {
-                    cacheFile.readText(Charsets.UTF_8)
+                    val bytes = cacheFile.readBytes()
+                    require(!bytes.contains(0.toByte())) { "İkili dosyalar desteklenmiyor. UTF-8 metin config dosyası seçin." }
+                    Charsets.UTF_8.newDecoder()
+                        .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                        .decode(java.nio.ByteBuffer.wrap(bytes)).toString()
                 }
 
                 _state.update {
@@ -342,7 +366,6 @@ class SetupWizardViewModel @Inject constructor(
 
                 undoStack.clear()
                 redoStack.clear()
-                undoStack.add(nodes)
 
                 cacheFile.delete()
 
@@ -355,6 +378,8 @@ class SetupWizardViewModel @Inject constructor(
                         fileSizeBytes = fileSize,
                         configNodes = nodes,
                         hasUnsavedChanges = false,
+                        canUndo = false,
+                        canRedo = false,
                         isGameRunning = gameRunning,
                         draftId = draftId,
                         pullProgressMessage = "",
@@ -363,6 +388,8 @@ class SetupWizardViewModel @Inject constructor(
                         } else null
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -400,6 +427,7 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun deleteNode(nodeId: String) {
+        if (_state.value.detectedFormat !in listOf(DetectedFormat.INI, DetectedFormat.PLAIN_TEXT)) return
         saveToUndoStack()
         _state.update { state ->
             state.copy(
@@ -410,19 +438,22 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun addNodeAfter(targetNodeId: String) {
+        if (_state.value.detectedFormat !in listOf(DetectedFormat.INI, DetectedFormat.PLAIN_TEXT)) return
         saveToUndoStack()
         _state.update { state ->
             val nodes = state.configNodes.toMutableList()
             val index = nodes.indexOfFirst { it.id == targetNodeId }
             if (index == -1) return@update state
 
+            val key = "new_key_${System.currentTimeMillis()}"
+            val section = nodes[index].section
             val newNode = ConfigNode(
                 lineNumber = nodes[index].lineNumber + 1,
                 type = NodeType.KEY_VALUE,
-                path = "new_key_${System.currentTimeMillis()}",
-                key = "YeniAnahtar",
+                path = if (section.isBlank()) key else "$section/$key",
+                key = key,
                 value = "YeniDeger",
-                rawLine = "YeniAnahtar=YeniDeger",
+                rawLine = "$key=YeniDeger",
                 isModified = true,
                 section = nodes[index].section
             )
@@ -432,6 +463,7 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun moveNode(nodeId: String, direction: MoveDirection) {
+        if (_state.value.detectedFormat !in listOf(DetectedFormat.INI, DetectedFormat.PLAIN_TEXT)) return
         saveToUndoStack()
         _state.update { state ->
             val nodes = state.configNodes.toMutableList()
@@ -452,43 +484,60 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun undo() {
-        if (undoStack.size <= 1) return
-        val current = undoStack.removeLast()
-        redoStack.add(current)
-        val previous = undoStack.last()
-        _state.update { it.copy(configNodes = previous, hasUnsavedChanges = true) }
+        if (undoStack.isEmpty()) return
+        redoStack.add(_state.value.configNodes)
+        val previous = undoStack.removeAt(undoStack.lastIndex)
+        _state.update {
+            it.copy(
+                configNodes = previous,
+                hasUnsavedChanges = true,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = redoStack.isNotEmpty()
+            )
+        }
     }
 
     fun redo() {
         if (redoStack.isEmpty()) return
-        val next = redoStack.removeLast()
-        undoStack.add(next)
-        _state.update { it.copy(configNodes = next, hasUnsavedChanges = true) }
-    }
-
-    val canUndo: Boolean get() = undoStack.size > 1
-    val canRedo: Boolean get() = redoStack.isNotEmpty()
-
-    fun getSerializedContent(): String {
-        val state = _state.value
-        return try {
-            if (state.profileType == ProfileType.MANUAL) {
-                state.fileContent
-            } else {
-                serializeWithEngine(
-                    state.fileContent,
-                    state.targetFilePath,
-                    state.configNodes
-                )
-            }
-        } catch (e: Exception) {
-            state.fileContent
+        val next = redoStack.removeAt(redoStack.lastIndex)
+        undoStack.add(_state.value.configNodes)
+        _state.update {
+            it.copy(
+                configNodes = next,
+                hasUnsavedChanges = true,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = redoStack.isNotEmpty()
+            )
         }
     }
 
+    fun getSerializedContent(): String {
+        val state = _state.value
+        if (!state.hasUnsavedChanges) return state.fileContent
+        if (state.detectedFormat in listOf(DetectedFormat.INI, DetectedFormat.PLAIN_TEXT)) {
+            val newline = if (state.fileContent.contains("\r\n")) "\r\n" else "\n"
+            return state.configNodes.joinToString(newline) { node ->
+                if (!node.isModified) node.rawLine
+                else if (node.type == NodeType.KEY_VALUE) "${node.key}=${node.value}"
+                else node.value
+            }
+        }
+        val parser = parserFactory.create(state.targetFilePath, state.fileContent)
+        parser.parse(state.fileContent)
+        state.configNodes.filter { it.isModified && it.type == NodeType.KEY_VALUE }.forEach {
+            parser.updateValue(it.path, it.value)
+        }
+        return parser.serialize()
+    }
+
     fun proceedToStep4() {
-        _state.update {
-            it.copy(currentStep = SetupWizardStep.PIN_VARIABLES, error = null)
+        try {
+            getSerializedContent()
+            _state.update { it.copy(currentStep = SetupWizardStep.PIN_VARIABLES, error = null) }
+        } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+            _state.update { it.copy(error = "İçerik oluşturulamadı: ${e.message}") }
         }
     }
 
@@ -530,10 +579,11 @@ class SetupWizardViewModel @Inject constructor(
     }
 
     fun setProfileType(type: ProfileType) {
-        _state.update { it.copy(profileType = type) }
+        _state.update { it.copy(profileType = if (it.requiresRawProfile) ProfileType.MANUAL else type) }
     }
 
     fun saveProfileAndProceed() {
+        if (_state.value.isLoading) return
         val state = _state.value
 
         if (state.profileName.isBlank()) {
@@ -544,6 +594,11 @@ class SetupWizardViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
+                val serialized = getSerializedContent()
+                val originalNodes = ConfigTreeBuilder.build(state.fileContent, state.detectedFormat)
+                val structuralChange = originalNodes.map { it.path to it.rawLine } != state.configNodes.map { it.path to it.rawLine }
+                val isManual = state.profileType == ProfileType.MANUAL || state.requiresRawProfile || structuralChange ||
+                    state.detectedFormat == DetectedFormat.PLAIN_TEXT
                 val gameId = ensureGameExists(state.packageName, state.gameName)
 
                 val schemaId = UUID.randomUUID().toString()
@@ -558,14 +613,13 @@ class SetupWizardViewModel @Inject constructor(
                 )
 
                 val profileId = UUID.randomUUID().toString()
-                val isManual = state.profileType == ProfileType.MANUAL
                 val profile = ProfileEntity(
                     id = profileId,
                     schemaId = schemaId,
                     name = state.profileName,
                     userValuesJson = if (isManual) "{}" else buildUserValuesJson(state),
                     isManual = isManual,
-                    rawContent = if (isManual) getSerializedContent() else null,
+                    rawContent = if (isManual) serialized else null,
                     targetFilePath = state.targetFilePath,
                     createdAt = System.currentTimeMillis()
                 )
@@ -578,6 +632,8 @@ class SetupWizardViewModel @Inject constructor(
                         error = null
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -591,6 +647,7 @@ class SetupWizardViewModel @Inject constructor(
 
     // ─── ADIM 5: GERİ YAZMA & UYGULAMA (Faz 7) ────────
     fun pushAndApply() {
+        if (_state.value.isPushing) return
         val state = _state.value
         if (!state.canPush) {
             _state.update { it.copy(error = "Push için dosya ve içerik gerekli.") }
@@ -619,147 +676,40 @@ class SetupWizardViewModel @Inject constructor(
             }
 
             try {
-                // ═══ ADIM 1: SERIALIZE ═══
                 updatePushStep(0, PushStepStatus.RUNNING)
-                val serializedContent = withContext(Dispatchers.IO) {
-                    getSerializedContent()
-                }
-
-                if (serializedContent == state.fileContent &&
-                    state.profileType != ProfileType.MANUAL
-                ) {
-                    updatePushStep(0, PushStepStatus.COMPLETED)
-                    markRemainingStepsSkipped(1)
-                    _state.update {
-                        it.copy(
-                            isPushing = false,
-                            pushSuccess = true,
-                            pushMessage = "Değişiklik yok — dosya zaten güncel.",
-                            currentStep = SetupWizardStep.DONE
-                        )
-                    }
-                    return@launch
-                }
+                val serialized = withContext(Dispatchers.IO) { getSerializedContent() }
                 updatePushStep(0, PushStepStatus.COMPLETED)
-
-                // ═══ ADIM 2: GEÇİCİ DOSYA ═══
-                updatePushStep(1, PushStepStatus.RUNNING)
-                val cacheFile = File(
-                    context.cacheDir,
-                    "wizard_push_${System.currentTimeMillis()}"
-                )
-                withContext(Dispatchers.IO) {
-                    cacheFile.writeText(serializedContent, Charsets.UTF_8)
-                }
-                updatePushStep(1, PushStepStatus.COMPLETED)
-
-                // ═══ ADIM 3: SHIZUKU PUSH ═══
-                updatePushStep(2, PushStepStatus.RUNNING)
-                val metadata = state.fileMetadata
-                var pushSuccess = false
-
-                if (pmpEngine.supportsAtomicPush) {
-                    pushSuccess = pmpEngine.pushAtomic(
-                        source = cacheFile,
-                        remotePath = state.targetFilePath,
-                        metadata = metadata,
-                        restoreSelinux = true
-                    )
-                }
-
-                if (!pushSuccess) {
-                    pushSuccess = pmpEngine.push(cacheFile, state.targetFilePath)
-                    if (pushSuccess) {
-                        restoreMetadataManually(state.targetFilePath, metadata)
+                pmpPipeline.execute(PmpRequest(
+                    remotePath = state.targetFilePath,
+                    patches = emptyList(),
+                    replacementContent = serialized,
+                    expectedOriginalContent = state.fileContent
+                )).collect { event ->
+                    when (event) {
+                        is PmpEvent.Encoding -> updatePushStep(1, PushStepStatus.COMPLETED)
+                        is PmpEvent.Pushing -> updatePushStep(2, PushStepStatus.RUNNING)
+                        is PmpEvent.Verifying -> {
+                            updatePushStep(2, PushStepStatus.COMPLETED)
+                            updatePushStep(3, PushStepStatus.COMPLETED)
+                            updatePushStep(4, PushStepStatus.RUNNING)
+                        }
+                        is PmpEvent.Completed -> {
+                            for (index in steps.indices) updatePushStep(index, PushStepStatus.COMPLETED)
+                            _state.update { it.copy(isPushing = false, pushSuccess = true,
+                                verificationPassed = true, pushMessage = "Dosya uygulandı ve doğrulandı.") }
+                        }
+                        is PmpEvent.Failed -> {
+                            updatePushStep(_state.value.currentPushStep, PushStepStatus.FAILED)
+                            _state.update { it.copy(isPushing = false, pushSuccess = false,
+                                verificationPassed = false, error = event.message) }
+                        }
+                        else -> Unit
                     }
                 }
-
-                withContext(Dispatchers.IO) { cacheFile.delete() }
-
-                if (!pushSuccess) {
-                    updatePushStep(2, PushStepStatus.FAILED)
-                    _state.update {
-                        it.copy(
-                            isPushing = false,
-                            pushSuccess = false,
-                            error = "Dosya hedefe yazılamadı. Shizuku iznini kontrol et."
-                        )
-                    }
-                    return@launch
-                }
-                updatePushStep(2, PushStepStatus.COMPLETED)
-
-                // ═══ ADIM 4: METADATA RESTORE ═══
-                updatePushStep(3, PushStepStatus.RUNNING)
-                if (metadata != null) {
-                    restoreMetadataManually(state.targetFilePath, metadata)
-                }
-                updatePushStep(3, PushStepStatus.COMPLETED)
-
-                // ═══ ADIM 5: DOĞRULAMA ═══
-                updatePushStep(4, PushStepStatus.RUNNING)
-                val verifyResult = try {
-                    pmpVerifier.verifyContent(
-                        expectedContent = serializedContent,
-                        remotePath = state.targetFilePath,
-                        expectedMetadata = metadata,
-                        options = VerifyOptions(
-                            requireHash = true,
-                            requireSize = false,
-                            requireMetadata = false,
-                            requireSelinux = false
-                        )
-                    )
-                } catch (_: Exception) {
-                    null
-                }
-
-                val verified = verifyResult?.success == true
-                if (!verified) {
-                    updatePushStep(4, PushStepStatus.FAILED)
-                    val rollbackResult = try {
-                        rollbackManager.restoreLatest(state.targetFilePath)
-                    } catch (_: Exception) {
-                        null
-                    }
-                    val rollbackMsg = when {
-                        rollbackResult == null ->
-                            "Doğrulama başarısız, rollback de yapılamadı."
-                        rollbackResult is RollbackResult.Success ->
-                            "Doğrulama başarısız. Otomatik rollback yapıldı: ${rollbackResult.message}"
-                        else ->
-                            "Doğrulama başarısız. Rollback denendi ama tamamlanamadı."
-                    }
-                    _state.update {
-                        it.copy(
-                            isPushing = false,
-                            pushSuccess = false,
-                            verificationPassed = false,
-                            rollbackInfo = rollbackMsg,
-                            error = rollbackMsg
-                        )
-                    }
-                    return@launch
-                }
-                updatePushStep(4, PushStepStatus.COMPLETED)
-
-                _state.update {
-                    it.copy(
-                        isPushing = false,
-                        pushSuccess = true,
-                        verificationPassed = true,
-                        pushMessage = "Dosya başarıyla hedefe yazıldı ve doğrulandı.",
-                        currentStep = SetupWizardStep.DONE
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isPushing = false,
-                        pushSuccess = false,
-                        error = "Push hatası: ${e.message}"
-                    )
-                }
+                _state.update { it.copy(isPushing = false, pushSuccess = false, error = "Push hatası: ${e.message}") }
             }
         }
     }
@@ -815,7 +765,7 @@ class SetupWizardViewModel @Inject constructor(
 
     fun goBack() {
         val current = _state.value.currentStep
-        if (current.isFirst || current.isLast) return
+        if (current.isFirst || current.isLast || _state.value.isPulling || _state.value.isLoading) return
         if (current == SetupWizardStep.PUSH_APPLY && _state.value.isPushing) return
 
         _state.update {
@@ -835,9 +785,10 @@ class SetupWizardViewModel @Inject constructor(
     private fun saveToUndoStack() {
         undoStack.add(_state.value.configNodes.toList())
         if (undoStack.size > MAX_UNDO_DEPTH) {
-            undoStack.removeFirst()
+            undoStack.removeAt(0)
         }
         redoStack.clear()
+        _state.update { it.copy(canUndo = true, canRedo = false) }
     }
 
     private fun detectFormat(path: String, content: String): DetectedFormat {
@@ -853,52 +804,15 @@ class SetupWizardViewModel @Inject constructor(
     private fun detectFromContent(content: String): DetectedFormat {
         val trimmed = content.trim()
         return when {
-            trimmed.startsWith("{") || trimmed.startsWith("[") -> DetectedFormat.JSON
-            trimmed.startsWith("<?xml", ignoreCase = true) -> DetectedFormat.XML
+            trimmed.startsWith("{") -> DetectedFormat.JSON
+            trimmed.startsWith("[") && runCatching { JSONArray(trimmed) }.isSuccess -> DetectedFormat.JSON
+            trimmed.startsWith("<") -> DetectedFormat.XML
             trimmed.lineSequence().any { line ->
                 val t = line.trim()
                 (t.startsWith("[") && t.contains("]")) || t.contains("=")
             } -> DetectedFormat.INI
             trimmed.isEmpty() -> DetectedFormat.PLAIN_TEXT
             else -> DetectedFormat.PLAIN_TEXT
-        }
-    }
-
-    private fun serializeWithEngine(
-        originalContent: String,
-        targetPath: String,
-        nodes: List<ConfigNode>
-    ): String {
-        val fileName = targetPath.substringAfterLast('/')
-        val parser = parserFactory.create(fileName, originalContent)
-        parser.parse(originalContent)
-        nodes.forEach { node ->
-            if (node.type == NodeType.KEY_VALUE && node.path.isNotBlank()) {
-                try {
-                    parser.updateValue(node.path, node.value)
-                } catch (_: Exception) {
-                }
-            }
-        }
-        return parser.serialize()
-    }
-
-    private suspend fun restoreMetadataManually(
-        path: String,
-        metadata: FileMetadata?
-    ) {
-        if (metadata == null) return
-        try {
-            metadata.uid?.let { uid ->
-                metadata.gid?.let { gid ->
-                    pmpEngine.chown(path, uid, gid)
-                }
-            }
-            metadata.mode?.let { pmpEngine.chmod(path, it) }
-            if (pmpEngine.supportsSelinux) {
-                metadata.seContext?.let { pmpEngine.chcon(path, it) }
-            }
-        } catch (_: Exception) {
         }
     }
 
@@ -916,7 +830,9 @@ class SetupWizardViewModel @Inject constructor(
             if (appInfo.icon != 0) {
                 "android.resource://$packageName/${appInfo.icon}"
             } else ""
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
             ""
         }
 
@@ -963,8 +879,10 @@ class SetupWizardViewModel @Inject constructor(
                     }
                 }
                 UiComponentType.TOGGLE -> {
-                    comp.put("checkedValue", "1")
-                    comp.put("uncheckedValue", "0")
+                    val original = state.configNodes.firstOrNull { it.path == path }?.value
+                    val booleanText = original == "true" || original == "false"
+                    comp.put("checkedValue", if (booleanText) "true" else "1")
+                    comp.put("uncheckedValue", if (booleanText) "false" else "0")
                 }
                 UiComponentType.TEXT_INPUT -> {
                 }

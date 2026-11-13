@@ -1,6 +1,7 @@
 package com.basitce.gfx.core.core_engine.rollback
 
 import android.content.Context
+import com.basitce.gfx.core.core_engine.verification.PmpVerifier
 import com.basitce.gfx.core.core_engine.PmpEngine
 import com.basitce.gfx.core.core_engine.shizuku.RemoteShell
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,7 +46,8 @@ sealed class RollbackResult {
 class ConfigRollbackManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pmpEngine: PmpEngine,
-    private val remoteShell: RemoteShell
+    private val remoteShell: RemoteShell,
+    private val verifier: PmpVerifier
 ) {
 
     suspend fun listBackupsForTarget(targetPath: String): BackupList {
@@ -171,10 +173,7 @@ class ConfigRollbackManager @Inject constructor(
                 warnings = warnings
             )
 
-            return RollbackResult.Success(
-                message = "Backup remote copy ile geri yüklendi.",
-                warnings = warnings
-            )
+            return verifyRestoredBackup(backupPath, targetPath, warnings)
         }
 
         // 2) Shell cat fallback
@@ -190,10 +189,7 @@ class ConfigRollbackManager @Inject constructor(
                 warnings = warnings
             )
 
-            return RollbackResult.Success(
-                message = "Backup shell cat ile geri yüklendi.",
-                warnings = warnings
-            )
+            return verifyRestoredBackup(backupPath, targetPath, warnings)
         }
 
         warnings.add("Shell cat fallback başarısız: ${catResult.stderr}")
@@ -235,10 +231,9 @@ class ConfigRollbackManager @Inject constructor(
                 warnings = warnings
             )
 
-            RollbackResult.Success(
-                message = "Backup pull/push fallback ile geri yüklendi.",
-                warnings = warnings
-            )
+            if (verifier.verifyPush(tempFile, targetPath).success) {
+                RollbackResult.Success("Yedek geri yüklendi ve doğrulandı.", warnings)
+            } else RollbackResult.Failure("Geri yüklenen dosya doğrulanamadı.", warnings)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -249,6 +244,25 @@ class ConfigRollbackManager @Inject constructor(
             )
         } finally {
             tempFile.delete()
+        }
+    }
+
+    private suspend fun verifyRestoredBackup(
+        backupPath: String,
+        targetPath: String,
+        warnings: List<String>
+    ): RollbackResult {
+        val checkFile = File(context.cacheDir, "restore_verify_${java.util.UUID.randomUUID()}")
+        return try {
+            if (pmpEngine.pull(backupPath, checkFile) && verifier.verifyPush(checkFile, targetPath).success) {
+                RollbackResult.Success("Yedek geri yüklendi ve doğrulandı.", warnings)
+            } else RollbackResult.Failure("Geri yüklenen dosya doğrulanamadı. Yedek dosyası korundu.", warnings)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            RollbackResult.Failure("Geri yükleme doğrulama hatası: ${e.message}", warnings, e)
+        } finally {
+            checkFile.delete()
         }
     }
 

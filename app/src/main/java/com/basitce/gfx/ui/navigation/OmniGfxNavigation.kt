@@ -20,7 +20,7 @@ import com.basitce.gfx.ui.sync.ProfileSyncScreen
 object Routes {
     const val HOME = "home"
     const val APP_PICKER = "app_picker"
-    const val GAME_DETAIL = "game_detail/{gameId}"
+    const val GAME_DETAIL = "game_detail/{gameId}?profileId={profileId}"
     const val SETUP_WIZARD = "wizard/{packageName}"
     const val SHIZUKU_SETUP = "shizuku_setup"
     const val BACKUP_MANAGER = "backup_manager"
@@ -28,7 +28,7 @@ object Routes {
     const val SYNC = "sync"
     const val GUIDE = "guide"
 
-    fun gameDetail(gameId: String) = "game_detail/$gameId"
+    fun gameDetail(gameId: String, profileId: String = "") = "game_detail/$gameId?profileId=$profileId"
     fun setupWizard(packageName: String) = "wizard/$packageName"
 }
 
@@ -44,7 +44,7 @@ fun OmniGfxNavHost(
             MainScreen(
                 onAddGame = { navController.navigate(Routes.APP_PICKER) },
                 onGameClick = { gameId -> navController.navigate(Routes.gameDetail(gameId)) },
-                onLoadProfile = { gameId, _ -> navController.navigate(Routes.gameDetail(gameId)) },
+                onLoadProfile = { gameId, profileId -> navController.navigate(Routes.gameDetail(gameId, profileId)) },
                 onOpenBackupManager = { navController.navigate(Routes.BACKUP_MANAGER) },
                 onOpenMarketplace = { navController.navigate(Routes.MARKETPLACE) },
                 onOpenSync = { navController.navigate(Routes.SYNC) },
@@ -67,7 +67,7 @@ fun OmniGfxNavHost(
 
         composable(
             route = Routes.GAME_DETAIL,
-            arguments = listOf(navArgument("gameId") { type = NavType.StringType })
+            arguments = listOf(navArgument("gameId") { type = NavType.StringType }, navArgument("profileId") { type = NavType.StringType; defaultValue = "" })
         ) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
             GameDetailScreen(

@@ -118,6 +118,8 @@ data class SetupWizardState(
 
     val configNodes: List<ConfigNode> = emptyList(),
     val hasUnsavedChanges: Boolean = false,
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
 
     val pinnedVariables: Map<String, PinnedVariable> = emptyMap(),
     val profileName: String = "",
@@ -138,10 +140,16 @@ data class SetupWizardState(
         get() = targetFilePath.isNotBlank()
 
     val canProceedToEdit: Boolean
-        get() = fileContent.isNotEmpty() && detectedFormat != DetectedFormat.UNKNOWN
+        get() = draftId != null && detectedFormat != DetectedFormat.UNKNOWN
 
     val canPush: Boolean
-        get() = targetFilePath.isNotBlank() && fileContent.isNotEmpty()
+        get() = targetFilePath.isNotBlank() && draftId != null
+
+    val requiresRawProfile: Boolean
+        get() = detectedFormat == DetectedFormat.INI && configNodes
+            .filter { it.type == NodeType.KEY_VALUE }
+            .groupingBy { it.path.lowercase(java.util.Locale.ROOT) }
+            .eachCount().any { it.value > 1 }
 
     val hasAnyChanges: Boolean
         get() = configNodes.any { it.isModified } || hasUnsavedChanges

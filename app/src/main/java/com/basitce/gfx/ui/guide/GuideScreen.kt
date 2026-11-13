@@ -1,5 +1,9 @@
+// Guide content quotes real Android config paths as documentation text, not file access.
+@file:SuppressLint("SdCardPath")
+
 package com.basitce.gfx.ui.guide
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -29,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Build
@@ -37,7 +42,6 @@ import androidx.compose.material.icons.filled.Dangerous
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Games
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lightbulb
@@ -288,7 +292,7 @@ private fun TableOfContents(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.HelpOutline,
+                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
                 contentDescription = null,
                 tint = OmniPrimary,
                 modifier = Modifier.size(20.dp)
@@ -1343,7 +1347,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "troubleshooting",
-        icon = Icons.Default.HelpOutline,
+        icon = Icons.AutoMirrored.Filled.HelpOutline,
         title = "Sık Karşılaşılan Sorunlar",
         subtitle = "Çözümler ve ipuçları",
         accentColor = OmniWarning,

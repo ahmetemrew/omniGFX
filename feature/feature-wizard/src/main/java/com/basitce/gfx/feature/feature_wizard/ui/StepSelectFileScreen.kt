@@ -85,16 +85,25 @@ fun StepSelectFile(
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (presets.isEmpty()) item {
+                Surface(color = OmniSurfaceElevated, shape = RoundedCornerShape(12.dp)) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Bu oyun için doğrulanmış hazır config yolu yok", color = OmniOnSurface, style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Shizuku ADB modu özel uygulama verilerini açamaz. Yalnızca erişilebilir ve oyunun kullandığı metin config dosyalarını seçin. Reklam, analiz ve motor kaynak dosyaları grafik ayarı değildir.", color = OmniOnSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             if (presets.isNotEmpty()) {
                 item {
                     Text(
-                        text = "💡 Bilinen Config Dosyaları",
+                        text = "💡 Config Yolu Önerileri",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = OmniOnSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Bu oyun için bilinen config dosyaları. Birini seçerek doğrudan başlayabilirsin.",
+                        text = "Yollar oyun sürümüne göre değişebilir. Dosyanın varlığı ve erişimi analiz adımında kontrol edilir.",
                         style = MaterialTheme.typography.bodySmall,
                         color = OmniOnSurfaceVariant
                     )

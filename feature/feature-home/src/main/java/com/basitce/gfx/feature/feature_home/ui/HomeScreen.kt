@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_ui.R
 import com.basitce.gfx.core.core_ui.components.OmniCard
@@ -42,6 +42,7 @@ fun HomeScreen(
 ) {
     val games by viewModel.games.collectAsStateWithLifecycle()
     val shizukuStatus by viewModel.shizukuStatus.collectAsStateWithLifecycle()
+    val shizukuState by viewModel.shizukuState.collectAsStateWithLifecycle()
     val showShizukuGuide by viewModel.showShizukuGuide.collectAsStateWithLifecycle()
 
     if (showShizukuGuide) {
@@ -72,6 +73,11 @@ fun HomeScreen(
 
         OmniShizukuBar(
             status = shizukuStatus,
+            connectionDetail = when (shizukuState.privilegeLevel) {
+                com.basitce.gfx.core.core_engine.shizuku.ShizukuPrivilegeLevel.ADB_SHELL -> "ADB/shell (UID 2000)"
+                com.basitce.gfx.core.core_engine.shizuku.ShizukuPrivilegeLevel.ROOT -> "ROOT (UID 0)"
+                else -> "Yetki doğrulanamadı"
+            },
             onClick = { viewModel.onShizukuBarClick() }
         )
 

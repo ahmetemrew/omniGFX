@@ -110,7 +110,7 @@ class ProfileMarketplaceViewModel @Inject constructor(
             }
 
             try {
-                val profile = repository.importProfileFromString(state.jsonInput.trim())
+                val profile = repository.importProfileFromString(state.jsonInput.trim()).copy(id = java.util.UUID.randomUUID().toString())
                 repository.saveProfile(profile)
 
                 _uiState.update {

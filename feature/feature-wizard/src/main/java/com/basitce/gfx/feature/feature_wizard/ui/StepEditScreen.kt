@@ -122,24 +122,24 @@ fun StepEdit(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         IconButton(
                             onClick = { viewModel.undo() },
-                            enabled = viewModel.canUndo
+                            enabled = state.canUndo
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Undo,
                                 contentDescription = "Geri Al",
-                                tint = if (viewModel.canUndo) OmniOnSurface
+                                tint = if (state.canUndo) OmniOnSurface
                                     else OmniOnSurface.copy(alpha = 0.3f),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                         IconButton(
                             onClick = { viewModel.redo() },
-                            enabled = viewModel.canRedo
+                            enabled = state.canRedo
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Redo,
                                 contentDescription = "İleri Al",
-                                tint = if (viewModel.canRedo) OmniOnSurface
+                                tint = if (state.canRedo) OmniOnSurface
                                     else OmniOnSurface.copy(alpha = 0.3f),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -211,6 +211,7 @@ fun StepEdit(
             }
         }
 
+        state.error?.let { Text(it, color = OmniError, modifier = Modifier.padding(16.dp)) }
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
@@ -219,6 +220,9 @@ fun StepEdit(
             items(filteredNodes, key = { it.id }) { node ->
                 ConfigLineItem(
                     node = node,
+                    structuralEnabled = state.detectedFormat in listOf(
+                        com.basitce.gfx.core.core_engine.workflow.DetectedFormat.INI,
+                        com.basitce.gfx.core.core_engine.workflow.DetectedFormat.PLAIN_TEXT),
                     onValueChange = { viewModel.updateNodeValue(node.id, it) },
                     onPinClick = { showPinSheetFor = node },
                     onDelete = { viewModel.deleteNode(node.id) },
@@ -261,7 +265,7 @@ fun StepEdit(
     if (showDiffPreview) {
         DiffPreviewSheet(
             originalContent = state.fileContent,
-            modifiedContent = viewModel.getSerializedContent(),
+            modifiedContent = runCatching { viewModel.getSerializedContent() }.getOrElse { "İçerik oluşturulamadı: ${it.message}" },
             onDismiss = { showDiffPreview = false }
         )
     }
@@ -287,6 +291,7 @@ fun StepEdit(
 @Composable
 private fun ConfigLineItem(
     node: ConfigNode,
+    structuralEnabled: Boolean,
     onValueChange: (String) -> Unit,
     onPinClick: () -> Unit,
     onDelete: () -> Unit,
@@ -405,6 +410,7 @@ private fun ConfigLineItem(
                     }
                     IconButton(
                         onClick = onAddBelow,
+                        enabled = structuralEnabled,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
@@ -416,6 +422,7 @@ private fun ConfigLineItem(
                     }
                     IconButton(
                         onClick = onDelete,
+                        enabled = structuralEnabled,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
@@ -435,6 +442,7 @@ private fun ConfigLineItem(
                 ) {
                     TextButton(
                         onClick = onMoveUp,
+                        enabled = structuralEnabled,
                         contentPadding = PaddingValues(4.dp)
                     ) {
                         Icon(
@@ -449,6 +457,7 @@ private fun ConfigLineItem(
                     }
                     TextButton(
                         onClick = onMoveDown,
+                        enabled = structuralEnabled,
                         contentPadding = PaddingValues(4.dp)
                     ) {
                         Icon(

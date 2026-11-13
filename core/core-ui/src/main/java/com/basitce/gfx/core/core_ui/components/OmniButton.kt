@@ -60,7 +60,7 @@ fun OmniSecondaryButton(
             .fillMaxWidth()
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
-        border = ButtonDefaults.outlinedButtonBorder.copy(
+        border = ButtonDefaults.outlinedButtonBorder(enabled).copy(
             width = 1.dp,
             brush = androidx.compose.ui.graphics.SolidColor(OmniOutlineStrong)
         ),

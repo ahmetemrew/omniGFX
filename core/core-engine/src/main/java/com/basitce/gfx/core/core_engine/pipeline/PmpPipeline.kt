@@ -9,6 +9,10 @@ import com.basitce.gfx.core.core_engine.verification.VerifyOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
@@ -23,10 +27,16 @@ class PmpPipeline @Inject constructor(
     private val parserFactory: ConfigParserFactory,
     private val verifier: PmpVerifier
 ) {
+    private val writeMutex = Mutex()
+
     fun execute(request: PmpRequest): Flow<PmpEvent> = flow {
+        writeMutex.withLock { executeLocked(request).collect { emit(it) } }
+    }
+
+    private fun executeLocked(request: PmpRequest): Flow<PmpEvent> = flow {
         emit(PmpEvent.Started)
         val warnings = mutableListOf<String>()
-        val stamp = System.currentTimeMillis()
+        val stamp = UUID.randomUUID().toString()
         val cacheDir = File(context.cacheDir, "omnigfx_pmp").apply { mkdirs() }
         val safeName = request.remotePath
             .substringAfterLast('/')
@@ -36,20 +46,16 @@ class PmpPipeline @Inject constructor(
             .ifBlank { "config" }
         val pulledFile = File(cacheDir, "pull_${stamp}_$safeName")
         val modifiedFile = File(cacheDir, "modified_${stamp}_$safeName")
+        var writeAttempted = false
+        var originalForRollback: String? = null
+        var metadataForRollback: FileMetadata? = null
+        var remoteBackupPath: String? = null
         try {
+            require(request.remotePath.startsWith("/") && !request.remotePath.contains('\u0000')) { "Mutlak bir hedef dosya yolu gerekli." }
             // ═══ AŞAMA 1: PULL ═══
             emit(PmpEvent.Pulling)
             val metadata = safeStat(request.remotePath, warnings)
-
-            if (request.options.createRemoteBackup) {
-                val backupResult = createRemoteBackup(request, warnings)
-                if (backupResult == BackupOutcome.FAILED_ABORT) {
-                    emit(PmpEvent.Failed(
-                        "Remote backup oluşturulamadığı için işlem iptal edildi."
-                    ))
-                    return@flow
-                }
-            }
+            metadataForRollback = metadata
 
             val pullSucceeded = try {
                 pmpEngine.pull(request.remotePath, pulledFile)
@@ -70,8 +76,13 @@ class PmpPipeline @Inject constructor(
                 pulledFile.readText(Charsets.UTF_8)
             }
 
+            originalForRollback = originalContent
+            if (request.expectedOriginalContent != null && request.expectedOriginalContent != originalContent) {
+                emit(PmpEvent.Failed("Dosya düzenleme sırasında değişti. Dosyayı yeniden çekin."))
+                return@flow
+            }
             emit(PmpEvent.Modifying)
-            val updatedContent: String = when (request.patchMode) {
+            val updatedContent: String = request.replacementContent ?: when (request.patchMode) {
                 PmpPatchMode.CONFIG_PARSER -> {
                     modifyWithParser(request, originalContent, warnings) ?: run {
                         emit(PmpEvent.Failed("Config parse/modify başarısız."))
@@ -89,6 +100,21 @@ class PmpPipeline @Inject constructor(
                 return@flow
             }
 
+            if (request.options.createRemoteBackup) {
+                val path = createRemoteBackupPath(request.remotePath)
+                val backedUp = pmpEngine.supportsRemoteCopy && pmpEngine.copyRemote(request.remotePath, path)
+                if (backedUp) remoteBackupPath = path
+                else if (request.options.abortIfBackupFails) {
+                    emit(PmpEvent.Failed("Yedek oluşturulamadığı için dosya değiştirilmedi."))
+                    return@flow
+                } else warnings.add("Uzak yedek oluşturulamadı.")
+            }
+            if (request.options.createLocalBackup) {
+                withContext(Dispatchers.IO) {
+                    val backupDir = File(context.filesDir, "omnigfx/backups").apply { mkdirs() }
+                    pulledFile.copyTo(File(backupDir, "${stamp}_$safeName"))
+                }
+            }
             emit(PmpEvent.Encoding)
             withContext(Dispatchers.IO) {
                 modifiedFile.writeText(updatedContent, Charsets.UTF_8)
@@ -96,6 +122,7 @@ class PmpPipeline @Inject constructor(
 
             // ═══ AŞAMA 3: PUSH + VERIFY ═══
             emit(PmpEvent.Pushing)
+            writeAttempted = true
             val pushSucceeded = try {
                 if (request.options.atomicReplace && pmpEngine.supportsAtomicPush) {
                     pmpEngine.pushAtomic(
@@ -117,9 +144,9 @@ class PmpPipeline @Inject constructor(
                 false
             }
             if (!pushSucceeded) {
-                emit(PmpEvent.Failed(
-                    "Dosya hedefe push edilemedi: ${request.remotePath}"
-                ))
+                val restored = rollback(request, pulledFile, originalContent, metadata)
+                writeAttempted = false
+                emit(PmpEvent.Failed("Dosya yazılamadı. $restored"))
                 return@flow
             }
 
@@ -148,21 +175,24 @@ class PmpPipeline @Inject constructor(
 
                 // ── KRİTİK DÜZELTME ──
                 // Doğrulama başarısızsa işlemi DURDUR, sadece warning ekleme.
-                if (verifyResult != null && !verifyResult.success) {
-                    warnings.add("Push doğrulanamadı: ${verifyResult.message}")
+                if (verifyResult?.success != true) {
+                    warnings.add("Push doğrulanamadı: ${verifyResult?.message}")
+                    val restored = rollback(request, pulledFile, originalContent, metadata)
+                    writeAttempted = false
                     emit(PmpEvent.Failed(
-                        "Push doğrulanamadı. Dosya bozuk olabilir: ${verifyResult.message}",
+                        "Push doğrulanamadı. $restored",
                         RuntimeException("Verification failed")
                     ))
                     return@flow
                 }
             }
 
+            writeAttempted = false
             emit(PmpEvent.Completed(
                 PmpResult.Success(
                     originalContent = originalContent,
                     updatedContent = updatedContent,
-                    remoteBackupPath = null,
+                    remoteBackupPath = remoteBackupPath,
                     warnings = warnings.toList()
                 )
             ))
@@ -173,10 +203,31 @@ class PmpPipeline @Inject constructor(
                 e.message ?: "PmpPipeline bilinmeyen hata.", e
             ))
         } finally {
-            withContext(Dispatchers.IO) {
+            withContext(NonCancellable + Dispatchers.IO) {
+                if (writeAttempted && originalForRollback != null) {
+                    rollback(request, pulledFile, originalForRollback, metadataForRollback)
+                }
                 pulledFile.delete()
                 modifiedFile.delete()
             }
+        }
+    }
+
+    private suspend fun rollback(
+        request: PmpRequest,
+        originalFile: File,
+        originalContent: String,
+        metadata: FileMetadata?
+    ): String = withContext(NonCancellable + Dispatchers.IO) {
+        try {
+            val restored = if (pmpEngine.supportsAtomicPush) {
+                pmpEngine.pushAtomic(originalFile, request.remotePath, metadata, request.options.restoreSelinux)
+            } else pmpEngine.push(originalFile, request.remotePath)
+            if (restored && verifier.verifyContent(originalContent, request.remotePath, metadata).success) {
+                "Önceki içerik geri yüklendi ve doğrulandı."
+            } else "Geri yükleme doğrulanamadı; yedekler ekranını kullanın."
+        } catch (e: Exception) {
+            "Geri yükleme tamamlanamadı: ${e.message}"
         }
     }
 
@@ -235,8 +286,7 @@ class PmpPipeline @Inject constructor(
             val pattern = patch.regexPattern
             val template = patch.regexReplacementTemplate
             if (pattern == null || template == null) {
-                warnings.add("Regex patch eksik: ${patch.path}")
-                continue
+                error("Regex patch eksik: ${patch.path}")
             }
             try {
                 val userValue = when (val v = patch.value) {
@@ -245,11 +295,13 @@ class PmpPipeline @Inject constructor(
                 }
                 val replacement = template.replace("{{value}}", userValue)
                 val regex = Regex(pattern)
-                modified = modified.replace(regex, replacement)
+                require(regex.containsMatchIn(modified)) { "Eşleşme bulunamadı: ${patch.path}" }
+                // Preserve capture references in the template, but treat the user's value literally.
+                modified = modified.replace(regex, template.replace("{{value}}", Regex.escapeReplacement(userValue)))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                warnings.add("Regex patch başarısız: ${patch.path} | ${e.message}")
+                throw IllegalArgumentException("Regex patch başarısız: ${patch.path} | ${e.message}", e)
             }
         }
         return modified
@@ -266,45 +318,6 @@ class PmpPipeline @Inject constructor(
         } catch (e: Exception) {
             warnings.add("stat alınamadı: ${e.message}")
             null
-        }
-    }
-
-    private enum class BackupOutcome {
-        SUCCESS,
-        FAILED_CONTINUE,
-        FAILED_ABORT
-    }
-
-    private suspend fun createRemoteBackup(
-        request: PmpRequest,
-        warnings: MutableList<String>
-    ): BackupOutcome {
-        if (!pmpEngine.supportsRemoteCopy) {
-            warnings.add("PmpEngine remote copy desteklemiyor.")
-            return if (request.options.abortIfBackupFails) {
-                BackupOutcome.FAILED_ABORT
-            } else {
-                BackupOutcome.FAILED_CONTINUE
-            }
-        }
-        val backupPath = createRemoteBackupPath(request.remotePath)
-        val succeeded = try {
-            pmpEngine.copyRemote(request.remotePath, backupPath)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            warnings.add("Remote backup sırasında hata: ${e.message}")
-            false
-        }
-        return if (succeeded) {
-            BackupOutcome.SUCCESS
-        } else {
-            warnings.add("Remote backup oluşturulamadı: $backupPath")
-            if (request.options.abortIfBackupFails) {
-                BackupOutcome.FAILED_ABORT
-            } else {
-                BackupOutcome.FAILED_CONTINUE
-            }
         }
     }
 

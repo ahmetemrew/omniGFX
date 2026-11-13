@@ -50,7 +50,7 @@ class ProfileSecurityScanner @Inject constructor() {
             )
         }
 
-        if (profile.patches.isEmpty()) {
+        if (profile.patches.isEmpty() && profile.rawContent == null) {
             errors.add("Profilde en az bir patch olmalıdır.")
         }
 

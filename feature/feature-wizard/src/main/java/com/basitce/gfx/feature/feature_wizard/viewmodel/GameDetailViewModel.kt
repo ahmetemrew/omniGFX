@@ -25,6 +25,7 @@ class GameDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val gameId: String = savedStateHandle["gameId"] ?: ""
+    private var pendingProfileId: String? = savedStateHandle["profileId"]
 
     private val _game = MutableStateFlow<GameEntity?>(null)
     val game: StateFlow<GameEntity?> = _game.asStateFlow()
@@ -70,6 +71,10 @@ class GameDetailViewModel @Inject constructor(
                     }
                 }
                 _profiles.value = allProfiles.sortedByDescending { it.createdAt }
+                pendingProfileId?.let { id ->
+                    _profileToApply.value = allProfiles.firstOrNull { it.id == id }
+                    pendingProfileId = null
+                }
             } catch (e: Exception) {
                 _profiles.value = emptyList()
             }

@@ -13,6 +13,9 @@ interface SchemaDao {
     @Query("SELECT * FROM schemas WHERE gameId = :gameId")
     fun getSchemasForGame(gameId: String): Flow<List<SchemaEntity>>
 
+    @Query("SELECT * FROM schemas WHERE id = :schemaId")
+    suspend fun getSchemaById(schemaId: String): SchemaEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSchema(schema: SchemaEntity)
 }

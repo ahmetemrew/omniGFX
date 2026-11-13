@@ -80,7 +80,7 @@ class BackupManagerViewModel @Inject constructor(
         loadBackupsForSelectedProfile()
     }
 
-    fun loadBackupsForSelectedProfile() {
+    fun loadBackupsForSelectedProfile(preserveMessage: Boolean = false) {
         val state = _uiState.value
 
         val profile = state.profiles.firstOrNull {
@@ -99,7 +99,7 @@ class BackupManagerViewModel @Inject constructor(
                 it.copy(
                     isLoading = true,
                     backups = emptyList(),
-                    message = null
+                    message = if (preserveMessage) it.message else null
                 )
             }
 
@@ -127,7 +127,7 @@ class BackupManagerViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         backups = distinctBackups,
-                        message = if (distinctBackups.isEmpty()) {
+                        message = if (preserveMessage && it.message != null) it.message else if (distinctBackups.isEmpty()) {
                             "Bu profil için backup bulunamadı."
                         } else {
                             null
@@ -146,6 +146,7 @@ class BackupManagerViewModel @Inject constructor(
     }
 
     fun restoreBackup(item: BackupItemUi) {
+        if (_uiState.value.isLoading) return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
@@ -162,7 +163,7 @@ class BackupManagerViewModel @Inject constructor(
                     )
                 }
 
-                loadBackupsForSelectedProfile()
+                loadBackupsForSelectedProfile(preserveMessage = true)
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -175,6 +176,7 @@ class BackupManagerViewModel @Inject constructor(
     }
 
     fun deleteBackup(item: BackupItemUi) {
+        if (_uiState.value.isLoading) return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
@@ -188,7 +190,7 @@ class BackupManagerViewModel @Inject constructor(
                     )
                 }
 
-                loadBackupsForSelectedProfile()
+                loadBackupsForSelectedProfile(preserveMessage = true)
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -201,6 +203,7 @@ class BackupManagerViewModel @Inject constructor(
     }
 
     fun cleanOldBackups(keep: Int = 3) {
+        if (_uiState.value.isLoading) return
         val state = _uiState.value
 
         val profile = state.profiles.firstOrNull {
@@ -233,7 +236,7 @@ class BackupManagerViewModel @Inject constructor(
                     )
                 }
 
-                loadBackupsForSelectedProfile()
+                loadBackupsForSelectedProfile(preserveMessage = true)
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(

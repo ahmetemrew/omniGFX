@@ -33,7 +33,6 @@ fun ShizukuGuideDialog(
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val adbCommand = "adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -46,7 +45,7 @@ fun ShizukuGuideDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "OmniGFX, oyun ayarlarını root olmadan değiştirmek için Shizuku'yu kullanır.",
+                    text = "OmniGFX dosya erişimi için Shizuku kullanır. ADB modu yalnızca shell kullanıcısının erişebildiği dosyaları açabilir.",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -55,16 +54,16 @@ fun ShizukuGuideDialog(
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
                 )
                 Text(
-                    text = "Adım 2: Bilgisayardan şu komutu bir kez çalıştırın:",
+                    text = "Adım 2: Shizuku içindeki kablosuz hata ayıklama veya bilgisayarla başlatma yönergelerini izleyin. Komut sürüme göre değişebilir.",
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedButton(
-                    onClick = { copyToClipboard(context, adbCommand) },
+                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/guide/setup/"))) },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
-                    Text(adbCommand)
+                    Text("Shizuku başlatma rehberi")
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

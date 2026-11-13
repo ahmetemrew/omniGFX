@@ -33,12 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +57,7 @@ fun BackupManagerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Backup Manager") },
+                title = { Text("Yedekler") },
                 navigationIcon = {
                     TextButton(onClick = onBack) {
                         Text("Geri")
@@ -79,6 +79,7 @@ fun BackupManagerScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Profil") },
+                    trailingIcon = { TextButton(onClick = { profileMenuExpanded = true }) { Text("Seç") } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { profileMenuExpanded = true }
@@ -108,7 +109,7 @@ fun BackupManagerScreen(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 OutlinedButton(onClick = { viewModel.cleanOldBackups(3) }) {
-                    Text("Eski Backupları Temizle")
+                    Text("Eski Yedekleri Temizle")
                 }
             }
 
@@ -139,18 +140,18 @@ fun BackupManagerScreen(
                         )
 
                         Text(
-                            text = "Target: ${item.targetPath}",
+                            text = "Hedef: ${item.targetPath}",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         item.entry.timestamp?.let { timestamp ->
                             val dateFormat = SimpleDateFormat(
                                 "dd.MM.yyyy HH:mm",
-                                Locale.getDefault()
+                                LocalLocale.current.platformLocale
                             )
 
                             Text(
-                                text = "Date: ${dateFormat.format(Date(timestamp))}",
+                                text = "Tarih: ${dateFormat.format(Date(timestamp))}",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -159,7 +160,7 @@ fun BackupManagerScreen(
                             Button(
                                 onClick = { viewModel.restoreBackup(item) }
                             ) {
-                                Text("Restore")
+                                Text("Geri Yükle")
                             }
 
                             Spacer(modifier = Modifier.width(8.dp))
@@ -167,7 +168,7 @@ fun BackupManagerScreen(
                             OutlinedButton(
                                 onClick = { viewModel.deleteBackup(item) }
                             ) {
-                                Text("Delete")
+                                Text("Sil")
                             }
                         }
                     }

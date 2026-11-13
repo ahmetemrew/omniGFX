@@ -29,7 +29,9 @@ data class PmpRequest(
     val remotePath: String,
     val patches: List<PmpPatch>,
     val patchMode: PmpPatchMode = PmpPatchMode.CONFIG_PARSER,
-    val options: PmpPipelineOptions = PmpPipelineOptions()
+    val options: PmpPipelineOptions = PmpPipelineOptions(),
+    val replacementContent: String? = null,
+    val expectedOriginalContent: String? = null
 )
 
 /**

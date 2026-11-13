@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.basitce.gfx.BuildConfig
 import com.basitce.gfx.core.core_ui.components.OmniCard
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
 import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
@@ -44,7 +45,7 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Sürüm 2.0.0-PRO",
+                    text = "Sürüm ${BuildConfig.VERSION_NAME}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

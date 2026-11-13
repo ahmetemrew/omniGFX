@@ -69,5 +69,7 @@ data class UserConfigProfile(
     val targetPathTemplate: String,
     val format: ConfigFormatHint = ConfigFormatHint.AUTO,
     val patches: List<ProfilePatch>,
-    val options: ProfileOptions = ProfileOptions()
+    val options: ProfileOptions = ProfileOptions(),
+    val rawContent: String? = null,
+    val schemaJson: String? = null
 )

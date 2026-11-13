@@ -57,7 +57,10 @@ class JsonPathParser @Inject constructor() : ConfigParser {
         ensureParsed()
 
         val normalizedPath = normalizeJsonPath(path)
-        val newValue = coerce(value)
+        val existing = if (rootSet && root != null) runCatching {
+            JsonPath.using(configuration).parse(root).read<Any?>(normalizedPath)
+        }.getOrNull() else null
+        val newValue = if (existing is String) value.toString() else coerce(value)
 
         // Kök node'u değiştirmek
         if (normalizedPath == "$") {

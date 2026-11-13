@@ -31,7 +31,7 @@ fun OmniTopBar(
         modifier = modifier.statusBarsPadding(),
         navigationIcon = navigationIcon,
         actions = actions,
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
             scrolledContainerColor = OmniBackground.copy(alpha = 0.95f)
         )

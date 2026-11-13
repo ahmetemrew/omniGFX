@@ -68,7 +68,8 @@ class ConfigParserFactory @Inject constructor(
 
     private fun looksLikeJson(content: String): Boolean {
         val trimmed = content.trim()
-        return trimmed.startsWith("{") || trimmed.startsWith("[")
+        return (trimmed.startsWith("{") || trimmed.startsWith("[")) &&
+            runCatching { com.jayway.jsonpath.JsonPath.parse(trimmed) }.isSuccess
     }
 
     private fun looksLikeXml(content: String): Boolean {

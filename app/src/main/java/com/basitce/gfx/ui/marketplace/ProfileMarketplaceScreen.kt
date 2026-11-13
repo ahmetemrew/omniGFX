@@ -25,7 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_engine.profile.FindingSeverity
 import com.basitce.gfx.core.core_engine.profile.ProfileRiskLevel
@@ -41,7 +41,7 @@ fun ProfileMarketplaceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile Marketplace") },
+                title = { Text("JSON Profil Analizi") },
                 navigationIcon = {
                     TextButton(onClick = onBack) {
                         Text("Geri")
@@ -68,7 +68,7 @@ fun ProfileMarketplaceScreen(
 
             Row {
                 Button(onClick = { viewModel.analyze() }) {
-                    Text("Analyze")
+                    Text("Analiz Et")
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -77,7 +77,7 @@ fun ProfileMarketplaceScreen(
                     onClick = { viewModel.importProfile() },
                     enabled = state.analysis?.canImport == true && !state.isImporting
                 ) {
-                    Text("Import")
+                    Text("İçe Aktar")
                 }
             }
 

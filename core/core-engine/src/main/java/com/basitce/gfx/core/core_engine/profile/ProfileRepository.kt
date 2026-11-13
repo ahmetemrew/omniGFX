@@ -1,6 +1,12 @@
 package com.basitce.gfx.core.core_engine.profile
 
 import android.content.Context
+import androidx.room.withTransaction
+import com.basitce.gfx.core.core_database.AppDatabase
+import com.basitce.gfx.core.core_database.entity.GameEntity
+import com.basitce.gfx.core.core_database.entity.SchemaEntity
+import com.basitce.gfx.core.core_database.entity.ProfileEntity
+import kotlinx.coroutines.flow.first
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -41,14 +47,13 @@ interface ProfileRepository {
 }
 
 /**
- * Basit, güvenli, JSON dosya tabanlı repository.
- *
- * Profiller app-private dizinde saklanır:
- * files/omnigfx/profiles.json
+ * Room-backed profile repository with compatibility for legacy JSON profiles.
+ * The shared database powers the wizard, backup browser and JSON transfer.
  */
 @Singleton
 class FileProfileRepository @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val database: AppDatabase
 ) : ProfileRepository {
 
     private val mutex = Mutex()
@@ -61,17 +66,35 @@ class FileProfileRepository @Inject constructor(
     override suspend fun getAllProfiles(): List<UserConfigProfile> {
         return mutex.withLock {
             withContext(Dispatchers.IO) {
-                readProfiles()
+                val legacy = readProfiles()
+                val room = database.profileDao().getAllProfilesWithSchema().first().map { item ->
+                    val schema = database.schemaDao().getSchemaById(item.profile.schemaId)
+                    val game = database.gameDao().getGameById(item.gameId)
+                    val values = JSONObject(item.profile.userValuesJson)
+                    UserConfigProfile(
+                        id = item.profile.id, name = item.profile.name,
+                        packageName = game?.packageName?.takeIf { it.isNotBlank() },
+                        targetPathTemplate = item.profile.targetFilePath,
+                        patches = values.keys().asSequence().map { key ->
+                            val value = values.get(key)
+                            ProfilePatch(key, if (value == JSONObject.NULL) null else value.toString(), when (value) {
+                                is Number -> PatchValueType.NUMBER
+                                is Boolean -> PatchValueType.BOOLEAN
+                                JSONObject.NULL -> PatchValueType.NULL
+                                else -> PatchValueType.STRING
+                            })
+                        }.toList(),
+                        rawContent = item.profile.rawContent,
+                        schemaJson = schema?.jsonSchema
+                    )
+                }
+                (room + legacy).distinctBy { it.id }
             }
         }
     }
 
     override suspend fun getProfileById(id: String): UserConfigProfile? {
-        return mutex.withLock {
-            withContext(Dispatchers.IO) {
-                readProfiles().firstOrNull { it.id == id }
-            }
-        }
+        return getAllProfiles().firstOrNull { it.id == id }
     }
 
     override suspend fun saveProfile(profile: UserConfigProfile) {
@@ -82,7 +105,34 @@ class FileProfileRepository @Inject constructor(
                 profiles.removeAll { it.id == profile.id }
                 profiles.add(profile)
 
-                writeProfiles(profiles)
+                val target = ProfilePathResolver().resolveCandidates(profile).firstOrNull() ?: error("Hedef yol çözümlenemedi")
+                require(target.startsWith("/")) { "Geçerli hedef dosya yolu gerekli." }
+                database.withTransaction {
+                    val games = database.gameDao().getAllGames().first()
+                    val packageName = profile.packageName.orEmpty()
+                    val gameId = games.firstOrNull { it.packageName == packageName }?.id ?: UUID.randomUUID().toString()
+                    if (games.none { it.id == gameId }) database.gameDao().insertGame(
+                        GameEntity(gameId, packageName, packageName.ifBlank { "İçe aktarılan profiller" }, "", true, System.currentTimeMillis())
+                    )
+                    val schemaId = UUID.randomUUID().toString()
+                    val schema = profile.schemaJson ?: JSONObject().put("targetFile", target)
+                        .put("parser", profile.format.name).put("uiComponents", JSONArray()).toString()
+                    database.schemaDao().insertSchema(SchemaEntity(schemaId, gameId, 2, schema))
+                    val values = JSONObject()
+                    profile.patches.forEach { patch ->
+                        val value: Any = when (patch.valueType) {
+                            PatchValueType.BOOLEAN -> patch.value.toBoolean()
+                            PatchValueType.NUMBER -> patch.value?.toDoubleOrNull() ?: error("Geçersiz sayı")
+                            PatchValueType.NULL -> JSONObject.NULL
+                            else -> patch.value.orEmpty()
+                        }
+                        values.put(patch.path, value)
+                    }
+                    database.profileDao().insertProfile(ProfileEntity(profile.id, schemaId, profile.name,
+                        values.toString(), profile.rawContent != null, profile.rawContent, target))
+                }
+                // Room is canonical; remove a migrated legacy entry to avoid resurrecting deleted profiles.
+                writeProfiles(profiles.filterNot { it.id == profile.id })
             }
         }
     }
@@ -92,6 +142,7 @@ class FileProfileRepository @Inject constructor(
             withContext(Dispatchers.IO) {
                 val profiles = readProfiles().toMutableList()
                 profiles.removeAll { it.id == id }
+                database.profileDao().deleteProfile(id)
                 writeProfiles(profiles)
             }
         }
@@ -175,6 +226,8 @@ class FileProfileRepository @Inject constructor(
 
         json.put("id", id)
         json.put("name", name)
+        rawContent?.let { json.put("rawContent", it) }
+        schemaJson?.let { json.put("schemaJson", it) }
 
         packageName?.let {
             json.put("packageName", it)
@@ -275,7 +328,9 @@ class FileProfileRepository @Inject constructor(
             targetPathTemplate = targetPathTemplate,
             format = format,
             patches = patches,
-            options = options
+            options = options,
+            rawContent = if (json.has("rawContent") && !json.isNull("rawContent")) json.getString("rawContent") else null,
+            schemaJson = if (json.has("schemaJson") && !json.isNull("schemaJson")) json.getString("schemaJson") else null
         )
     }
 

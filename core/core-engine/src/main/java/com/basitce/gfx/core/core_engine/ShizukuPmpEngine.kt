@@ -7,8 +7,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuRemoteProcess
 import java.io.File
 import java.io.InputStream
 import javax.inject.Inject
@@ -26,7 +27,12 @@ import javax.inject.Singleton
  * - chown/chmod/chcon ile metadata geri yükleme
  */
 @Singleton
-class ShizukuPmpEngine @Inject constructor() : PmpEngine {
+open class ShizukuPmpEngine internal constructor(
+    private val bulkTimeoutMs: Long
+) : PmpEngine {
+
+    @Inject
+    constructor() : this(DEFAULT_BULK_TIMEOUT_MS)
 
     override val supportsAtomicPush: Boolean
         get() = true
@@ -92,26 +98,31 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
             }
 
             try {
-                withContext(Dispatchers.IO) {
-                    destination.outputStream().use { outputStream ->
-                        process.inputStream.use { inputStream ->
-                            inputStream.copyTo(outputStream)
+                withTimeout(bulkTimeoutMs) {
+                    withContext(Dispatchers.IO) {
+                        destination.outputStream().use { outputStream ->
+                            process.inputStream.use { inputStream ->
+                                inputStream.copyTo(outputStream)
+                            }
                         }
                     }
+
+                    val exitCode = waitForExit(process)
+                    val stderr = stderrDeferred.await()
+
+                    if (exitCode != 0) {
+                        Log.w(
+                            TAG,
+                            "pull başarısız. path=$remotePath exit=$exitCode stderr=$stderr"
+                        )
+                        return@withTimeout false
+                    }
+
+                    true
                 }
-
-                val exitCode = waitForExit(process)
-                val stderr = stderrDeferred.await()
-
-                if (exitCode != 0) {
-                    Log.w(
-                        TAG,
-                        "pull başarısız. path=$remotePath exit=$exitCode stderr=$stderr"
-                    )
-                    return@coroutineScope false
-                }
-
-                true
+            } catch (e: TimeoutCancellationException) {
+                Log.w(TAG, "pull zaman aşımına uğradı. path=$remotePath")
+                false
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -213,11 +224,14 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
         }
 
         // 2) Metadata'yı rename öncesinde temp dosyaya uygula.
-        applyMetadataToPath(
+        if (!applyMetadataToPath(
             path = tempRemotePath,
             metadata = effectiveMetadata,
             restoreSelinux = restoreSelinux
-        )
+        )) {
+            executeCapture("rm -f $quotedTemp")
+            return@coroutineScope false
+        }
 
         // 3) Atomic rename.
         val renameResult = executeCapture("mv -f $quotedTemp $quotedRemote")
@@ -401,25 +415,30 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
         }
 
         try {
-            withContext(Dispatchers.IO) {
-                process.outputStream.use { outputStream ->
-                    source.inputStream().use { inputStream ->
-                        val copied = inputStream.copyTo(outputStream)
-                        outputStream.flush()
-                        Log.d(TAG, "writeFileViaStdin: $copied byte kopyalandı.")
+            withTimeout(bulkTimeoutMs) {
+                withContext(Dispatchers.IO) {
+                    process.outputStream.use { outputStream ->
+                        source.inputStream().use { inputStream ->
+                            val copied = inputStream.copyTo(outputStream)
+                            outputStream.flush()
+                            Log.d(TAG, "writeFileViaStdin: $copied byte kopyalandı.")
+                        }
                     }
                 }
+
+                val exitCode = waitForExit(process)
+                val stderr = stderrDeferred.await()
+
+                Log.d(
+                    TAG,
+                    "writeFileViaStdin sonuç. command=$command exit=$exitCode stderr=$stderr"
+                )
+
+                exitCode == 0
             }
-
-            val exitCode = waitForExit(process)
-            val stderr = stderrDeferred.await()
-
-            Log.d(
-                TAG,
-                "writeFileViaStdin sonuç. command=$command exit=$exitCode stderr=$stderr"
-            )
-
-            exitCode == 0
+        } catch (e: TimeoutCancellationException) {
+            Log.w(TAG, "writeFileViaStdin zaman aşımına uğradı. command=$command")
+            false
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -477,7 +496,7 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
         }
     }
 
-    private suspend fun waitForExit(process: ShizukuRemoteProcess): Int {
+    private suspend fun waitForExit(process: Process): Int {
         return try {
             runInterruptible(Dispatchers.IO) {
                 process.waitFor()
@@ -494,7 +513,9 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
         }
     }
 
-    private fun createProcess(command: String): ShizukuRemoteProcess? {
+    // Shizuku API is intentionally pinned to 12.1.0; newProcess has no replacement there.
+    @Suppress("DEPRECATION")
+    internal open fun createProcess(command: String): Process? {
         return try {
             Shizuku.newProcess(
                 arrayOf(shell, "-c", command),
@@ -509,7 +530,7 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
         }
     }
 
-    private fun destroyProcess(process: ShizukuRemoteProcess?) {
+    private fun destroyProcess(process: Process?) {
         try {
             process?.destroy()
         } catch (e: Throwable) {
@@ -551,7 +572,13 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
             }
         }
 
-        return succeeded
+        if (succeeded) return true
+        // Some storage filesystems reject chown/chcon even when metadata already matches.
+        val actual = stat(path) ?: return false
+        return (metadata.uid == null || metadata.uid == actual.uid) &&
+            (metadata.gid == null || metadata.gid == actual.gid) &&
+            (metadata.mode == null || metadata.mode == actual.mode) &&
+            (!restoreSelinux || metadata.seContext == null || metadata.seContext == actual.seContext)
     }
 
     private fun parseStat(output: String): FileMetadata? {
@@ -581,7 +608,7 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
 
     private fun createTempRemotePath(remotePath: String): String {
         val parent = remotePath.substringBeforeLast('/', "")
-        val tempName = ".omnigfx_tmp_${System.currentTimeMillis()}"
+        val tempName = ".omnigfx_tmp_${java.util.UUID.randomUUID()}"
 
         return if (parent.isEmpty()) {
             "/$tempName"
@@ -606,6 +633,7 @@ class ShizukuPmpEngine @Inject constructor() : PmpEngine {
 
     companion object {
         private const val TAG = "ShizukuPmpEngine"
+        private const val DEFAULT_BULK_TIMEOUT_MS = 60_000L
     }
 
     // endregion

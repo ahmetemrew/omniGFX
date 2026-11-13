@@ -108,7 +108,7 @@ object ConfigTreeBuilder {
         var lineCount = 0
 
         try {
-            val json = JSONObject(content)
+            val json = if (content.trimStart().startsWith("[")) JSONArray(content) else JSONObject(content)
             traverseJson("$", json, nodes) { lineCount++ }
         } catch (e: Exception) {
             return buildPlainTextTree(content)
@@ -128,7 +128,8 @@ object ConfigTreeBuilder {
                 val keys = value.keys()
                 while (keys.hasNext()) {
                     val key = keys.next()
-                    val childPath = "$currentPath.$key"
+                    val escapedKey = key.replace("\\", "\\\\").replace("'", "\\'")
+                    val childPath = "$currentPath['$escapedKey']"
                     traverseJson(childPath, value.get(key), nodes, nextLine)
                 }
             }
@@ -167,6 +168,9 @@ object ConfigTreeBuilder {
             val factory = DocumentBuilderFactory.newInstance().apply {
                 isNamespaceAware = false
                 isValidating = false
+                setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+                setFeature("http://xml.org/sax/features/external-general-entities", false)
+                setFeature("http://xml.org/sax/features/external-parameter-entities", false)
             }
             val builder = factory.newDocumentBuilder()
             val doc = builder.parse(InputSource(StringReader(content)))
@@ -186,8 +190,14 @@ object ConfigTreeBuilder {
         nodes: MutableList<ConfigNode>,
         nextLine: () -> Int
     ) {
-        val currentPath = if (parentPath.isBlank()) element.tagName
-            else "$parentPath/${element.tagName}"
+        var siblingIndex = 1
+        var sibling = element.previousSibling
+        while (sibling != null) {
+            if (sibling.nodeType == Node.ELEMENT_NODE && sibling.nodeName == element.tagName) siblingIndex++
+            sibling = sibling.previousSibling
+        }
+        val currentPath = if (parentPath.isBlank()) "/${element.tagName}"
+            else "$parentPath/${element.tagName}[$siblingIndex]"
 
         val attrs = element.attributes
         if (attrs != null) {
@@ -198,7 +208,7 @@ object ConfigTreeBuilder {
                     ConfigNode(
                         lineNumber = line,
                         type = NodeType.KEY_VALUE,
-                        path = "$currentPath/@${attr.nodeName}",
+                        path = "xpath:$currentPath/@${attr.nodeName}",
                         key = "@${attr.nodeName}",
                         value = attr.nodeValue,
                         rawLine = "@${attr.nodeName}=\"${attr.nodeValue}\"",
@@ -227,7 +237,7 @@ object ConfigTreeBuilder {
                     ConfigNode(
                         lineNumber = line,
                         type = NodeType.KEY_VALUE,
-                        path = currentPath,
+                        path = "xpath:$currentPath",
                         key = element.tagName,
                         value = textContent,
                         rawLine = "<${element.tagName}>$textContent</${element.tagName}>",

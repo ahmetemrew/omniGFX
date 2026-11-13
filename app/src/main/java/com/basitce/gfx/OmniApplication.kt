@@ -1,5 +1,6 @@
 package com.basitce.gfx
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import com.basitce.gfx.core.monitoring.OmniGfxCrashHandler
@@ -23,6 +24,8 @@ class OmniApplication : Application() {
         }
     }
 
+    // Timber tree implementation: forwarding to Log here is the intended sink.
+    @SuppressLint("LogNotTimber")
     private class CrashReportingTree : Timber.Tree() {
         override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
             if (priority >= Log.ERROR) {

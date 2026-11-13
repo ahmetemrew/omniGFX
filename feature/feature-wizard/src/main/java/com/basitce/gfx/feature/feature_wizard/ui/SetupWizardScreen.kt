@@ -1,5 +1,6 @@
 package com.basitce.gfx.feature.feature_wizard.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
 import com.basitce.gfx.core.core_ui.theme.OmniOutline
@@ -53,6 +55,8 @@ fun SetupWizardScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    BackHandler(enabled = !state.currentStep.isFirst) { viewModel.goBack() }
+
     LaunchedEffect(packageName) {
         viewModel.init(packageName)
     }
@@ -60,6 +64,7 @@ fun SetupWizardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .background(MaterialTheme.colorScheme.background)
             .navigationBarsPadding()
     ) {

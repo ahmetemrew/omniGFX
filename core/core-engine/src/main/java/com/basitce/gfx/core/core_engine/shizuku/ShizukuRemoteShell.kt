@@ -87,6 +87,8 @@ class ShizukuRemoteShell @Inject constructor() : RemoteShell {
         }
     }
 
+    // Shizuku API is intentionally pinned to 12.1.0; newProcess has no replacement there.
+    @Suppress("DEPRECATION")
     private fun createProcess(command: String): ShizukuRemoteProcess? {
         return try {
             Shizuku.newProcess(

@@ -103,6 +103,9 @@ fun StepPinVariables(
                 )
             }
 
+            if (state.requiresRawProfile) item {
+                Text("Bu INI dosyasında aynı bölümde tekrarlanan anahtarlar var. Satırların korunması için profil ham dosya olarak kaydedilir.", color = OmniOnSurfaceVariant)
+            }
             item {
                 OutlinedTextField(
                     value = state.profileName,

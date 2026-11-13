@@ -44,7 +44,8 @@ sealed class ShizukuStatus {
 fun OmniShizukuBar(
     status: ShizukuStatus,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    connectionDetail: String? = null
 ) {
     val containerColor by animateColorAsState(
         targetValue = when (status) {
@@ -93,7 +94,7 @@ fun OmniShizukuBar(
         Spacer(modifier = Modifier.width(10.dp))
 
         Text(
-            text = message,
+            text = if (status is ShizukuStatus.Connected && !connectionDetail.isNullOrBlank()) "$message • $connectionDetail" else message,
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
             color = indicatorColor
         )

@@ -29,12 +29,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.OutlinedTextField
+import com.basitce.gfx.core.core_ui.components.OmniSlider
+import com.basitce.gfx.core.core_ui.components.OmniDropdown
+import com.basitce.gfx.core.core_ui.components.OmniSwitch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_database.entity.ProfileEntity
 import com.basitce.gfx.core.core_ui.theme.OmniError
@@ -54,9 +59,12 @@ fun ProfileApplySheet(
     viewModel: ProfileApplyViewModel = hiltViewModel()
 ) {
     val state by viewModel.applyState.collectAsStateWithLifecycle()
+    val components by viewModel.components.collectAsStateWithLifecycle()
+    val values by viewModel.values.collectAsStateWithLifecycle()
+    LaunchedEffect(profile.id) { viewModel.prepare(profile) }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!state.isApplying) onDismiss() },
         containerColor = OmniSurface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
@@ -196,6 +204,38 @@ fun ProfileApplySheet(
                         )
                     }
 
+                    if (!profile.isManual) components.forEach { component ->
+                        val path = component.optString("path", component.optString("id"))
+                        val label = component.optString("label", path)
+                        val value = values[path].orEmpty()
+                        Spacer(Modifier.height(12.dp))
+                        when (component.optString("type")) {
+                            "slider" -> {
+                                val min = component.optDouble("min", 0.0).toFloat()
+                                val max = component.optDouble("max", 100.0).toFloat()
+                                val step = component.optDouble("step", 1.0).toFloat().coerceAtLeast(0.001f)
+                                if (min.isFinite() && max.isFinite() && max > min) OmniSlider(
+                                    label, (value.toFloatOrNull() ?: min).coerceIn(min, max),
+                                    { selected ->
+                                        val snapped = (min + kotlin.math.round((selected - min) / step) * step).coerceIn(min, max)
+                                        viewModel.updateValue(path, if (snapped % 1f == 0f) snapped.toInt().toString() else snapped.toString())
+                                    }, valueRange = min..max, valueLabel = value)
+                            }
+                            "toggle" -> {
+                                val checked = component.optString("checkedValue", "1")
+                                val unchecked = component.optString("uncheckedValue", "0")
+                                OmniSwitch(label, value == checked, { viewModel.updateValue(path, if (it) checked else unchecked) })
+                            }
+                            "dropdown" -> {
+                                val array = component.optJSONArray("options") ?: org.json.JSONArray()
+                                val options = (0 until array.length()).map { array.getString(it) }
+                                val mapping = component.optJSONObject("valueMapping")
+                                val selected = options.firstOrNull { mapping?.optString(it, it) == value } ?: value
+                                OmniDropdown(label, options, selected, { viewModel.updateValue(path, mapping?.optString(it, it) ?: it) })
+                            }
+                            else -> OutlinedTextField(value, { viewModel.updateValue(path, it) }, label = { Text(label) }, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(

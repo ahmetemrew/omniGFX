@@ -1,7 +1,6 @@
 package com.basitce.gfx.ui.shizuku
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +46,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_ui.components.ShizukuGuideDialog
 
@@ -116,13 +116,13 @@ fun ShizukuSetupScreen(
                         actionText = "İndir",
                         onAction = {
                             val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("market://details?id=moe.shizuku.privileged.api")
+                                data = "market://details?id=moe.shizuku.privileged.api".toUri()
                             }
                             try {
                                 context.startActivity(intent)
                             } catch (e: Exception) {
                                 val webIntent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api")
+                                    data = "https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api".toUri()
                                 }
                                 context.startActivity(webIntent)
                             }

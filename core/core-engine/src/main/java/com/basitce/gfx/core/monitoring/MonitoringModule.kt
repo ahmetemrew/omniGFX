@@ -12,12 +12,6 @@ abstract class MonitoringModule {
 
     @Binds
     @Singleton
-    abstract fun bindAnalyticsTracker(
-        impl: DebugAnalyticsTracker
-    ): AnalyticsTracker
-
-    @Binds
-    @Singleton
     abstract fun bindCrashReporter(
         impl: FileCrashReporter
     ): CrashReporter
