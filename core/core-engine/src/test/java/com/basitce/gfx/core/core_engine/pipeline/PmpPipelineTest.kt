@@ -7,6 +7,8 @@ import com.basitce.gfx.core.core_engine.FileMetadata
 import com.basitce.gfx.core.core_engine.PmpEngine
 import com.basitce.gfx.core.core_engine.verification.PmpVerifier
 import com.basitce.gfx.core.core_engine.verification.VerifyResult
+import io.mockk.coVerify
+import kotlinx.coroutines.flow.toList
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -39,6 +41,7 @@ class PmpPipelineTest {
         val cacheDir = File(System.getProperty("java.io.tmpdir"), "test_pmp")
         cacheDir.mkdirs()
         every { context.cacheDir } returns cacheDir
+        every { context.filesDir } returns File(cacheDir, "files").apply { mkdirs() }
     }
 
     @Test
@@ -166,4 +169,67 @@ class PmpPipelineTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+    private fun prepareWrite() {
+        coEvery { pmpEngine.stat(any()) } returns null
+        every { pmpEngine.supportsAtomicPush } returns true
+        every { pmpEngine.supportsRemoteCopy } returns true
+        coEvery { pmpEngine.copyRemote(any(), any()) } returns true
+        coEvery { pmpEngine.pull(any(), any()) } answers {
+            secondArg<File>().writeText("old")
+            true
+        }
+        coEvery { pmpEngine.pushAtomic(any(), any(), any(), any()) } returns true
+        coEvery { verifier.verifyContent(any(), any(), any(), any()) } returns VerifyResult(
+            true, "OK", true, null, null, emptyList())
+    }
+
+    @Test
+    fun `raw replacement is backed up and verified`() = runTest {
+        prepareWrite()
+        val events = pipeline.execute(PmpRequest("/sdcard/config.ini", emptyList(), replacementContent = "new")).toList()
+        val success = (events.last() as PmpEvent.Completed).result as PmpResult.Success
+        assertTrue(success.remoteBackupPath!!.contains(".omnigfx."))
+        coVerify(exactly = 1) { pmpEngine.copyRemote("/sdcard/config.ini", any()) }
+        coVerify(exactly = 1) { verifier.verifyContent("new", any(), any(), any()) }
+    }
+
+    @Test
+    fun `verification exception fails and restores original`() = runTest {
+        prepareWrite()
+        coEvery { verifier.verifyContent("new", any(), any(), any()) } throws IllegalStateException("Disconnected")
+        val events = pipeline.execute(PmpRequest("/sdcard/config.ini", emptyList(), replacementContent = "new")).toList()
+        assertTrue(events.last() is PmpEvent.Failed)
+        assertTrue((events.last() as PmpEvent.Failed).message.contains("geri yüklendi"))
+        coVerify(exactly = 2) { pmpEngine.pushAtomic(any(), any(), any(), any()) }
+        coVerify { verifier.verifyContent("old", any(), any(), any()) }
+    }
+
+    @Test
+    fun `changed original aborts before any write`() = runTest {
+        prepareWrite()
+        val events = pipeline.execute(PmpRequest("/sdcard/config.ini", emptyList(), replacementContent = "new", expectedOriginalContent = "older")).toList()
+        assertTrue(events.last() is PmpEvent.Failed)
+        coVerify(exactly = 0) { pmpEngine.pushAtomic(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `backup failure aborts before write`() = runTest {
+        prepareWrite()
+        coEvery { pmpEngine.copyRemote(any(), any()) } returns false
+        val events = pipeline.execute(PmpRequest("/sdcard/config.ini", emptyList(), replacementContent = "new")).toList()
+        assertTrue(events.last() is PmpEvent.Failed)
+        coVerify(exactly = 0) { pmpEngine.pushAtomic(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `invalid regex aborts instead of applying partial patches`() = runTest {
+        prepareWrite()
+        val events = pipeline.execute(PmpRequest("/sdcard/config.ini", listOf(
+            PmpPatch("first", "changed", "old", "{{value}}"),
+            PmpPatch("second", "value", "[", "{{value}}")
+        ), patchMode = PmpPatchMode.REGEX)).toList()
+        assertTrue(events.last() is PmpEvent.Failed)
+        coVerify(exactly = 0) { pmpEngine.pushAtomic(any(), any(), any(), any()) }
+    }
+
 }

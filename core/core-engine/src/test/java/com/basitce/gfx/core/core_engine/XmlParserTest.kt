@@ -172,4 +172,11 @@ class XmlParserTest {
         assertTrue(serialized.contains("[Section]"))
         assertTrue(serialized.contains("Key=Value"))
     }
+    @Test(expected = ConfigParserException::class)
+    fun `duplicate Unreal array keys cannot be patched ambiguously`() {
+        val parser = createParser()
+        parser.parse("[UserCustom DeviceProfile]\n+CVars=first\n+CVars=second\n")
+        parser.updateValue("UserCustom DeviceProfile/+CVars", "changed")
+    }
+
 }
