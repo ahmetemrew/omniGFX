@@ -26,5 +26,4 @@ captures/
 .env.*
 
 # Agent scratch reports
-QWEN_PROGRESS.md
-QWEN_DONE.md
+QWEN_*
