@@ -23,11 +23,16 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'tools platform-tools platforms;android-37.0'
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug
 
       - name: Rename APK
         run: cp app/build/outputs/apk/debug/app-debug.apk OmniGFX_v2.0_debug.apk
