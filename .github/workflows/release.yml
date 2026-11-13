@@ -26,7 +26,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'tools platform-tools platforms;android-37.0'
+          # The legacy "tools" package no longer exists in the SDK repository.
+          # build-tools 36.0.0 is the AGP 9.5.1 default.
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

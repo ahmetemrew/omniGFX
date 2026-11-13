@@ -16,7 +16,9 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'tools platform-tools platforms;android-37.0'
+          # The legacy "tools" package no longer exists in the SDK repository.
+          # build-tools 36.0.0 is the AGP 9.5.1 default.
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
       - uses: actions/upload-artifact@v4
