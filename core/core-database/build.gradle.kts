@@ -2,16 +2,19 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
 
 android {
     namespace = "com.basitce.gfx.core.core_database"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         minSdk = 26
+    }
+    lint {
+        // Shared project-wide lint config (intentional dependency pins, etc.).
+        lintConfig = rootProject.file("lint.xml")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -26,13 +29,13 @@ kotlin {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.core:core-ktx:1.19.1")
 
-    val room_version = "2.6.1"
+    val room_version = "2.8.5"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation("com.google.dagger:hilt-android:2.60.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.60.1")
 }

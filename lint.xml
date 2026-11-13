@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!--
+        Intentional dependency pins — do NOT auto-bump:
+        * dev.rikka.shizuku:api / :provider 12.1.0 — stable Shizuku API surface the
+          engine is written against; the 13.x line is unverified for this app.
+        * com.jayway.jsonpath:json-path 2.10.0 — 3.x is a major rewrite with breaking
+          API changes; staying on the proven 2.x line.
+        NewerVersionAvailable is therefore disabled project-wide.
+    -->
+    <issue id="NewerVersionAvailable" severity="ignore" />
+</lint>
