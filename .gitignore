@@ -1,5 +1,7 @@
 *.iml
 .gradle
+.kotlin/
+.qwen/
 /local.properties
 local.properties
 .idea/
@@ -11,4 +13,18 @@ captures/
 .cxx
 *.apk
 *.ap_
+*.aab
 *.dex
+
+# Signing material must never be committed
+*.jks
+*.keystore
+*.p12
+
+# Local secrets / environment
+.env
+.env.*
+
+# Agent scratch reports
+QWEN_PROGRESS.md
+QWEN_DONE.md
