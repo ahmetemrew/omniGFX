@@ -3,6 +3,9 @@
 Tur: 2026-11-14. `before/` önceki kimliğin görüntüleri (14 adet, koyu tema).
 `after/` yeni kimlikle aynı senaryolar + açık tema + font ölçeği 2.0.
 Betik: `tools/design_shots.sh` (tek flock çağrısı içinde emülatör başlat→kur→gez→kapat).
+Dolu durumlar: `tools/design_shots_filled.sh` + `design_filled_session.sh`
+(Shizuku ADB modu + demo config ile sihirbazın dolu/başarı durumları emülatörde üretilir).
+Dosya adı = ekran-durum; before/ ve after/ numaraları aynı slug haritasını kullanır.
 
 ## Ana gezinme (alt bar: Oyunlar / Profiller / Ayarlar)
 | # | Ekran | Dosya | Durumlar |
@@ -33,9 +36,29 @@ Betik: `tools/design_shots.sh` (tek flock çağrısı içinde emülatör başlat
 | 20 | Shizuku rehber diyaloğu | core-ui/ShizukuGuideDialog.kt | diyalog: neden + tek eylem |
 
 ## Durum kapsama notları
-- Shizuku emülatörde çalışmaz → 12-16 ekranlarının "Shizuku yok" durumu emülatörde,
-  dolu durumları gerçek cihazda (before/ görüntüleri) doğrulanır.
+- Dolu durumlar (21–26) Shizuku ADB modu ile emülatörde üretilir: Shizuku v13.6
+  servisi resmi yoldan (native `libshizuku.so`) başlatılır, demo INI (`tools/design_demo_config.ini`)
+  /sdcard/Download/UserCustom.ini olarak seed edilir, sihirbaz uçtan uca koşulur
+  (çek → düzenle → pin → profil → uygula → yedek). Before/ karşılıkları gerçek
+  cihazdan alınmış eski kimlik görüntüleridir; ekran ve durum eşleşmesi birebirdir.
 - Açık tema: 01/02/03/05/06/08 yeniden çekilir (after/ *-acik).
-- Font ölçeği 2.0: 01/03 yeniden çekilir (after/ *-buyukfont), sonra 1.0'a döndürülür.
+- Font ölçeği 2.0: 01/03/05 yeniden çekilir (after/ *-buyukfont), sonra 1.0'a döndürülür.
 - Azaltılmış hareket: ANIMATOR_DURATION_SCALE=0 ile geçişler anında (kod düzeyinde
   OmniMotion.scale; görüntü farkı üretmez, davranışsal doğrulama).
+
+## Dolu durum seti (before/ ↔ after/ eşleşmesi)
+| # | Ekran / durum | before/ (eski kimlik) | after/ (yeni kimlik) |
+|---|---|---|---|
+| 21 | Çek & analiz — dosya çekildi | 21-cek-analiz-koyu | 21-cek-analiz-koyu |
+| 22 | Düzenleyici — satırlar + pin | 22-duzenleyici-koyu | 22-duzenleyici-koyu |
+| 23 | Uygula — başarı + doğrulama | 23-uygula-basari-koyu | 23-uygula-basari-koyu |
+| 24 | Oyunlar — Shizuku hazır (boş liste) | 24-oyunlar-hazir-koyu | 24-oyunlar-hazir-koyu |
+| 24b | Oyunlar — dolu liste (sihirbaz sonrası) | — (before karşılığı yok) | 24b-oyunlar-dolu-koyu |
+| 25 | Profiller — dolu liste | 25-profiller-dolu-koyu | 25-profiller-dolu-koyu |
+| 26 | Yedekler — dolu liste | 26-yedekler-dolu-koyu | 26-yedekler-dolu-koyu |
+
+Not (9. oturum): before/24'ün gerçek içeriği OCR ile doğrulandı — "Shizuku hazır ·
+ADB/shell (UID 2000)" bandı + BOŞ liste (before/01 ise "Shizuku izni gerekli" bandı).
+Slug'daki "hazir" bağlantı durumudur, dolu liste değil. after/24 aynı durumda çekilir
+(sihirbazdan önce, pm clear ile temiz veri); dolu liste kanıtı 24b'de (07b gibi
+before karşılığı olmayan ek durum).

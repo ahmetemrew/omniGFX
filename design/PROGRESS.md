@@ -3,6 +3,169 @@
 Proje: OmniGFX Pro (Shizuku tabanlı oyun config düzenleyici, Kotlin + Compose, 6 modül)
 Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adımda güncellenir.
 
+## Durum: F13 tam yeniden doğrulama + dolu durum teslimi (2026-11-14, 10. oturum)
+
+### 10. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose). CRITIQUE.md YOK (teyit).
+- [x] 9. oturumun filled4 kuyruk süreci (PID 1679209) emu.lock'ta bekliyordu;
+      after/21–26 hâlâ eski kısmi koşudan kalma GEÇERSIZ PNG'lerdi (24b yok).
+      Yedekli koşu sonlandırıldı; yerine TEK kapsamlı doğrulama kuyruğa alındı:
+      `nohup setsid flock -o build.lock bash tools/design_verify_full.sh`
+      (PID 1696388, log .qwen/tmp/design-verify10.log). Sıra: clean assembleDebug
+      testDebugUnitTest lintDebug assembleRelease → 22 ana görüntü → dolu durum
+      oturumu (21–26 + 24b, düzeltilmiş betik). Tüm görüntüler SON APK'dan.
+- [x] Kilit durumu: MobAI-draw sig13 emülatör oturumu kilidi tutuyordu; verify10
+      emu.lock kuyruğunda (ledmanagerpro round2b de kuyrukta).
+- [x] colors.xml'den brand_paper/brand_on_paper silinmiş (22:52, oturum öncesi);
+      kaynakta referans YOK (yalnız bayat build intermediates) → build'i kırmez,
+      mevcut değişiklik korundu. webp foreground silinmeleri güvenli: adaptive
+      ikon @drawable vektörlerine referans veriyor (mipmap-anydpi/ic_launcher.xml).
+- [x] Bağımsız kod denetimi (10. oturum): Color(0x tema dışı 0; fontSize tema dışı 0;
+      yasaklı copy 0 (tek KDoc yorumu); emoji 0; sabit dp padding 0; Brush/gradyan 0.
+- [x] Sürüm uyumu: AGP 9.5.1 / Kotlin 2.4.21 / Gradle 9.9.1 / KSP 2.3.12 / Hilt 2.60.1;
+      CI JDK 17 + platforms;android-37.0 + build-tools;36.0.0 (API 37 kapıları sağlanır).
+      gh auth: ahmetemrew ✓.
+- [x] verify10 sonucu: clean assembleDebug testDebugUnitTest lintDebug assembleRelease
+      BUILD SUCCESSFUL 1m42s GRADLE_RC=0; 76 test 0 fail; 22 ana görüntü + splash
+      TAP_MISS_COUNT=0 CRASH_NONE VERIFY_ALL_RC=0 (log .qwen/tmp/design-verify10.log).
+      Dolu oturum: Shizuku SERVER UP, 21/22/23/24/24b/25 geçerli; **26 WAIT MISS
+      'omnigfx'** → FILLED_SESSION_RC=1. Emülatörler kapatıldı, CRASH_NONE.
+- [x] **26 kök nedeni (kod kanıtı):** betik FPSLimit'i DEĞERİNİ DEĞİŞTİRMEDEN
+      pinliyordu → serialized == original → PmpPipeline NoChange yolundan döner
+      (PmpPipeline.kt ~L97, yedek oluşturmadan ÖNCE) → dosya yazılmaz, .bak
+      oluşmaz, başarı ekranı yine de "Dosya uygulandı" gösterir. 23 dump'ında
+      FPSLimit=60 (değişmemiş) kanıt. Çözüm: betik editörde Brightness 80→75
+      yapıyor (tap_scroll "80" + MOVE_END + 2×DEL + "75"); updateNodeValue
+      rawLine'ı değiştirmediği için profil "Dinamik" kalır, gerçek yazma + yedek
+      oluşur. tools/design_shots_filled.sh güncellendi.
+- [x] **Copy kalıntıları bulundu ve düzeltildi (25 mesaj, 7 dosya):** önceki copy
+      geçişi strings.xml + ekranları kapsamış, ViewModel/engine mesajları atlanmış.
+      "backup/restore/push/path/patch/package name/exception" → Türkçe:
+      ConfigRollbackManager (9), BackupManagerViewModel (5), ProfileEngine (7),
+      ProfileTemplateAnalyzer (6), SetupWizardViewModel (2), PmpVerifier (1),
+      PmpPipeline (1). Test bağımlılığı yok (tarama temiz). İşlevsellik aynı,
+      yalnız metin.
+- [x] verify11: clean build+test+lint+release BUILD SUCCESSFUL 2m51s GRADLE_RC=0
+      (572 görev, copy düzeltmeleri derlendi). AMA dolu oturumda `tap "Shizuku"`
+      Ayarlar'daki bağlantı kartı metnine denk geldi (485,402 — satır değil),
+      izin akışı çalışmadı → 'Bağlantı hazır' MISS → kaskad. Koşu durduruldu
+      (geçersiz 21/22/24 PNG'leri üretildi; sonraki koşu tazeleyecek).
+- [x] Betik sertleştirme: `tap "Shizuku"` → `tap "Dosya erişimi için gerekli"`
+      (OmniListRow alt başlığı, benzersiz needle; iki yerde). SettingsScreen.kt
+      satır yapısından doğrulandı.
+- [x] verify12 YEŞİL: clean assembleDebug testDebugUnitTest lintDebug assembleRelease
+      BUILD SUCCESSFUL GRADLE_RC=0; 76 test 0 fail. Dolu oturum: needle düzeltmesi
+      çalıştı ('Dosya erişimi için gerekli' → satır), 'Bağlantı hazır' OK, değer
+      değişikliği 80→75 OK, gerçek yazma + yedek oluştu → **WAIT OK 'omnigfx',
+      SHOT 26, FILLED_TAP_MISS_COUNT=0, CRASH_NONE, FILLED_SESSION_RC=0**
+      (log .qwen/tmp/design-verify12.log). Emülatör trap ile kapatıldı.
+- [x] 21–26+24b geçerlilik: 7 dump TEMIZ (layout audit), 7 PNG TEMIZ (palet);
+      26 dump'ında gerçek .bak adı + hedef yol + 14.11.2026 23:56 + Geri yükle /
+      Yedeği sil. before/21–26 OCR eşleşmesi teyit. Ana set: 21 dump + 22 PNG TEMIZ
+      (verify10, bu oturumda yeniden denetlendi). Görsel: 13/22/23/25 açıldı
+      (vision bütçesi 5. görüntüde tükendi → 26 sayısal yoldan).
+- [x] REVIEW.md: 7 dolu ekran puanlandı (21: 8.89, 22: 8.67, 23: 9.00, 24: 9.00,
+      24b: 9.00, 25: 8.89, 26: 9.00). 29 ekran, genel ≈8.89, en düşük kriter 8.
+      Eski "Shizuku emülatörde çalışmadı" notu kaldırıldı; kanıt katmanları güncellendi.
+- [ ] commit + push + CI yeşil + QWEN_DESIGN_DONE.md güncelleme.
+
+## Durum: F12 dolu durum görüntüleri — kök neden + betik düzeltmesi (2026-11-14, 9. oturum)
+
+### 9. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose → material-3-expressive).
+- [x] CRITIQUE.md YOK (bağımsız eleştirmen dosyası bulunmuyor).
+- [x] verify9 logdan doğrulandı: VERIFY_ALL_RC=0, TAP_MISS_COUNT=0, CRASH_NONE (22 ana
+      görüntü). APK 21:31 build'i güncel (o tarihten sonra Kotlin değişikliği yok).
+- [x] **after/21–26 GEÇERSİZ bulundu** (8. oturum kısmi koşularından kalma):
+      23 ve 24 birebir aynı PNG (md5 eşit); 23/24/25 dump'ları "Çek ve çözümle"
+      (adım 3) gösteriyor; 26 "Henüz yedek yok" (boş). Yalnız 21/22 geçerli.
+- [x] Kök neden (kod + dump kanıtı): editördeki ilk "Sabitle" eşleşmesi "[Graphics]"
+      bölüm başlığı satırının pini; pin sayfasının "Değişkeni kaydet" düğmesi ekran
+      dışında kalınca dump'a girmiyor → tap_optional bulamıyor → sayfa açık kalıyor →
+      sonraki dokunuşlar boşa → `back` sihirbazı adım 3'e düşürüyor → kaskad MISS.
+- [x] tools/design_shots_filled.sh düzeltildi:
+      • `dismiss_ime()`: BACK yalnız mInputShown=true ise (IME yokken gezinmeyi bozmaz).
+      • Pin editörden değil adım 4'ten: "Değişkenleri ayarla" → profil adı "Dengeli 60 FPS"
+        → "FPSLimit" satırı → sayfa → `tap_scroll "Değişkeni kaydet"` (sayfa içi kaydırma).
+      • Her geçişte wait_for kapısı: "Profil adı", "Değişkeni yapılandır",
+        "Sabitlenen değişkenler", "Dosyayı yaz ve uygula", "Dosya uygulandı", "Settings",
+        "Dengeli 60 FPS", "omnigfx".
+- [x] design_filled_session.sh: kardeş emülatör bekleme 120s → 15 dk (RAM baskısı:
+      kardeş ledmanagerpro emülatörü aktif, 6 GB available + swap yoğun; iki AVD
+      aynı anda LMK riski).
+- [x] **before/24 eşleşme hatası bulundu ve düzeltildi** (OCR kanıtı): before/24
+      "Shizuku hazır · ADB/shell (UID 2000)" bandı + BOŞ liste gösteriyor; before/01
+      "Shizuku izni gerekli" bandı. Slug'daki "hazir" = bağlantı durumu, dolu liste değil.
+      → after/24 sihirbazdan ÖNCE çekiliyor (pm clear + "Bağlantı hazır" wait_for);
+      dolu liste kanıtı **24b-oyunlar-dolu-koyu** (07b gibi before karşılığı olmayan ek
+      durum). SCREENS.md tablosu + audit EXPECTED (24/24b) güncellendi.
+- [x] design_filled_session.sh: `pm clear` (temiz veri) + cleanup EMU_PID guard.
+- [x] Vision bütçesi 4 görüntüde tükendi (before/23, 26, 24, 25) → kalan kanıt OCR
+      (tesseract) + sayısal audit + palet. before/23=başarı, 25=dolu profil, 26=dolu
+      yedek doğrulandı; docs/device-test PNG'leri eski kimlik ama farklı ekranlar.
+- [ ] filled4 koşusu: nohup + flock -o, PID 1679209, log .qwen/tmp/design-filled4.log.
+- [ ] 21–26+24b geçerlilik denetimi (dump başlıkları + audit + palet) + REVIEW.md puanlama.
+- [ ] Kendi doğrulamam: clean assembleDebug testDebugUnitTest lintDebug (+release).
+- [ ] commit + push + CI + QWEN_DESIGN_DONE.md güncelleme.
+
+## Durum: F11 doğrulama + dolu durum Shizuku kök neden düzeltmesi (2026-11-14, 8. oturum)
+
+### 8. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose → material-3-expressive).
+- [x] verify9 ana oturum YEŞİL: clean assembleDebug testDebugUnitTest lintDebug
+      assembleRelease → BUILD SUCCESSFUL, GRADLE_RC=0; 76 test 0 fail; 22 ana görüntü
+      TAP_MISS_COUNT=0, CRASH_NONE (.qwen/tmp/design-verify9.log).
+- [x] Bağımsız kod denetimi: Color(0x yalnız OmniColor.kt; fontSize yalnız
+      OmniTypography.kt; yasaklı copy 0 (tek yorum satırı); emoji 0; sabit dp padding 0.
+- [x] Kontrastlar bağımsız yeniden hesaplandı: 22 çift, tümü eşikleri geçti
+      (14.50, 8.78, 9.36, 8.58, 3.68, 15.32, ... DESIGN.md ile birebir).
+- [x] Sayısal audit: 21 dump TEMIZ (RC=0); palet 22 görüntü TEMIZ.
+- [x] Görsel: 01 (koyu) + 13 (açık) + 18 (büyük font) açılıp incelendi — kimlik,
+      tek CTA, pirinç nav lambası, semantik ikonlar; açık tema birinci sınıf.
+- [x] **Dolu durum Shizuku kök nedeni ÇÖZÜLDÜ** (7. oturumda SHIZUKU SERVER FAIL):
+      1) v13.6'da resmi başlatma yolu native `libshizuku.so`'yu doğrudan çalıştırmak
+         (sürüm notlarındaki komut). Eski app_process+CLASSPATH yolu `librish.so`'yu
+         bulamayıp UnsatisfiedLinkError ile çöküyordu (logcat crash trace ile kanıtlandı).
+         design_filled_session.sh artık official libshizuku.so komutunu üretiyor.
+      2) İzin diyaloğu Shizuku task'inde açılıyor → Allow sonrası start_app ile
+         OmniGFX'e deterministik dönüş; izin bloğu best-effort (wait_quiet, MISS saymaz).
+      3) Uygulama seçicide "Settings" arama olmadan görünmüyor → "Uygulama ara…" +
+         input text "settings" adımı eklendi.
+      4) Pin ikonu AdvancedPinSheet'i açıyor; shot 22 artık sayfadan ÖNCE alınıyor,
+         sonra "Değişkeni kaydet" (etiket node.key ile hazır) pin'i kaydedip kapatıyor.
+- [x] Shizuku servisi emülatörde ADB modunda gerçekten çalışıyor: sihirbaz demo INI'yı
+      çekti ("Dosya çekildi" WAIT OK), düzenleyici açıldı — filled3'te doğrulandı.
+- [ ] filled4: düzeltilmiş betikle 6 dolu durum görüntüsü (21–26) + REVIEW.md puanlama.
+- [ ] commit + push + CI + QWEN_DESIGN_DONE.md.
+
+## Durum: F11 bağımsız yeniden doğrulama + dolu durumlar (2026-11-14, 7. oturum)
+
+### 7. oturum hedefi
+Brief yeniden koştu: önceki iddialara güvenme, kendin doğrula. CRITIQUE.md YOK.
+Eksik tespit: before/ setindeki 6 dolu durumun (eski 10–15) after/ karşılığı yoktu ve
+before/ numaraları after/ slug haritasıyla çelişiyordu (06/07 ters, 10–15 farklı ekran).
+
+### Yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose).
+- [x] before/ yeniden numaralandırıldı (git mv): 06↔07 düzeltildi, 08→rehber-liste,
+      10–15 → 21–26 (after/ slug haritasıyla birebir). İçerik vision ile doğrulandı
+      (06=Shizuku kurulum, 07=Ayarlar, 08=rehber liste; eski kimlik mor/gradyan/şablon).
+- [x] Dolu durumlar için Shizuku ADB modu yolu açıldı: tools/design_shots_filled.sh,
+      tools/design_filled_session.sh, tools/design_verify_full.sh, tools/design_demo_config.ini.
+      Shizuku v13.6.0 APK .qwen/tmp/shizuku.apk (gitignore'lı, commit edilmez).
+      Akış: Shizuku servisi (adb start.sh) → izin → sihirbaz (Settings + demo INI) →
+      çek/düzenle/pin/profil/uygula → oyunlar/profiller/yedekler dolu.
+- [x] Bağımsız kod denetimi: Color(0x yalnız OmniColor.kt (60); fontSize yalnız
+      OmniTypography.kt (17); yasaklı copy 0 (tek yorum satırı); emoji 0.
+- [x] Kontrastlar bağımsız yeniden hesaplandı: 12 çift, tümü eşikleri geçti
+      (DESIGN.md değerleriyle birebir: 14.50, 8.43, 8.78, 9.36, 8.58, 3.68, 15.32, ...).
+- [x] DESIGN.md bayat cümle düzeltildi (app/ui/theme silinmişti, "eşler" yazıyordu).
+- [x] CI workflow doğrulandı: setup-android packages düzeltilmiş (tools yok, android-37.0).
+- [ ] verify9: clean build + test + lint + release + 22 ana görüntü + 6 dolu durum
+      görüntüsü (flock kuyruğunda; kardeş Medium_Phone emülatörü bekleniyor).
+- [ ] REVIEW.md: 6 yeni ekran puanlanacak; before/after eşleşme tablosu güncellenecek.
+- [ ] commit + push + CI + QWEN_DESIGN_DONE.md.
+
 ## Durum: F9 tam doğrulama YEŞİL + F10 teslim (2026-11-14, 6. oturum)
 
 ### 6. oturum bulguları ve yapılanlar

@@ -2,7 +2,8 @@
 
 Kimlik: **Kalibrasyon tezgâhı.** İşlenmiş grafit gövde + pirinç sinyal + petrol "doğrulandı".
 Tek kaynak: `core/core-ui/.../theme/` (`OmniColor.kt`, `OmniTypography.kt`, `OmniShape.kt`,
-`OmniSpacing.kt`, `OmniMotion.kt`). `app/ui/theme/` yalnızca bunları eşler, kendi rengi yok.
+`OmniSpacing.kt`, `OmniMotion.kt`). Eski `app/ui/theme/` paleti kaldırıldı; MainActivity
+doğrudan core-ui temasını (`OmniTheme`) kullanır.
 
 ## 1. Renk
 
