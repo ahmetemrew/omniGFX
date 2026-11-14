@@ -106,7 +106,7 @@ class PmpVerifier @Inject constructor(
         if (remotePath.isBlank()) {
             return@withContext VerifyResult(
                 success = false,
-                message = "Remote path boş.",
+                message = "Uzak yol boş.",
                 hashMatch = null,
                 sizeMatch = null,
                 metadataMatch = null,

@@ -85,7 +85,7 @@ class PmpPipeline @Inject constructor(
             val updatedContent: String = request.replacementContent ?: when (request.patchMode) {
                 PmpPatchMode.CONFIG_PARSER -> {
                     modifyWithParser(request, originalContent, warnings) ?: run {
-                        emit(PmpEvent.Failed("Config parse/modify başarısız."))
+                        emit(PmpEvent.Failed("Config çözümlenemedi veya değiştirilemedi."))
                         return@flow
                     }
                 }

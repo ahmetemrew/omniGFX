@@ -98,7 +98,7 @@ class ProfileEngine @Inject constructor(
 
             if (candidatePaths.isEmpty()) {
                 failure(
-                    message = "Aday path üretilemedi.",
+                    message = "Aday yol üretilemedi.",
                     warnings = warnings
                 )
                 return@flow
@@ -315,7 +315,7 @@ class ProfileEngine @Inject constructor(
 
                         if (profile.options.abortIfBackupFails) {
                             failure(
-                                message = "Remote backup oluşturulamadığı için işlem iptal edildi.",
+                                message = "Uzak yedek oluşturulamadığı için işlem iptal edildi.",
                                 selectedPath = selectedPath,
                                 warnings = warnings
                             )
@@ -327,7 +327,7 @@ class ProfileEngine @Inject constructor(
 
                     if (profile.options.abortIfBackupFails) {
                         failure(
-                            message = "Remote backup desteklenmiyor ve abortIfBackupFails aktif.",
+                            message = "Uzak yedek desteklenmiyor; yedek zorunlu olduğu için işlem iptal edildi.",
                             selectedPath = selectedPath,
                             warnings = warnings
                         )
@@ -481,7 +481,7 @@ class ProfileEngine @Inject constructor(
 
             if (!pushSucceeded) {
                 failure(
-                    message = "Dosya hedef konuma push edilemedi: $selectedPath",
+                    message = "Dosya hedef konuma yazılamadı: $selectedPath",
                     selectedPath = selectedPath,
                     warnings = warnings
                 )
@@ -534,7 +534,7 @@ class ProfileEngine @Inject constructor(
                 if (!verificationResult.success) {
                     if (!profile.options.autoRollbackOnVerificationFailure) {
                         failure(
-                            message = "Push doğrulanamadı.",
+                            message = "Yazma doğrulanamadı.",
                             selectedPath = selectedPath,
                             warnings = warnings,
                             verification = verificationResult,
@@ -590,7 +590,7 @@ class ProfileEngine @Inject constructor(
                     }
 
                     failure(
-                        message = "Push doğrulanamadı ve otomatik rollback tetiklendi.",
+                        message = "Yazma doğrulanamadı ve otomatik geri alma tetiklendi.",
                         selectedPath = selectedPath,
                         warnings = warnings,
                         verification = verificationResult,
@@ -742,7 +742,7 @@ class ProfileEngine @Inject constructor(
             throw e
         } catch (e: Exception) {
             RollbackResult.Failure(
-                message = "Backup cleanup sırasında exception: ${e.message}",
+                message = "Yedek temizliği sırasında hata: ${e.message}",
                 warnings = emptyList(),
                 cause = e
             )

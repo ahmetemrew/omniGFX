@@ -79,7 +79,7 @@ class ProfileTemplateAnalyzer @Inject constructor(
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.HIGH,
-                    message = "Profil unsafe system path'lere izin veriyor."
+                    message = "Profil güvenli olmayan sistem yollarına izin veriyor."
                 )
             )
         }
@@ -88,7 +88,7 @@ class ProfileTemplateAnalyzer @Inject constructor(
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.INFO,
-                    message = "Profilde package name tanımlı değil."
+                    message = "Profilde paket adı tanımlı değil."
                 )
             )
         }
@@ -97,14 +97,14 @@ class ProfileTemplateAnalyzer @Inject constructor(
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.WARNING,
-                    message = "Profil çok fazla patch içeriyor: ${profile.patches.size}"
+                    message = "Profil çok fazla değişiklik içeriyor: ${profile.patches.size}"
                 )
             )
         } else if (profile.patches.size > 30) {
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.INFO,
-                    message = "Profil geniş patch listesi içeriyor: ${profile.patches.size}"
+                    message = "Profil geniş bir değişiklik listesi içeriyor: ${profile.patches.size}"
                 )
             )
         }
@@ -113,7 +113,7 @@ class ProfileTemplateAnalyzer @Inject constructor(
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.CRITICAL,
-                    message = "Target path template /system içeriyor."
+                    message = "Hedef yol şablonu /system içeriyor."
                 )
             )
         }
@@ -122,7 +122,7 @@ class ProfileTemplateAnalyzer @Inject constructor(
             findings.add(
                 ProfileSecurityFinding(
                     severity = FindingSeverity.CRITICAL,
-                    message = "Target path template /data/system içeriyor."
+                    message = "Hedef yol şablonu /data/system içeriyor."
                 )
             )
         }

@@ -128,7 +128,7 @@ class BackupManagerViewModel @Inject constructor(
                         isLoading = false,
                         backups = distinctBackups,
                         message = if (preserveMessage && it.message != null) it.message else if (distinctBackups.isEmpty()) {
-                            "Bu profil için backup bulunamadı."
+                            "Bu profil için yedek bulunamadı."
                         } else {
                             null
                         }
@@ -138,7 +138,7 @@ class BackupManagerViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = e.message ?: "Backup listesi yüklenemedi."
+                        message = e.message ?: "Yedek listesi yüklenemedi."
                     )
                 }
             }
@@ -168,7 +168,7 @@ class BackupManagerViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = e.message ?: "Backup geri yüklenemedi."
+                        message = e.message ?: "Yedek geri yüklenemedi."
                     )
                 }
             }
@@ -195,7 +195,7 @@ class BackupManagerViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = e.message ?: "Backup silinemedi."
+                        message = e.message ?: "Yedek silinemedi."
                     )
                 }
             }
@@ -241,7 +241,7 @@ class BackupManagerViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = e.message ?: "Backup temizliği başarısız oldu."
+                        message = e.message ?: "Yedek temizliği başarısız oldu."
                     )
                 }
             }

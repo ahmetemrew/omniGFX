@@ -114,7 +114,7 @@ class ConfigRollbackManager @Inject constructor(
 
         if (latestBackup == null) {
             return RollbackResult.Failure(
-                message = "Hedef dosya için backup bulunamadı.",
+                message = "Hedef dosya için yedek bulunamadı.",
                 warnings = list.warnings
             )
         }
@@ -133,7 +133,7 @@ class ConfigRollbackManager @Inject constructor(
 
         if (!isLikelyBackupPath(backupPath)) {
             return RollbackResult.Failure(
-                message = "Path backup dosyasına benzemiyor: $backupPath",
+                message = "Bu yol bir yedek dosyasına benzemiyor: $backupPath",
                 warnings = warnings
             )
         }
@@ -208,7 +208,7 @@ class ConfigRollbackManager @Inject constructor(
 
             if (!pulled || !tempFile.exists()) {
                 return RollbackResult.Failure(
-                    message = "Backup cache'e çekilemedi.",
+                    message = "Yedek önbelleğe çekilemedi.",
                     warnings = warnings
                 )
             }
@@ -220,7 +220,7 @@ class ConfigRollbackManager @Inject constructor(
 
             if (!pushed) {
                 return RollbackResult.Failure(
-                    message = "Backup hedefe push edilemedi.",
+                    message = "Yedek hedef dosyaya yazılamadı.",
                     warnings = warnings
                 )
             }
@@ -238,7 +238,7 @@ class ConfigRollbackManager @Inject constructor(
             throw e
         } catch (e: Exception) {
             RollbackResult.Failure(
-                message = "Restore sırasında hata oluştu.",
+                message = "Geri yükleme sırasında hata oluştu.",
                 warnings = warnings,
                 cause = e
             )
@@ -269,7 +269,7 @@ class ConfigRollbackManager @Inject constructor(
     suspend fun deleteBackup(backupPath: String): RollbackResult {
         if (!isLikelyBackupPath(backupPath)) {
             return RollbackResult.Failure(
-                message = "Path backup dosyasına benzemiyor: $backupPath"
+                message = "Bu yol bir yedek dosyasına benzemiyor: $backupPath"
             )
         }
 
@@ -278,11 +278,11 @@ class ConfigRollbackManager @Inject constructor(
 
         return if (result.isSuccess) {
             RollbackResult.Success(
-                message = "Backup silindi: $backupPath"
+                message = "Yedek silindi: $backupPath"
             )
         } else {
             RollbackResult.Failure(
-                message = "Backup silinemedi: $backupPath",
+                message = "Yedek silinemedi: $backupPath",
                 warnings = listOf(result.stderr)
             )
         }
@@ -302,7 +302,7 @@ class ConfigRollbackManager @Inject constructor(
 
         if (list.backups.size <= keep) {
             return RollbackResult.Success(
-                message = "Temizlenecek eski backup yok.",
+                message = "Temizlenecek eski yedek yok.",
                 warnings = list.warnings
             )
         }
@@ -324,7 +324,7 @@ class ConfigRollbackManager @Inject constructor(
         }
 
         return RollbackResult.Success(
-            message = "$deletedCount eski backup silindi.",
+            message = "$deletedCount eski yedek silindi.",
             warnings = warnings
         )
     }

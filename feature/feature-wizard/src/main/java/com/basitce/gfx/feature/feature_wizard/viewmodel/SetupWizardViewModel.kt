@@ -650,7 +650,7 @@ class SetupWizardViewModel @Inject constructor(
         if (_state.value.isPushing) return
         val state = _state.value
         if (!state.canPush) {
-            _state.update { it.copy(error = "Push için dosya ve içerik gerekli.") }
+            _state.update { it.copy(error = "Yazma için dosya ve içerik gerekli.") }
             return
         }
 
@@ -709,7 +709,7 @@ class SetupWizardViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.update { it.copy(isPushing = false, pushSuccess = false, error = "Push hatası: ${e.message}") }
+                _state.update { it.copy(isPushing = false, pushSuccess = false, error = "Yazma hatası: ${e.message}") }
             }
         }
     }
