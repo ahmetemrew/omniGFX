@@ -37,6 +37,13 @@ EXPECTED = {
     "18": ["Oyunlar"],
     "19": ["Ayarlar"],
     "20": ["Rehber"],
+    "21": ["Dosya çekildi", "Dosya bilgisi"],
+    "22": ["biçimi", "Değişkenleri ayarla"],
+    "23": ["Dosya uygulandı", "Uygulama özeti"],
+    "24": ["Oyunlar", "Bağlantı hazır"],
+    "24b": ["Oyunlar", "Settings"],
+    "25": ["Profiller", "Dengeli 60 FPS"],
+    "26": ["Yedekler", "omnigfx"],
 }
 
 
@@ -46,27 +53,38 @@ def audit(path, scale):
     problems = []
     margins = []
     texts = []
+    parsed = []
     for m in re.finditer(r'<node[^>]*>', xml):
         s = m.group(0)
         b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', s)
         if not b:
             continue
         x1, y1, x2, y2 = map(int, b.groups())
-        if x1 < 0 or y1 < 0 or x2 > W or y2 > H:
-            problems.append(f"CLIP [{x1},{y1}][{x2},{y2}]")
         t = re.search(r'text="([^"]*)"', s)
         txt = t.group(1) if t else ""
+        d = re.search(r'content-desc="([^"]*)"', s)
+        desc = d.group(1) if d else ""
+        parsed.append((x1, y1, x2, y2, txt, desc, 'clickable="true"' in s))
+    # Viewport kesiği imzası: satır LazyColumn görünür alanının alt kenarında
+    # kesilince metin glifi de düğümle aynı alt kenarda kesik görünür (<10dp).
+    # Tam boyut kodda heightIn(min=48dp) ile garanti; dilim sahte pozitiftir.
+    cut = [(tx1, tx2, ty2) for tx1, ty1, tx2, ty2, ttxt, _, _ in parsed
+           if ttxt and (ty2 - ty1) < 10 * scale]
+    for x1, y1, x2, y2, txt, desc, clickable in parsed:
+        if x1 < 0 or y1 < 0 or x2 > W or y2 > H:
+            problems.append(f"CLIP [{x1},{y1}][{x2},{y2}]")
         if txt:
             texts.append(txt)
-        if 'clickable="true"' in s:
+        if clickable:
             # Kenarda kesik düğüm: listede kısmen görünen satırın gerçek boyutu
             # değil görünür dilimidir; tam boyut kodda heightIn ile garanti.
             if y2 >= H or y1 <= 0:
                 continue
+            if any(tx1 >= x1 and tx2 <= x2 and ty2 == y2 for tx1, tx2, ty2 in cut):
+                continue
             wdp, hdp = (x2 - x1) / scale, (y2 - y1) / scale
             if wdp < 47.5 or hdp < 47.5:
-                d = re.search(r'content-desc="([^"]*)"', s)
-                problems.append(f"KUCUK_HEDEF {(txt or (d.group(1) if d else '?'))[:24]} {wdp:.0f}x{hdp:.0f}dp")
+                problems.append(f"KUCUK_HEDEF {(txt or desc or '?')[:24]} {wdp:.0f}x{hdp:.0f}dp")
         if len(txt) >= 24 and abs((x1 + x2) / 2 - W / 2) > 40:
             margins.append(x1)
     edge = 20 * scale
