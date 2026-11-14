@@ -3,8 +3,9 @@
 Tur: 2026-11-14 (5. oturumda tamamlandı). Kanıt: `design/before/` (eski kimlik, 14 görüntü)
 ve `design/after/` (yeni kimlik; koyu + açık + font ölçeği 2.0 + splash, 22 görüntü).
 Görüntüler gerçek emülatörde (Medium_Phone, API 37) `tools/design_shots.sh` ile alındı;
-gezinti metin tabanlı (uiautomator), ezber koordinat yok. Son koşu: verify5
-(.qwen/tmp/design-verify5.log), TAP_MISS_COUNT=0, CRASH_NONE.
+gezinti metin tabanlı (uiautomator), ezber koordinat yok. Son koşu: verify8
+(.qwen/tmp/design-verify8.log), TAP_MISS_COUNT=0, CRASH_NONE. Araçlar paylaşılan
+emülatör yarışına karşı sertleştirildi (wm reset, tap retry, deterministik overflow).
 
 Puanlama (tasarim-temel §5): her kriter 1–10. Eşik: ortalama ≥ 8.5 ve hiçbir kriter < 7.
 Kriterler: Kimlik, Hiyerarşi, Ritim, Tipografi, Renk, Durumlar, Dokunma, Slop, Copy.

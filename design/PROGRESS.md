@@ -3,7 +3,34 @@
 Proje: OmniGFX Pro (Shizuku tabanlı oyun config düzenleyici, Kotlin + Compose, 6 modül)
 Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adımda güncellenir.
 
-## Durum: F8 puanlama + F9 tam doğrulama (2026-11-14, 5. oturum)
+## Durum: F9 tam doğrulama YEŞİL + F10 teslim (2026-11-14, 6. oturum)
+
+### 6. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose → material-3-expressive).
+- [x] Bağımsız doğrulama (verify6): flock -o ile clean assembleDebug testDebugUnitTest
+      lintDebug assembleRelease → BUILD SUCCESSFUL, GRADLE_RC=0 (572 görev), testler 0 fail.
+- [x] verify6 emülatör: CRASH_NONE ama TAP_MISS=12 — paylaşılan Medium_Phone AVD'sinde
+      kardeş oturumların bıraktığı ekran/gezinme durumu dump koordinatlarını kaydırmış
+      (Profiller sekmesi 2337'de, dokunuş boşa; shots 02–09 launcher). Tasarım regresyonu DEĞİL.
+- [x] Kök neden + araç sertleştirme (tools/design_shots.sh, design_emulator_session.sh):
+      • wm size/density reset (kardeş override'ını sıfırlar) — alt sekme koordinatlarını düzeltti.
+      • navigation_mode ZORLANMADI (zorlama üst bar overflow dokunuşunu launcher'a kaydırıyordu).
+      • tap() MISS'te bir kez yeniden dener (Compose popup yakalama gecikmesi).
+      • Overflow akışı deterministik: her erişim öncesi start_app + Profiller (kaskad hatası yok).
+      • Emülatör oturumu aktif kardeş emülatörü kapanana dek bekler (offline sayılmaz).
+      • start_app settle 4s→6s (RAM baskısı altında yavaş boot).
+- [x] verify8 (sertleştirilmiş araçlar): TAP_MISS_COUNT=0, SHOTS_RC=0, CRASH_NONE.
+      22 görüntü taze ve geçerli; overflow menüsü (Yedekler/Profil analizi/İçe-dışa aktar) doğru açıldı.
+- [x] Sayısal kanıt (verify8): layout audit 21 dump TEMIZ (RC=0); palet 22 görüntü TEMIZ
+      (koyu #121A1B / açık #F4F7F6, petrol/pirinç/oksit token'ları). Ekran belirteçleri doğru.
+- [x] Görsel: 01 (koyu) + 13 (açık) açılıp incelendi — kalibrasyon tezgâhı kimliği, tek CTA,
+      pirinç nav lambası, semantik ikonlar; açık tema birinci sınıf.
+- [x] Kod denetimi: Color(0x yalnız OmniColor.kt; fontSize yalnız OmniTypography.kt;
+      yasaklı copy 0; emoji 0.
+- [x] F8 REVIEW.md: 22 ekran ort 8.56–9.00, genel ≈8.88, en düşük kriter 8 (hiçbiri <7).
+- [ ] F10: commit (araçlar + taze görüntüler + PROGRESS/REVIEW) + push + CI + QWEN_DESIGN_DONE.md.
+
+## Durum (önceki): F8 puanlama + F9 tam doğrulama (2026-11-14, 5. oturum)
 
 ### 5. oturum bulguları ve yapılanlar
 - [x] Skill'ler okundu (tasarim-temel → tasarim-compose → material-3-expressive).
