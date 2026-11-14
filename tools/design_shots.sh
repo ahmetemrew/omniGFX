@@ -17,6 +17,13 @@ for _ in $(seq 1 90); do
   sleep 2
 done
 
+# Paylaşılan AVD'de kardeş oturumların bırakabileceği ekran override'ını sıfırla.
+# (Gezinme modu zorlanmaz: kalibre görüntüler AVD varsayılanıyla alındı; zorlama
+# üst bar dokunuşlarını kaydırabiliyor.)
+adb shell wm size reset >/dev/null 2>&1
+adb shell wm density reset >/dev/null 2>&1
+sleep 3
+
 adb install -r -g "$APK" || { echo "INSTALL FAIL"; exit 1; }
 adb shell pm clear "$PKG" >/dev/null
 # Deterministik görüntüler + azaltılmış hareket yolunun testi:
@@ -35,9 +42,10 @@ shot() { # $1 = dosya adı (uzantısız); görüntü + sayısal hizalama kanıt�
 }
 
 tap() { # $1 = text/content-desc alt dizesi; en küçük eşleşen düğüme dokunur
+  local xy attempt
+  for attempt in 1 2; do
   adb shell uiautomator dump /sdcard/omni_ui.xml >/dev/null 2>&1
   adb pull /sdcard/omni_ui.xml "$TMP/ui.xml" >/dev/null 2>&1
-  local xy
   xy=$(python3 - "$TMP/ui.xml" "$1" <<'PY'
 import re, sys
 xml = open(sys.argv[1], encoding='utf-8', errors='replace').read()
@@ -63,6 +71,9 @@ if best:
     print(best[1], best[2])
 PY
 )
+    [ -n "$xy" ] && break
+    sleep 1.5
+  done
   if [ -n "$xy" ]; then
     adb shell input tap $xy
     echo "TAP '$1' -> $xy"
@@ -75,7 +86,7 @@ PY
 MISSES=0
 
 back() { adb shell input keyevent KEYCODE_BACK; sleep 1.2; }
-start_app() { adb shell am force-stop "$PKG"; adb shell am start -n "$PKG/.MainActivity" >/dev/null; sleep 4; }
+start_app() { adb shell am force-stop "$PKG"; adb shell am start -n "$PKG/.MainActivity" >/dev/null; sleep 6; }
 
 # ── KOYU TEMA ──
 adb shell cmd uimode night yes
@@ -84,15 +95,15 @@ start_app
 shot 01-oyunlar-bos-koyu
 tap "Profiller"
 shot 02-profiller-bos-koyu
-tap "Diğer işlemler"; tap "Yedekler"
+tap "Diğer işlemler"; sleep 1; tap "Yedekler"
 shot 03-yedekler-bos-koyu
-back
-tap "Diğer işlemler"; tap "Profil analizi"
+start_app; tap "Profiller"
+tap "Diğer işlemler"; sleep 1; tap "Profil analizi"
 shot 04-marketplace-bos-koyu
-back
-tap "Diğer işlemler"; tap "İçe / dışa aktar"
+start_app; tap "Profiller"
+tap "Diğer işlemler"; sleep 1; tap "İçe / dışa aktar"
 shot 05-aktarim-koyu
-back
+start_app
 tap "Ayarlar"
 shot 06-ayarlar-koyu
 tap "Shizuku"

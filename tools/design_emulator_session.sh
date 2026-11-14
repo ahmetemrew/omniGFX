@@ -16,6 +16,12 @@ else
   EMU="$HOME/Android/Sdk/emulator/emulator"
   PORT=5560
   export ANDROID_SERIAL="emulator-$PORT"
+  # Kardeş oturumların emülatörü kapanana dek bekle (aynı AVD çakışmasını önler).
+  # Yalnızca aktif ("device") emülatörler sayılır; offline/zombie beklemeyi uzatmaz.
+  for _ in $(seq 1 60); do
+    [ -z "$(adb devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2=="device" {print $1}')" ] && break
+    sleep 2
+  done
   "$EMU" -avd Medium_Phone -port "$PORT" -no-window -no-audio -no-boot-anim \
     -gpu swiftshader_indirect -no-snapshot >.qwen/tmp/emulator.log 2>&1 &
   EMU_PID=$!
