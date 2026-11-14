@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Açılış ekranı zemini: grafit gövde (koyu tema). -->
+    <color name="splash_background">#121A1B</color>
+</resources>

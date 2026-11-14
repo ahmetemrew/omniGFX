@@ -5,6 +5,10 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -70,7 +74,7 @@ class ProfileTransferViewModel @Inject constructor(
             profile.copy(id = UUID.randomUUID().toString())
         }
         profiles.forEach { repository.saveProfile(it) }
-        "${profiles.size} profil içe aktarıldı. Profiller sekmesinden uygulayabilirsiniz."
+        "${profiles.size} profil içe aktarıldı. Profiller sekmesinden uygulayabilirsin."
     }
 
     private fun runOperation(block: suspend () -> String) {
@@ -86,27 +90,73 @@ class ProfileTransferViewModel @Inject constructor(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSyncScreen(onBack: () -> Unit, viewModel: ProfileTransferViewModel = hiltViewModel()) {
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val spacing = com.basitce.gfx.core.core_ui.theme.OmniTheme.spacing
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) {
         it?.let(viewModel::exportTo)
     }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
         it?.let(viewModel::importFrom)
     }
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("Profil Aktarımı") }, navigationIcon = { TextButton(onClick = onBack) { Text("Geri") } })
-    }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Profillerini JSON dosyası olarak yedekle veya başka bir cihaza taşı.", style = MaterialTheme.typography.titleMedium)
-            Text("Aktarım cihazın dosya seçicisiyle yapılır. Bulut hesabı gerekmez. İçe aktarılan profiller yeni kopyalar olarak kaydedilir; oyun dosyalarına otomatik yazılmaz.")
-            Button(onClick = { exporter.launch("OmniGFX-profiller.json") }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Profilleri Dışa Aktar") }
-            OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("JSON Dosyasından İçe Aktar") }
-            if (busy) CircularProgressIndicator()
-            message?.let { Text(it) }
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            com.basitce.gfx.core.core_ui.components.OmniTopBar(
+                title = "Profil aktarımı",
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Geri"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = spacing.screen),
+            verticalArrangement = Arrangement.spacedBy(spacing.lg)
+        ) {
+            Text(
+                text = "Profillerini JSON dosyası olarak yedekle veya başka bir cihaza taşı.",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "Aktarım cihazın dosya seçicisiyle yapılır. Bulut hesabı gerekmez. " +
+                    "İçe aktarılan profiller yeni kopyalar olarak kaydedilir; oyun dosyalarına otomatik yazılmaz.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            com.basitce.gfx.core.core_ui.components.OmniPrimaryButton(
+                text = "Profilleri dışa aktar",
+                onClick = { exporter.launch("OmniGFX-profiller.json") },
+                enabled = !busy,
+                icon = Icons.Outlined.FileUpload
+            )
+            com.basitce.gfx.core.core_ui.components.OmniSecondaryButton(
+                text = "JSON dosyasından içe aktar",
+                onClick = { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+                enabled = !busy,
+                icon = Icons.Outlined.FileDownload
+            )
+            if (busy) {
+                com.basitce.gfx.core.core_ui.components.OmniLoading(label = "Aktarım sürüyor")
+            }
+            message?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

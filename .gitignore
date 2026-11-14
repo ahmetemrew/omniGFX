@@ -27,3 +27,6 @@ captures/
 
 # Agent scratch reports
 QWEN_*
+
+# Python bytecode
+__pycache__/

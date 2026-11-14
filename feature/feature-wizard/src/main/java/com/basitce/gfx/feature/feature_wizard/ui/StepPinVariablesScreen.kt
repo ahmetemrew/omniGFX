@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,15 +21,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,22 +43,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.basitce.gfx.core.core_ui.theme.OmniBackground
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniOnPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSuccess
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
-import com.basitce.gfx.core.core_ui.theme.OmniWarning
+import com.basitce.gfx.core.core_ui.components.OmniCard
+import com.basitce.gfx.core.core_ui.components.OmniErrorCard
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTone
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ConfigNode
 import com.basitce.gfx.feature.feature_wizard.viewmodel.NodeType
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ProfileType
@@ -73,6 +66,7 @@ fun StepPinVariables(
     viewModel: SetupWizardViewModel
 ) {
     var showPinSheetFor by remember { mutableStateOf<ConfigNode?>(null) }
+    val spacing = OmniTheme.spacing
 
     val pinnableNodes = remember(state.configNodes) {
         state.configNodes.filter { it.type == NodeType.KEY_VALUE }
@@ -81,78 +75,71 @@ fun StepPinVariables(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(OmniBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(horizontal = spacing.screen, vertical = spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.lg)
         ) {
             item {
                 Text(
-                    text = "📌 Değişkenler & Profil",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = OmniOnSurface
-                )
-                Text(
-                    text = "Düzenlediğin değişkenleri slider/dropdown olarak pinle ve profil olarak kaydet.",
+                    text = "Düzenlediğin değerleri kaydırıcı veya liste olarak sabitle, profil olarak kaydet.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = OmniOnSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             if (state.requiresRawProfile) item {
-                Text("Bu INI dosyasında aynı bölümde tekrarlanan anahtarlar var. Satırların korunması için profil ham dosya olarak kaydedilir.", color = OmniOnSurfaceVariant)
-            }
-            item {
-                OutlinedTextField(
-                    value = state.profileName,
-                    onValueChange = { viewModel.updateProfileName(it) },
-                    label = { Text("Profil Adı") },
-                    placeholder = { Text("örn: Rekabet Modu, 60 FPS, Düşük Grafik") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = OmniSurface,
-                        unfocusedContainerColor = OmniSurface,
-                        focusedBorderColor = OmniPrimary,
-                        unfocusedBorderColor = OmniOutline,
-                        focusedTextColor = OmniOnSurface,
-                        unfocusedTextColor = OmniOnSurface
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                Text(
+                    text = "Bu INI dosyasında aynı bölümde tekrarlanan anahtarlar var. " +
+                        "Satırların korunması için profil ham dosya olarak kaydedilir.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             item {
-                Text(
-                    text = "Profil Tipi",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
+                OutlinedTextField(
+                    value = state.profileName,
+                    onValueChange = { viewModel.updateProfileName(it) },
+                    label = { Text("Profil adı") },
+                    placeholder = { Text("örn: Rekabet modu, 60 FPS, Düşük grafik") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    color = OmniOnSurface
+                    shape = RoundedCornerShape(OmniRadius.sm)
                 )
+            }
+
+            item {
+                OmniSectionHeader(title = "Profil tipi")
             }
 
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.listItem)
                 ) {
                     ProfileTypeCard(
-                        title = "Dinamik Profil",
-                        description = "Slider ve menülerle kolayca değiştirilebilir.",
-                        icon = Icons.Default.Tune,
+                        title = "Dinamik profil",
+                        description = "Kaydırıcı ve menülerle kolayca değiştirilir.",
+                        icon = Icons.Outlined.Tune,
                         isSelected = state.profileType == ProfileType.DYNAMIC,
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.setProfileType(ProfileType.DYNAMIC) }
                     )
                     ProfileTypeCard(
-                        title = "Ham Dosya",
-                        description = "Tam yedek. Tek tıkla olduğu gibi geri yazar.",
-                        icon = Icons.Default.Code,
+                        title = "Ham dosya",
+                        description = "Tam yedek. Tek dokunuşla olduğu gibi geri yazar.",
+                        icon = Icons.Outlined.Code,
                         isSelected = state.profileType == ProfileType.MANUAL,
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.setProfileType(ProfileType.MANUAL) }
@@ -164,12 +151,9 @@ fun StepPinVariables(
                 state.profileType == ProfileType.DYNAMIC
             ) {
                 item {
-                    Text(
-                        text = "Pinlenmiş Değişkenler (${state.pinnedVariables.size})",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
+                    OmniSectionHeader(
+                        title = "Sabitlenen değişkenler",
+                        count = state.pinnedVariables.size
                     )
                 }
 
@@ -177,26 +161,23 @@ fun StepPinVariables(
                     PinnedVariableCard(
                         label = variable.label,
                         path = variable.path,
-                        typeLabel = variable.uiComponentType.name,
-                        onRemove = { viewModel.removePin(variable.path) }
+                        typeLabel = variable.uiComponentType.label,
+                        onRemove = { viewModel.removePin(variable.path) },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
 
             if (state.profileType == ProfileType.DYNAMIC) {
                 item {
-                    Text(
-                        text = "Pinlenebilir Değişkenler",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
-                    )
-                    Text(
-                        text = "Bir değişkene basarak slider, dropdown veya toggle olarak pinle.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OmniOnSurfaceVariant
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
+                        OmniSectionHeader(title = "Sabitlenebilir değişkenler")
+                        Text(
+                            text = "Bir değişkene dokunarak kaydırıcı, liste veya anahtar olarak sabitle.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 items(pinnableNodes, key = { it.id }) { node ->
@@ -204,107 +185,64 @@ fun StepPinVariables(
                     PinnableNodeRow(
                         node = node,
                         isPinned = isPinned,
-                        onClick = { showPinSheetFor = node }
+                        onClick = { showPinSheetFor = node },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
 
             item {
-                Surface(
-                    color = OmniSurface,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                OmniCard {
+                    Text(
+                        text = "Kayıt özeti",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(spacing.md))
+                    SummaryRow("Oyun", state.gameName)
+                    SummaryRow("Hedef dosya", state.targetFilePath.substringAfterLast('/'))
+                    SummaryRow("Biçim", state.detectedFormat.label)
+                    if (state.profileType == ProfileType.DYNAMIC) {
+                        SummaryRow("Dinamik değişken", "${state.pinnedVariables.size} adet")
+                    } else {
+                        SummaryRow("İçerik", "${state.fileContent.length} karakter")
+                        Spacer(modifier = Modifier.height(spacing.sm))
                         Text(
-                            text = "Kayıt Özeti",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = OmniOnSurfaceVariant
+                            text = "Bu profil dosyanın tamamını saklar. " +
+                                "Uygulandığında dosyanın tümü değişir.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OmniTheme.semantic.onWarningContainer
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        SummaryRow("Oyun", state.gameName)
-                        SummaryRow("Hedef Dosya", state.targetFilePath.substringAfterLast('/'))
-                        SummaryRow("Format", state.detectedFormat.label)
-                        if (state.profileType == ProfileType.DYNAMIC) {
-                            SummaryRow("Dinamik Değişken", "${state.pinnedVariables.size} adet")
-                        } else {
-                            SummaryRow("İçerik", "${state.fileContent.length} karakter")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "⚠️ Bu profil dosyanın ham halini saklar. " +
-                                    "Uygulandığında dosya tamamen değiştirilir.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OmniWarning
-                            )
-                        }
                     }
                 }
             }
 
             state.error?.let { error ->
                 item {
-                    Surface(
-                        color = OmniError.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = error,
-                            color = OmniError,
-                            modifier = Modifier.padding(12.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    OmniErrorCard(
+                        title = "Profil kaydedilemedi",
+                        message = error
+                    )
                 }
             }
         }
 
         Surface(
-            color = OmniSurface,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box(
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(horizontal = spacing.screen, vertical = spacing.md)
                     .navigationBarsPadding()
             ) {
-                Button(
+                OmniPrimaryButton(
+                    text = "Kaydet ve cihaza yaz",
                     onClick = { viewModel.saveProfileAndProceed() },
-                    enabled = state.profileName.isNotBlank() && !state.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = OmniPrimary,
-                        disabledContainerColor = OmniSurfaceElevated
-                    )
-                ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = OmniOnPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Kaydet ve Cihaza Yaz →",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = if (state.profileName.isNotBlank()) OmniOnPrimary
-                                else OmniOnSurface.copy(alpha = 0.38f)
-                        )
-                    }
-                }
+                    enabled = state.profileName.isNotBlank(),
+                    loading = state.isLoading,
+                    icon = Icons.Outlined.Save
+                )
             }
         }
     }
@@ -336,50 +274,54 @@ private fun ProfileTypeCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) OmniPrimary.copy(alpha = 0.1f) else OmniSurface
-    val borderColor = if (isSelected) OmniPrimary else OmniOutline
+    val spacing = OmniTheme.spacing
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary
+        else MaterialTheme.colorScheme.outlineVariant
 
     Surface(
-        color = bgColor,
-        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(OmniRadius.md),
         modifier = modifier
-            .border(1.5.dp, borderColor, RoundedCornerShape(16.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(OmniRadius.md))
             .clickable(onClick = onClick)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(spacing.panel)
+                .heightIn(min = spacing.touchTarget),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(OmniRadius.sm))
                     .background(
-                        if (isSelected) OmniPrimary else OmniSurfaceElevated
+                        if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = if (isSelected) OmniOnPrimary else OmniOnSurfaceVariant,
+                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = if (isSelected) OmniPrimary else OmniOnSurface,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (isSelected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.xxs))
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = OmniOnSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -391,66 +333,55 @@ private fun PinnedVariableCard(
     label: String,
     path: String,
     typeLabel: String,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val spacing = OmniTheme.spacing
+
     Surface(
-        color = OmniPrimary.copy(alpha = 0.08f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(OmniRadius.sm),
+        modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, OmniPrimary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(OmniRadius.sm))
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .padding(horizontal = spacing.md, vertical = spacing.sm)
+                .heightIn(min = spacing.touchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                Icons.Default.CheckCircle,
+                Icons.Outlined.CheckCircle,
                 contentDescription = null,
-                tint = OmniSuccess,
+                tint = OmniTheme.semantic.success,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = OmniOnSurface,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = path,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily.Monospace
-                    ),
-                    color = OmniOnSurfaceVariant,
+                    style = OmniTheme.mono.micro,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = OmniPrimary.copy(alpha = 0.15f)
-            ) {
-                Text(
-                    text = typeLabel,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = OmniPrimary,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
+            Spacer(modifier = Modifier.width(spacing.sm))
+            OmniStatusChip(text = typeLabel, tone = OmniTone.Success)
             IconButton(onClick = onRemove) {
                 Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Kaldır",
-                    tint = OmniError,
-                    modifier = Modifier.size(16.dp)
+                    Icons.Outlined.Delete,
+                    contentDescription = "Sabiti kaldır",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -461,54 +392,60 @@ private fun PinnedVariableCard(
 private fun PinnableNodeRow(
     node: ConfigNode,
     isPinned: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val bgColor = if (isPinned) OmniPrimary.copy(alpha = 0.08f) else OmniSurface
-    val borderColor = if (isPinned) OmniPrimary else OmniOutline
+    val spacing = OmniTheme.spacing
 
     Surface(
-        color = bgColor,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(OmniRadius.sm),
+        modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(
+                if (isPinned) Modifier.border(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary,
+                    RoundedCornerShape(OmniRadius.sm)
+                ) else Modifier
+            )
             .clickable(onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .padding(horizontal = spacing.md, vertical = spacing.sm)
+                .heightIn(min = spacing.touchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                Icons.Default.PushPin,
+                Icons.Outlined.PushPin,
                 contentDescription = null,
-                tint = if (isPinned) OmniPrimary else OmniOnSurfaceVariant.copy(alpha = 0.4f),
-                modifier = Modifier.size(18.dp)
+                tint = if (isPinned) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = node.key,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace
-                    ),
-                    color = OmniOnSurface,
+                    style = OmniTheme.mono.key,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "Mevcut: ${node.value}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = OmniOnSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
             if (isPinned) {
                 Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = "Pinlendi",
-                    tint = OmniSuccess,
+                    Icons.Outlined.CheckCircle,
+                    contentDescription = "Sabitlendi",
+                    tint = OmniTheme.semantic.success,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -518,26 +455,28 @@ private fun PinnableNodeRow(
 
 @Composable
 private fun SummaryRow(label: String, value: String) {
+    val spacing = OmniTheme.spacing
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = spacing.xs),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = OmniOnSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.width(spacing.md))
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = FontFamily.Monospace
-            ),
-            color = OmniOnSurface,
+            style = OmniTheme.mono.key,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f, fill = false)
         )
     }
 }

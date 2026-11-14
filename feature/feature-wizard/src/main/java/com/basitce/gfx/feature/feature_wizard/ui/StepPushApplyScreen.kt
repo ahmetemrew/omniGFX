@@ -1,10 +1,5 @@
 package com.basitce.gfx.feature.feature_wizard.ui
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,47 +17,39 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.basitce.gfx.core.core_ui.theme.OmniBackground
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniOnPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSuccess
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniWarning
+import com.basitce.gfx.core.core_ui.components.OmniCard
+import com.basitce.gfx.core.core_ui.components.OmniErrorCard
+import com.basitce.gfx.core.core_ui.components.OmniLoading
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTextButton
+import com.basitce.gfx.core.core_ui.components.OmniTone
+import com.basitce.gfx.core.core_ui.components.OmniValueReadout
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ProfileType
-import com.basitce.gfx.feature.feature_wizard.viewmodel.PushProgressStep
 import com.basitce.gfx.feature.feature_wizard.viewmodel.PushStepStatus
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardState
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardViewModel
+import com.basitce.gfx.feature.feature_wizard.viewmodel.UiComponentType
 
 @Composable
 fun StepPushApply(
@@ -70,42 +57,39 @@ fun StepPushApply(
     viewModel: SetupWizardViewModel,
     onFinish: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+
     if (state.showGameRunningWarning) {
         AlertDialog(
             onDismissRequest = { viewModel.confirmGameRunningAndPush() },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = OmniWarning
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Oyun Şu An Çalışıyor", color = OmniOnSurface)
-                }
+            icon = {
+                Icon(
+                    Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = OmniTheme.semantic.warning
+                )
             },
+            title = { Text("Oyun şu an çalışıyor") },
             text = {
                 Text(
-                    "Değişikliklerin uygulanması için oyunun kapalı olması önerilir. Oyunu kapatıp yazmak ister misiniz?",
-                    color = OmniOnSurfaceVariant
+                    "Değişikliklerin uygulanması için oyunun kapalı olması önerilir. " +
+                        "Oyunu kapatıp yazmak ister misin?"
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = { viewModel.forceStopGameAndPush() },
-                    colors = ButtonDefaults.buttonColors(containerColor = OmniPrimary)
-                ) {
-                    Text("Oyunu Kapat ve Yaz", color = OmniOnPrimary)
-                }
+                OmniTextButton(
+                    text = "Oyunu kapat ve yaz",
+                    onClick = { viewModel.forceStopGameAndPush() }
+                )
             },
             dismissButton = {
-                Row {
-                    TextButton(onClick = { viewModel.confirmGameRunningAndPush() }) {
-                        Text("Yine de Yaz", color = OmniWarning)
-                    }
-                }
+                OmniTextButton(
+                    text = "Yine de yaz",
+                    onClick = { viewModel.confirmGameRunningAndPush() }
+                )
             },
-            containerColor = OmniSurface
+            shape = RoundedCornerShape(OmniRadius.lg),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
         return
     }
@@ -113,84 +97,46 @@ fun StepPushApply(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(OmniBackground)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = spacing.screen),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
         when {
-            state.isPushing -> {
-                PushingContent(state = state)
-            }
-            state.pushSuccess == true -> {
-                SuccessContent(state = state, onFinish = onFinish)
-            }
-            state.pushSuccess == false || state.error != null -> {
+            state.isPushing -> PushingContent(state = state)
+            state.pushSuccess == true -> SuccessContent(state = state, onFinish = onFinish)
+            state.pushSuccess == false || state.error != null ->
                 ErrorContent(state = state, viewModel = viewModel, onFinish = onFinish)
-            }
-            else -> {
-                IdleContent(state = state, viewModel = viewModel)
-            }
+            else -> IdleContent(state = state, viewModel = viewModel)
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
         Spacer(modifier = Modifier.navigationBarsPadding())
     }
 }
 
 @Composable
 private fun PushingContent(state: SetupWizardState) {
-    val infiniteTransition = rememberInfiniteTransition(label = "push_spin")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "push_rotation"
-    )
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier.size(120.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Sync,
-                contentDescription = null,
-                tint = OmniPrimary.copy(alpha = 0.3f),
-                modifier = Modifier
-                    .size(100.dp)
-                    .rotate(rotation)
-            )
-            Icon(
-                Icons.Default.Code,
-                contentDescription = null,
-                tint = OmniPrimary,
-                modifier = Modifier.size(48.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Text(
-            text = "Dosya Uygulanıyor",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = OmniOnSurface
+            text = "Dosya uygulanıyor",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        OmniLoading(label = "Güvenli yazma sürüyor. Bu işlem birkaç saniye sürebilir.")
 
-        state.pushProgressSteps.forEachIndexed { index, step ->
-            ProgressStepRow(
-                label = step.label,
-                status = step.status,
-                isCurrent = index == state.currentPushStep &&
-                    step.status == PushStepStatus.RUNNING
-            )
+        OmniCard {
+            state.pushProgressSteps.forEachIndexed { index, step ->
+                ProgressStepRow(
+                    label = step.label,
+                    status = step.status,
+                    isCurrent = index == state.currentPushStep &&
+                        step.status == PushStepStatus.RUNNING
+                )
+            }
         }
     }
 }
@@ -201,67 +147,58 @@ private fun ProgressStepRow(
     status: PushStepStatus,
     isCurrent: Boolean
 ) {
+    val spacing = OmniTheme.spacing
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
         when (status) {
-            PushStepStatus.COMPLETED -> {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = OmniSuccess,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            PushStepStatus.RUNNING -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
-                    color = OmniPrimary
-                )
-            }
-            PushStepStatus.FAILED -> {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = null,
-                    tint = OmniError,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            PushStepStatus.SKIPPED -> {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = null,
-                    tint = OmniOnSurfaceVariant.copy(alpha = 0.3f),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            PushStepStatus.PENDING -> {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(OmniOnSurfaceVariant.copy(alpha = 0.3f))
-                )
-            }
+            PushStepStatus.COMPLETED -> Icon(
+                Icons.Outlined.CheckCircle,
+                contentDescription = null,
+                tint = OmniTheme.semantic.success,
+                modifier = Modifier.size(20.dp)
+            )
+            PushStepStatus.RUNNING -> CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            PushStepStatus.FAILED -> Icon(
+                Icons.Outlined.Close,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(20.dp)
+            )
+            PushStepStatus.SKIPPED -> Icon(
+                Icons.Outlined.Close,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.size(20.dp)
+            )
+            PushStepStatus.PENDING -> Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(OmniRadius.xs))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+            )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(spacing.md))
 
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
-            ),
+            style = if (isCurrent) MaterialTheme.typography.titleSmall
+            else MaterialTheme.typography.bodyMedium,
             color = when (status) {
-                PushStepStatus.COMPLETED -> OmniSuccess
-                PushStepStatus.RUNNING -> OmniOnSurface
-                PushStepStatus.FAILED -> OmniError
-                PushStepStatus.SKIPPED -> OmniOnSurfaceVariant.copy(alpha = 0.4f)
-                PushStepStatus.PENDING -> OmniOnSurfaceVariant.copy(alpha = 0.6f)
+                PushStepStatus.COMPLETED -> OmniTheme.semantic.success
+                PushStepStatus.RUNNING -> MaterialTheme.colorScheme.onSurface
+                PushStepStatus.FAILED -> MaterialTheme.colorScheme.error
+                PushStepStatus.SKIPPED -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                PushStepStatus.PENDING -> MaterialTheme.colorScheme.onSurfaceVariant
             }
         )
     }
@@ -272,86 +209,74 @@ private fun SuccessContent(
     state: SetupWizardState,
     onFinish: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(OmniSuccess.copy(alpha = 0.1f)),
+                .size(96.dp)
+                .clip(RoundedCornerShape(OmniRadius.xl))
+                .background(OmniTheme.semantic.successContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.CheckCircle,
+                Icons.Outlined.CheckCircle,
                 contentDescription = null,
-                tint = OmniSuccess,
-                modifier = Modifier.size(64.dp)
+                tint = OmniTheme.semantic.onSuccessContainer,
+                modifier = Modifier.size(48.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
         Text(
-            text = "İşlem Başarılı!",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = OmniSuccess
+            text = "Dosya uygulandı",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.sm))
 
-        Surface(
-            color = OmniSurface,
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Uygulama Özeti",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = OmniOnSurface
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SummaryRow("Oyun", state.gameName)
-                SummaryRow("Dosya", state.targetFilePath.substringAfterLast('/'))
-                SummaryRow("Format", state.detectedFormat.label)
-                SummaryRow(
-                    "Profil",
-                    if (state.profileType == ProfileType.DYNAMIC)
-                        "Dinamik (${state.pinnedVariables.size} değişken)"
-                    else "Ham Dosya"
-                )
-                if (state.verificationPassed == true) {
-                    SummaryRow("Doğrulama", "✅ Hash eşleşti", isHighlighted = true)
-                }
-                SummaryRow(
-                    "Anti-Cheat Koruması",
-                    "Metadata Geri Yüklendi",
-                    isHighlighted = true
-                )
-            }
-        }
+        Text(
+            text = state.pushMessage?.takeIf { it.isNotBlank() }
+                ?: "Değişiklikler cihaza yazıldı.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
-        Button(
-            onClick = onFinish,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = OmniPrimary)
-        ) {
-            Icon(
-                Icons.Default.Home,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+        OmniCard(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Ana Ekrana Dön",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = OmniOnPrimary
+                text = "Uygulama özeti",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(spacing.md))
+            SummaryRow("Oyun", state.gameName)
+            SummaryRow("Dosya", state.targetFilePath.substringAfterLast('/'))
+            SummaryRow("Biçim", state.detectedFormat.label)
+            SummaryRow(
+                "Profil",
+                if (state.profileType == ProfileType.DYNAMIC)
+                    "Dinamik (${state.pinnedVariables.size} değişken)"
+                else "Ham dosya"
+            )
+            if (state.verificationPassed == true) {
+                SummaryRow("Doğrulama", "İçerik eşleşti", isHighlighted = true)
+            }
+            SummaryRow("Dosya kimliği", "İzinler ve sahiplik korundu", isHighlighted = true)
         }
+
+        VariableReadouts(state = state)
+
+        Spacer(modifier = Modifier.height(spacing.xxxl))
+
+        OmniPrimaryButton(
+            text = "Ana ekrana dön",
+            onClick = onFinish,
+            icon = Icons.Outlined.Home
+        )
     }
 }
 
@@ -361,101 +286,60 @@ private fun ErrorContent(
     viewModel: SetupWizardViewModel,
     onFinish: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(OmniError.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Error,
-                contentDescription = null,
-                tint = OmniError,
-                modifier = Modifier.size(64.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Text(
-            text = "İşlem Başarısız",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = OmniError
+            text = "Dosya yazılamadı",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(spacing.lg))
 
-        state.error?.let { error ->
-            Surface(
-                color = OmniSurface,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
+        OmniErrorCard(
+            title = "Yazma başarısız",
+            message = state.error ?: "Beklenmeyen bir sorun oluştu. Tekrar deneyebilirsin.",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        state.rollbackInfo?.let { info ->
+            Spacer(modifier = Modifier.height(spacing.md))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(OmniRadius.md))
+                    .background(OmniTheme.semantic.warningContainer)
+                    .padding(spacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
             ) {
+                Icon(
+                    Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = OmniTheme.semantic.onWarningContainer,
+                    modifier = Modifier.size(20.dp)
+                )
                 Text(
-                    text = error,
-                    color = OmniOnSurface,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = info,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OmniTheme.semantic.onWarningContainer,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        state.rollbackInfo?.let { info ->
-            Spacer(modifier = Modifier.height(12.dp))
-            Surface(
-                color = OmniWarning.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = OmniWarning,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = info,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OmniWarning,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(spacing.xxxl))
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedButton(
-                onClick = onFinish,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("İptal", color = OmniOnSurface)
-            }
-            Button(
-                onClick = { viewModel.pushAndApply() },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OmniError)
-            ) {
-                Text("Tekrar Dene", color = Color.White)
-            }
-        }
+        OmniPrimaryButton(
+            text = "Tekrar dene",
+            onClick = { viewModel.pushAndApply() }
+        )
+        Spacer(modifier = Modifier.height(spacing.md))
+        OmniSecondaryButton(
+            text = "Vazgeç",
+            onClick = onFinish
+        )
     }
 }
 
@@ -464,70 +348,88 @@ private fun IdleContent(
     state: SetupWizardState,
     viewModel: SetupWizardViewModel
 ) {
+    val spacing = OmniTheme.spacing
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(OmniSurface),
+                .size(96.dp)
+                .clip(RoundedCornerShape(OmniRadius.xl))
+                .background(MaterialTheme.colorScheme.surfaceContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.Code,
+                Icons.Outlined.Code,
                 contentDescription = null,
-                tint = OmniPrimary,
-                modifier = Modifier.size(60.dp)
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
         Text(
-            text = "Dosyayı Cihaza Yaz",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = OmniOnSurface
+            text = "Dosyayı cihaza yaz",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(spacing.sm))
 
         Text(
-            text = "Düzenlenen config dosyası Shizuku üzerinden\n" +
-                "hedefe güvenli şekilde yazılacak.\n" +
-                "Metadata (UID/GID/SELinux) korunacak.",
+            text = "Düzenlenen config dosyası hedefe güvenle yazılacak. " +
+                "Önce yedek alınır, yazma sonrası içerik doğrulanır; " +
+                "sorun olursa eski dosya otomatik geri gelir.",
             style = MaterialTheme.typography.bodyMedium,
-            color = OmniOnSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
-        Surface(
-            color = OmniSurface,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SummaryRow("Hedef", state.targetFilePath)
-                SummaryRow("Format", state.detectedFormat.label)
-                SummaryRow("Boyut", "${state.fileContent.length} karakter")
-            }
+        OmniCard(modifier = Modifier.fillMaxWidth()) {
+            SummaryRow("Hedef", state.targetFilePath)
+            SummaryRow("Biçim", state.detectedFormat.label)
+            SummaryRow("Boyut", "${state.fileContent.length} karakter")
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        VariableReadouts(state = state)
 
-        Button(
-            onClick = { viewModel.pushAndApply() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = OmniPrimary)
-        ) {
-            Text(
-                text = "Dosyayı Yaz ve Uygula",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = OmniOnPrimary
-            )
-        }
+        Spacer(modifier = Modifier.height(spacing.xxxl))
+
+        OmniPrimaryButton(
+            text = "Dosyayı yaz ve uygula",
+            onClick = { viewModel.pushAndApply() }
+        )
+    }
+}
+
+/**
+ * İMZA ANI 1 — uygulama özetinde değer okumaları: her sabitlenmiş değişken
+ * eski → yeni olarak tik raylı okuma penceresinde gösterilir.
+ */
+@Composable
+private fun VariableReadouts(state: SetupWizardState) {
+    val spacing = OmniTheme.spacing
+
+    if (state.profileType != ProfileType.DYNAMIC || state.pinnedVariables.isEmpty()) return
+
+    Spacer(modifier = Modifier.height(spacing.xxl))
+    OmniSectionHeader(title = "Değer okumaları")
+    Spacer(modifier = Modifier.height(spacing.sm))
+    state.pinnedVariables.values.forEach { variable ->
+        val current = state.configNodes.firstOrNull { it.path == variable.path }?.value
+            ?: variable.defaultValue.orEmpty()
+        val fraction = if (variable.uiComponentType == UiComponentType.SLIDER && variable.max > variable.min) {
+            ((current.toFloatOrNull() ?: variable.min) - variable.min) / (variable.max - variable.min)
+        } else null
+        OmniValueReadout(
+            label = variable.label,
+            value = current,
+            previousValue = variable.defaultValue,
+            fraction = fraction,
+            compact = true
+        )
+        Spacer(modifier = Modifier.height(spacing.sm))
     }
 }
 
@@ -537,26 +439,32 @@ private fun SummaryRow(
     value: String,
     isHighlighted: Boolean = false
 ) {
+    val spacing = OmniTheme.spacing
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = spacing.xs),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = OmniOnSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.SemiBold,
-                fontFamily = if (isHighlighted) FontFamily.Default else FontFamily.Monospace
-            ),
-            color = if (isHighlighted) OmniSuccess else OmniOnSurface,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
+        Spacer(modifier = Modifier.width(spacing.md))
+        if (isHighlighted) {
+            OmniStatusChip(text = value, tone = OmniTone.Success)
+        } else {
+            Text(
+                text = value,
+                style = OmniTheme.mono.key,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.basitce.gfx.feature.feature_wizard.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -20,9 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -35,14 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSuccess
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardStep
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardViewModel
 
@@ -54,6 +52,8 @@ fun SetupWizardScreen(
     viewModel: SetupWizardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val spacing = OmniTheme.spacing
+    val motion = OmniTheme.motion
 
     BackHandler(enabled = !state.currentStep.isFirst) { viewModel.goBack() }
 
@@ -72,47 +72,35 @@ fun SetupWizardScreen(
             currentStep = state.currentStep,
             gameName = state.gameName,
             onBack = {
-                if (state.currentStep.isFirst) {
-                    onBack()
-                } else {
-                    viewModel.goBack()
-                }
+                if (state.currentStep.isFirst) onBack() else viewModel.goBack()
             }
         )
 
-        StepIndicator(currentStep = state.currentStep)
+        StepRail(currentStep = state.currentStep)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(spacing.lg))
 
         AnimatedContent(
             targetState = state.currentStep,
             transitionSpec = {
-                val direction = if (targetState.order > initialState.order) 1 else -1
-                (slideInHorizontally(tween(300)) { it * direction } + fadeIn(tween(300)))
-                    .togetherWith(
-                        slideOutHorizontally(tween(300)) { -it * direction } + fadeOut(tween(300))
-                    )
+                if (motion.reduced) {
+                    fadeIn(motion.shortTween()) togetherWith fadeOut(motion.shortTween())
+                } else {
+                    val direction = if (targetState.order > initialState.order) 1 else -1
+                    (slideInHorizontally(motion.longTween()) { it / 4 * direction } +
+                        fadeIn(motion.longTween())) togetherWith
+                        (slideOutHorizontally(motion.longTween()) { -it / 4 * direction } +
+                            fadeOut(motion.longTween()))
+                }
             },
             label = "wizard_step_transition",
             modifier = Modifier.weight(1f)
         ) { step ->
             when (step) {
-                SetupWizardStep.SELECT_FILE -> StepSelectFile(
-                    state = state,
-                    viewModel = viewModel
-                )
-                SetupWizardStep.PULL_ANALYZE -> StepPullAnalyze(
-                    state = state,
-                    viewModel = viewModel
-                )
-                SetupWizardStep.EDIT -> StepEdit(
-                    state = state,
-                    viewModel = viewModel
-                )
-                SetupWizardStep.PIN_VARIABLES -> StepPinVariables(
-                    state = state,
-                    viewModel = viewModel
-                )
+                SetupWizardStep.SELECT_FILE -> StepSelectFile(state = state, viewModel = viewModel)
+                SetupWizardStep.PULL_ANALYZE -> StepPullAnalyze(state = state, viewModel = viewModel)
+                SetupWizardStep.EDIT -> StepEdit(state = state, viewModel = viewModel)
+                SetupWizardStep.PIN_VARIABLES -> StepPinVariables(state = state, viewModel = viewModel)
                 SetupWizardStep.PUSH_APPLY -> StepPushApply(
                     state = state,
                     viewModel = viewModel,
@@ -132,10 +120,11 @@ private fun WizardTopBar(
     gameName: String,
     onBack: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = spacing.sm, vertical = spacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
@@ -145,54 +134,65 @@ private fun WizardTopBar(
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(spacing.xs))
         Column {
             Text(
                 text = currentStep.title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (gameName.isNotBlank()) {
                 Text(
                     text = gameName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = OmniOnSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
+/**
+ * Adım rayı: noktalar yerine segmentli ilerleme. Gerçek bir sıra olduğu için
+ * numaralandırma burada meşru. Tamamlanan = petrol, aktif = pirinç, gelecek = sönük.
+ */
 @Composable
-private fun StepIndicator(currentStep: SetupWizardStep) {
+private fun StepRail(currentStep: SetupWizardStep) {
     val steps = SetupWizardStep.entries.filter { it != SetupWizardStep.DONE }
+    val spacing = OmniTheme.spacing
+    val motion = OmniTheme.motion
+    val colors = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.Center,
+            .padding(horizontal = spacing.screen)
+            .semantics {
+                contentDescription = "Adım ${currentStep.order + 1} / ${steps.size}: ${currentStep.title}"
+            },
+        horizontalArrangement = Arrangement.spacedBy(spacing.xs),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        steps.forEachIndexed { index, step ->
-            val isCompleted = step.order < currentStep.order
-            val isCurrent = step == currentStep
-
-            val color = when {
-                isCompleted -> OmniSuccess
-                isCurrent -> OmniPrimary
-                else -> OmniOutline
+        steps.forEach { step ->
+            val completed = step.order < currentStep.order
+            val active = step == currentStep
+            val target = when {
+                completed -> colors.primary
+                active -> colors.secondary
+                else -> colors.outlineVariant
             }
-
+            val segmentColor by animateColorAsState(
+                targetValue = target,
+                animationSpec = motion.mediumTween(),
+                label = "step_segment_color"
+            )
             Box(
                 modifier = Modifier
-                    .size(if (isCurrent) 12.dp else 8.dp)
-                    .clip(CircleShape)
-                    .background(color)
+                    .weight(1f)
+                    .height(if (active) 5.dp else 3.dp)
+                    .clip(RoundedCornerShape(OmniRadius.xs))
+                    .background(segmentColor)
             )
-
-            if (index < steps.lastIndex) {
-                Spacer(modifier = Modifier.width(8.dp))
-            }
         }
     }
 }

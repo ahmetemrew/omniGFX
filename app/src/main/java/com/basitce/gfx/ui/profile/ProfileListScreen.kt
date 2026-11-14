@@ -7,20 +7,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -42,18 +39,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_database.model.ProfileWithSchema
-import com.basitce.gfx.core.core_ui.components.OmniCard
 import com.basitce.gfx.core.core_ui.components.OmniEmptyState
+import com.basitce.gfx.core.core_ui.components.OmniLoading
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTone
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniWarning
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.presentation.profile.ProfileListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,51 +62,33 @@ fun ProfileListScreen(
     onOpenMarketplace: () -> Unit = {},
     onOpenSync: () -> Unit = {},
     onOpenShizukuSetup: () -> Unit = {},
+    onAddGame: () -> Unit = {},
     viewModel: ProfileListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var menuExpanded by remember { mutableStateOf(false) }
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
 
     Scaffold(
+        containerColor = colors.background,
         topBar = {
             OmniTopBar(
                 title = "Profiller",
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menü")
+                        Icon(Icons.Outlined.MoreVert, contentDescription = "Diğer işlemler")
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
+                        onDismissRequest = { menuExpanded = false },
+                        shape = RoundedCornerShape(OmniRadius.md),
+                        containerColor = colors.surfaceContainer
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Yedekler") },
-                            onClick = {
-                                onOpenBackupManager()
-                                menuExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("JSON Profil Analizi") },
-                            onClick = {
-                                onOpenMarketplace()
-                                menuExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("İçe / Dışa Aktar") },
-                            onClick = {
-                                onOpenSync()
-                                menuExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Shizuku Ayarı") },
-                            onClick = {
-                                onOpenShizukuSetup()
-                                menuExpanded = false
-                            }
-                        )
+                        MenuItem("Yedekler") { onOpenBackupManager(); menuExpanded = false }
+                        MenuItem("Profil analizi") { onOpenMarketplace(); menuExpanded = false }
+                        MenuItem("İçe / dışa aktar") { onOpenSync(); menuExpanded = false }
+                        MenuItem("Shizuku ayarı") { onOpenShizukuSetup(); menuExpanded = false }
                     }
                 }
             )
@@ -120,64 +100,72 @@ fun ProfileListScreen(
                 .padding(padding)
         ) {
             when {
-                state.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                state.isLoading -> OmniLoading(
+                    label = "Profiller yükleniyor…",
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                state.profiles.isEmpty() -> {
-                    OmniEmptyState(
-                        title = "Henüz profil yok",
-                        description = "Bir oyunun ayarlarını kaydettiğinde burada listelenecek. Her oyun için istediğin kadar profil oluşturabilirsin.",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                state.profiles.isEmpty() -> OmniEmptyState(
+                    title = "Henüz profil yok",
+                    description = "Bir oyunun ayarlarını kaydettiğinde burada görünür. " +
+                        "Her oyun için istediğin kadar profil oluşturabilirsin.",
+                    icon = Icons.Outlined.Tune,
+                    action = {
+                        OmniPrimaryButton(text = "Oyun ekle", onClick = onAddGame)
+                    },
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(state.profiles, key = { it.profile.id }) { profileWithSchema ->
-                            // confirmValueChange is deprecated; StartToEnd is already disabled
-                            // below, so only the EndToStart dismiss side effect is needed.
-                            val dismissState = rememberSwipeToDismissBoxState()
-                            LaunchedEffect(dismissState.currentValue) {
-                                if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                else -> LazyColumn(
+                    contentPadding = PaddingValues(
+                        horizontal = spacing.screen,
+                        vertical = spacing.lg
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(spacing.listItem)
+                ) {
+                    items(state.profiles, key = { it.profile.id }) { profileWithSchema ->
+                        val dismissState = rememberSwipeToDismissBoxState()
+                        LaunchedEffect(dismissState.currentValue) {
+                            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                                viewModel.deleteProfile(profileWithSchema.profile.id)
+                            }
+                        }
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            backgroundContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            colors.errorContainer,
+                                            RoundedCornerShape(OmniRadius.md)
+                                        )
+                                        .padding(horizontal = spacing.xl),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = "Sil",
+                                        tint = colors.onErrorContainer
+                                    )
+                                }
+                            },
+                            enableDismissFromStartToEnd = false,
+                            modifier = Modifier.animateItem()
+                        ) {
+                            ProfileRow(
+                                profile = profileWithSchema,
+                                onLoad = {
+                                    onLoadProfile(
+                                        profileWithSchema.gameId,
+                                        profileWithSchema.profile.id
+                                    )
+                                },
+                                onDelete = {
                                     viewModel.deleteProfile(profileWithSchema.profile.id)
                                 }
-                            }
-
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                backgroundContent = {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(OmniError, RoundedCornerShape(20.dp))
-                                            .padding(horizontal = 24.dp),
-                                        contentAlignment = Alignment.CenterEnd
-                                    ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Sil", tint = Color.White)
-                                    }
-                                },
-                                enableDismissFromStartToEnd = false
-                            ) {
-                                ProfileCard(
-                                    profile = profileWithSchema,
-                                    onLoad = {
-                                        onLoadProfile(
-                                            profileWithSchema.gameId,
-                                            profileWithSchema.profile.id
-                                        )
-                                    },
-                                    onDelete = {
-                                        viewModel.deleteProfile(profileWithSchema.profile.id)
-                                    }
-                                )
-                            }
+                            )
                         }
                     }
                 }
@@ -188,69 +176,77 @@ fun ProfileListScreen(
     state.error?.let { error ->
         AlertDialog(
             onDismissRequest = { viewModel.clearError() },
-            title = { Text("Hata") },
-            text = { Text(error) },
+            shape = RoundedCornerShape(OmniRadius.lg),
+            containerColor = colors.surfaceContainerHigh,
+            title = {
+                Text("Profil işlemi tamamlanamadı", style = MaterialTheme.typography.titleLarge)
+            },
+            text = { Text(error, style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearError() }) {
-                    Text("Tamam")
-                }
+                TextButton(onClick = { viewModel.clearError() }) { Text("Tamam") }
             }
         )
     }
 }
 
 @Composable
-private fun ProfileCard(
+private fun MenuItem(text: String, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text, style = MaterialTheme.typography.bodyLarge) },
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun ProfileRow(
     profile: ProfileWithSchema,
     onLoad: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
     val isManual = profile.profile.isManual
 
-    OmniCard(
-        modifier = Modifier.clickable(onClick = onLoad)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .background(colors.surfaceContainerLow, RoundedCornerShape(OmniRadius.md))
+            .clickable(onClick = onLoad)
+            .padding(start = spacing.lg, end = spacing.xs, top = spacing.md, bottom = spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(spacing.xs)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = profile.profile.name,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Text(
+                text = profile.profile.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = profile.gameName,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            OmniStatusChip(
+                text = if (isManual) "Ham dosya" else "Dinamik",
+                tone = if (isManual) OmniTone.Warning else OmniTone.Success
+            )
+        }
 
-                Text(
-                    text = profile.gameName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // ─── TİP ROZETİ (BADGE) ───────────────────────
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = if (isManual) OmniWarning.copy(alpha = 0.15f) else OmniPrimary.copy(alpha = 0.15f)
-            ) {
-                Text(
-                    text = if (isManual) "HAM DOSYA" else "DİNAMİK",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = if (isManual) OmniWarning else OmniPrimary,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Sil",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = "${profile.profile.name} profilini sil",
+                tint = colors.onSurfaceVariant
+            )
         }
     }
 }

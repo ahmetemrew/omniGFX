@@ -1,6 +1,7 @@
 package com.basitce.gfx.core.core_ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -15,13 +16,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
+/**
+ * Açılır liste: seçilen değer config malzemesi olduğu için monospace gösterilir.
+ * Alan zemini surfaceContainerLow → kenarlık her iki temada ≥3:1 geçer.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OmniDropdown(
@@ -32,6 +33,7 @@ fun OmniDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -42,19 +44,21 @@ fun OmniDropdown(
             value = selectedOption,
             onValueChange = {},
             readOnly = true,
-            label = { Text(label) },
+            label = { Text(label, style = MaterialTheme.typography.bodySmall) },
+            textStyle = OmniTheme.mono.value,
+            shape = RoundedCornerShape(OmniRadius.sm),
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedBorderColor = OmniPrimary,
-                unfocusedBorderColor = OmniOutline,
-                focusedLabelColor = OmniPrimary,
-                unfocusedLabelColor = OmniOnSurfaceVariant,
-                focusedContainerColor = OmniSurface,
-                unfocusedContainerColor = OmniSurface
+                focusedTextColor = colors.onSurface,
+                unfocusedTextColor = colors.onSurface,
+                focusedBorderColor = colors.primary,
+                unfocusedBorderColor = colors.outline,
+                focusedLabelColor = colors.primary,
+                unfocusedLabelColor = colors.onSurfaceVariant,
+                focusedContainerColor = colors.surfaceContainerLow,
+                unfocusedContainerColor = colors.surfaceContainerLow
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,15 +67,18 @@ fun OmniDropdown(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(OmniRadius.md),
+            containerColor = colors.surfaceContainer
         ) {
             options.forEach { option ->
+                val selected = option == selectedOption
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = option,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (option == selectedOption) OmniPrimary else Color.Unspecified
+                            style = OmniTheme.mono.value,
+                            color = if (selected) colors.primary else colors.onSurface
                         )
                     },
                     onClick = {

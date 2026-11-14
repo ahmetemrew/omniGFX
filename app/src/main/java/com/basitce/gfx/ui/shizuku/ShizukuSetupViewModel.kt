@@ -56,7 +56,7 @@ class ShizukuSetupViewModel @Inject constructor(
                     ShizukuConnectionState.NOT_INSTALLED ->
                         "Shizuku yüklü değil. Lütfen Shizuku'yu indir ve kur."
                     ShizukuConnectionState.UNKNOWN ->
-                        "Shizuku durumu kontrol ediliyor..."
+                        "Shizuku durumu kontrol ediliyor…"
                 }
 
                 _uiState.value = ShizukuSetupUiState(

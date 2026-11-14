@@ -45,7 +45,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     // material3 1.4+ no longer exposes material-icons-core transitively.
-    implementation("androidx.compose.material:material-icons-core")
+    // Outlined.SportsEsports gibi extended ikonlar için extended set gerekli.
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.60.1")

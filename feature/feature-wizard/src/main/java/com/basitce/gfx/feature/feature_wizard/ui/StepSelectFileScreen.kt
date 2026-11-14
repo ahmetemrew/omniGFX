@@ -22,11 +22,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,21 +45,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_engine.shizuku.RemoteFileSystemEntry
-import com.basitce.gfx.core.core_ui.theme.OmniBackground
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniOnPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTone
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.GamePathPreset
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardState
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardViewModel
@@ -74,38 +68,39 @@ fun StepSelectFile(
     val presets = remember(state.packageName) {
         viewModel.getPathPresets()
     }
+    val spacing = OmniTheme.spacing
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(OmniBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(horizontal = spacing.screen, vertical = spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.lg)
         ) {
             if (presets.isEmpty()) item {
-                Surface(color = OmniSurfaceElevated, shape = RoundedCornerShape(12.dp)) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Bu oyun için doğrulanmış hazır config yolu yok", color = OmniOnSurface, style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Shizuku ADB modu özel uygulama verilerini açamaz. Yalnızca erişilebilir ve oyunun kullandığı metin config dosyalarını seçin. Reklam, analiz ve motor kaynak dosyaları grafik ayarı değildir.", color = OmniOnSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(OmniRadius.md)) {
+                    Column(Modifier.padding(spacing.lg)) {
+                        Text("Bu oyun için doğrulanmış hazır config yolu yok", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(spacing.sm))
+                        Text("Sınırlı erişim özel uygulama verilerini açamaz. Yalnızca erişilebilir ve oyunun kullandığı metin config dosyalarını seç. Reklam, analiz ve motor kaynak dosyaları grafik ayarı değildir.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
             if (presets.isNotEmpty()) {
                 item {
                     Text(
-                        text = "💡 Config Yolu Önerileri",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = OmniOnSurface
+                        text = "Önerilen config yolları",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.sm))
                     Text(
                         text = "Yollar oyun sürümüne göre değişebilir. Dosyanın varlığı ve erişimi analiz adımında kontrol edilir.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 items(presets) { preset ->
@@ -119,11 +114,11 @@ fun StepSelectFile(
 
             item {
                 Text(
-                    text = "📝 Manuel Dosya Yolu",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = OmniOnSurface
+                    text = "Kendin yol gir",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
                 OutlinedTextField(
                     value = state.targetFilePath,
                     onValueChange = { viewModel.onManualPathChange(it) },
@@ -131,35 +126,35 @@ fun StepSelectFile(
                     placeholder = {
                         Text(
                             "/data/data/com.example/files/config.ini",
-                            color = OmniOnSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     leadingIcon = {
                         Icon(
-                            Icons.AutoMirrored.Filled.InsertDriveFile,
+                            Icons.AutoMirrored.Outlined.InsertDriveFile,
                             contentDescription = null,
-                            tint = OmniOnSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = OmniSurface,
-                        unfocusedContainerColor = OmniSurface,
-                        focusedBorderColor = OmniPrimary,
-                        unfocusedBorderColor = OmniOutline,
-                        focusedTextColor = OmniOnSurface,
-                        unfocusedTextColor = OmniOnSurface
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(OmniRadius.sm)
                 )
             }
 
             item {
                 Text(
-                    text = "📂 Dosya Gezgini",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = OmniOnSurface
+                    text = "Dosya gezgini",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -173,14 +168,14 @@ fun StepSelectFile(
             state.browserError?.let { error ->
                 item {
                     Surface(
-                        color = OmniError.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(OmniRadius.md),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = error,
-                            color = OmniError,
-                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(spacing.md),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -195,7 +190,7 @@ fun StepSelectFile(
                             .height(120.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = OmniPrimary)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
             } else {
@@ -216,70 +211,57 @@ fun StepSelectFile(
         }
 
         Surface(
-            color = OmniSurface,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(spacing.lg)
                     .navigationBarsPadding()
             ) {
                 if (state.targetFilePath.isNotBlank()) {
                     Surface(
-                        color = OmniPrimary.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(OmniRadius.md),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(spacing.md),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Default.CheckCircle,
+                                Icons.Outlined.CheckCircle,
                                 contentDescription = null,
-                                tint = OmniPrimary,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(spacing.sm))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Seçili: ${state.targetFilePath.substringAfterLast('/')}",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = OmniPrimary,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = state.targetFilePath,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                                    color = OmniOnSurfaceVariant,
+                                    style = OmniTheme.mono.micro,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(spacing.md))
                 }
 
-                Button(
+                OmniPrimaryButton(
+                    text = "Dosyayı çek ve çözümle",
                     onClick = { viewModel.proceedToStep2() },
-                    enabled = state.targetFilePath.isNotBlank() && !state.isBrowsing,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = OmniPrimary,
-                        disabledContainerColor = OmniSurfaceElevated
-                    )
-                ) {
-                    Text(
-                        text = "Dosyayı Çek ve Analiz Et →",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (state.targetFilePath.isNotBlank()) OmniOnPrimary else OmniOnSurface.copy(alpha = 0.38f)
-                    )
-                }
+                    enabled = state.targetFilePath.isNotBlank() && !state.isBrowsing
+                )
             }
         }
     }
@@ -291,15 +273,16 @@ private fun PresetCard(
     onSelect: () -> Unit,
     onBrowse: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
     Surface(
-        color = OmniSurface,
-        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(OmniRadius.lg),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, OmniOutline, RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(OmniRadius.lg))
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(spacing.lg)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -308,29 +291,29 @@ private fun PresetCard(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(OmniSurfaceElevated),
+                        .clip(RoundedCornerShape(OmniRadius.sm))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Description,
+                        imageVector = Icons.Outlined.Description,
                         contentDescription = null,
-                        tint = OmniPrimary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = preset.label,
-                        color = OmniOnSurface,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleSmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = preset.description,
-                        color = OmniOnSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
@@ -338,38 +321,31 @@ private fun PresetCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = OmniPrimary.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = preset.expectedFormat.label,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = OmniPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
+                OmniStatusChip(
+                    text = preset.expectedFormat.label,
+                    tone = OmniTone.Neutral
+                )
 
                 Row {
                     TextButton(onClick = onBrowse) {
                         Text(
-                            "Dizini Aç",
+                            "Dizini aç",
                             style = MaterialTheme.typography.labelMedium,
-                            color = OmniOnSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     TextButton(onClick = onSelect) {
                         Text(
-                            "Bunu Seç",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = OmniPrimary
+                            "Bunu seç",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -384,34 +360,35 @@ private fun BreadcrumbRow(
     viewModel: SetupWizardViewModel
 ) {
     val parts = viewModel.getBreadcrumb()
+    val spacing = OmniTheme.spacing
 
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(OmniSurface)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .clip(RoundedCornerShape(OmniRadius.md))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = spacing.md, vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
         items(parts) { (name, fullPath) ->
             TextButton(
                 onClick = { viewModel.browseTo(fullPath) },
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                contentPadding = PaddingValues(horizontal = spacing.xs, vertical = spacing.xs)
             ) {
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-                    color = if (fullPath == path) OmniPrimary else OmniOnSurfaceVariant,
+                    style = OmniTheme.mono.micro,
+                    color = if (fullPath == path) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
             if (fullPath != path) {
                 Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = OmniOnSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(14.dp)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
@@ -424,43 +401,45 @@ private fun FileListItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) OmniPrimary.copy(alpha = 0.15f) else OmniSurface
-    val borderColor = if (isSelected) OmniPrimary else OmniOutline
+    val spacing = OmniTheme.spacing
+    val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
 
     Surface(
         color = bgColor,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(OmniRadius.md),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(OmniRadius.md))
             .clickable(onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(OmniSurfaceElevated),
+                    .clip(RoundedCornerShape(OmniRadius.sm))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (entry.isDirectory) Icons.Default.Folder else Icons.AutoMirrored.Filled.InsertDriveFile,
+                    imageVector = if (entry.isDirectory) Icons.Outlined.Folder else Icons.AutoMirrored.Outlined.InsertDriveFile,
                     contentDescription = null,
-                    tint = if (entry.isDirectory) Color(0xFFFBBF24) else Color(0xFF60A5FA),
+                    tint = if (entry.isDirectory) OmniTheme.semantic.warning
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.md))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.name,
-                    color = OmniOnSurface,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -471,9 +450,9 @@ private fun FileListItem(
                 )
                 if (subtitleParts.isNotEmpty()) {
                     Text(
-                        text = subtitleParts.joinToString(" • "),
-                        color = OmniOnSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = subtitleParts.joinToString("   "),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = OmniTheme.mono.micro,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -482,9 +461,9 @@ private fun FileListItem(
 
             if (isSelected) {
                 Icon(
-                    Icons.Default.CheckCircle,
+                    Icons.Outlined.CheckCircle,
                     contentDescription = "Seçili",
-                    tint = OmniPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }

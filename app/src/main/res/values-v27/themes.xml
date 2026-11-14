@@ -1,5 +1,0 @@
-<resources>
-    <style name="Theme.OmniGFX" parent="Theme.OmniGFX.Base">
-        <item name="android:windowLightNavigationBar">false</item>
-    </style>
-</resources>

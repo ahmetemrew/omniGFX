@@ -14,13 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
+/**
+ * Ayar kaydırıcısı: değer monospace okunur (rakamlar tabular → titremez),
+ * etiket solda, değer sağda. Ray petrol, thumb yüzey renginde.
+ */
 @Composable
 fun OmniSlider(
     label: String,
@@ -34,6 +34,9 @@ fun OmniSlider(
     hapticFeedbackEnabled: Boolean = true
 ) {
     val haptic = LocalHapticFeedback.current
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -42,13 +45,14 @@ fun OmniSlider(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.onSurface,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Text(
                 text = valueLabel ?: String.format("%.1f", value),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = OmniPrimary
+                style = OmniTheme.mono.value,
+                color = colors.primary
             )
         }
 
@@ -56,8 +60,8 @@ fun OmniSlider(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = OmniOnSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp)
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(top = spacing.xxs)
             )
         }
 
@@ -71,13 +75,13 @@ fun OmniSlider(
             },
             valueRange = valueRange,
             steps = steps,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = spacing.xs),
             colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.onSurface,
-                activeTrackColor = OmniPrimary,
-                inactiveTrackColor = OmniSurfaceElevated,
-                activeTickColor = OmniPrimary,
-                inactiveTickColor = OmniSurfaceElevated
+                thumbColor = colors.primary,
+                activeTrackColor = colors.primary,
+                inactiveTrackColor = colors.surfaceContainerHighest,
+                activeTickColor = colors.onPrimary.copy(alpha = 0.6f),
+                inactiveTickColor = colors.onSurfaceVariant.copy(alpha = 0.4f)
             )
         )
     }

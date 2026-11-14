@@ -1,8 +1,6 @@
 package com.basitce.gfx.ui.backup
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,56 +9,64 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.basitce.gfx.core.core_ui.components.OmniCard
+import com.basitce.gfx.core.core_ui.components.OmniDropdown
+import com.basitce.gfx.core.core_ui.components.OmniEmptyState
+import com.basitce.gfx.core.core_ui.components.OmniLoading
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniTextButton
+import com.basitce.gfx.core.core_ui.components.OmniTopBar
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupManagerScreen(
     onBack: () -> Unit,
     viewModel: BackupManagerViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    var profileMenuExpanded by remember { mutableStateOf(false) }
+    val spacing = OmniTheme.spacing
 
     val selectedProfile = state.profiles.firstOrNull {
         it.id == state.selectedProfileId
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("Yedekler") },
+            OmniTopBar(
+                title = "Yedekler",
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Geri")
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Geri"
+                        )
                     }
                 }
             )
@@ -70,110 +76,136 @@ fun BackupManagerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.screen),
+            verticalArrangement = Arrangement.spacedBy(spacing.lg)
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = selectedProfile?.name ?: "Profil seç",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Profil") },
-                    trailingIcon = { TextButton(onClick = { profileMenuExpanded = true }) { Text("Seç") } },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { profileMenuExpanded = true }
-                )
-
-                DropdownMenu(
-                    expanded = profileMenuExpanded,
-                    onDismissRequest = { profileMenuExpanded = false }
-                ) {
-                    state.profiles.forEach { profile ->
-                        DropdownMenuItem(
-                            text = { Text(profile.name) },
-                            onClick = {
-                                viewModel.selectProfile(profile.id)
-                                profileMenuExpanded = false
-                            }
-                        )
+            if (state.profiles.isNotEmpty()) {
+                OmniDropdown(
+                    label = "Profil",
+                    options = state.profiles.map { it.name },
+                    selectedOption = selectedProfile?.name ?: "",
+                    onOptionSelected = { name ->
+                        state.profiles.firstOrNull { it.name == name }?.let {
+                            viewModel.selectProfile(it.id)
+                        }
                     }
-                }
+                )
             }
 
-            Row {
-                Button(onClick = { viewModel.loadBackupsForSelectedProfile() }) {
-                    Text("Yenile")
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                OutlinedButton(onClick = { viewModel.cleanOldBackups(3) }) {
-                    Text("Eski Yedekleri Temizle")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OmniSecondaryButton(
+                    text = "Yenile",
+                    onClick = { viewModel.loadBackupsForSelectedProfile() },
+                    fillWidth = false
+                )
+                if (state.backups.isNotEmpty()) {
+                    OmniTextButton(
+                        text = "Eski yedekleri temizle",
+                        onClick = { viewModel.cleanOldBackups(3) }
+                    )
                 }
             }
 
             state.message?.let { message ->
-                Text(text = message)
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            if (state.isLoading) {
-                CircularProgressIndicator()
-            }
+            when {
+                state.isLoading -> OmniLoading(label = "Yedekler yükleniyor")
 
-            if (state.backups.isEmpty() && !state.isLoading) {
-                Text("Backup bulunamadı.")
-            }
+                state.backups.isEmpty() -> OmniEmptyState(
+                    title = "Henüz yedek yok",
+                    description = "Bu profil için henüz yedek alınmamış. Bir dosya yazıldığında ilk yedek otomatik oluşur.",
+                    icon = Icons.Outlined.History
+                )
 
-            LazyColumn(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(state.backups) { item ->
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = item.entry.fileName,
-                            style = MaterialTheme.typography.titleSmall
+                else -> LazyColumn(
+                    contentPadding = PaddingValues(bottom = spacing.section),
+                    verticalArrangement = Arrangement.spacedBy(spacing.listItem)
+                ) {
+                    items(state.backups, key = { it.entry.fileName }) { item ->
+                        BackupRow(
+                            fileName = item.entry.fileName,
+                            targetPath = item.targetPath,
+                            timestamp = item.entry.timestamp,
+                            onRestore = { viewModel.restoreBackup(item) },
+                            onDelete = { viewModel.deleteBackup(item) },
+                            modifier = Modifier.animateItem()
                         )
-
-                        Text(
-                            text = "Hedef: ${item.targetPath}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-
-                        item.entry.timestamp?.let { timestamp ->
-                            val dateFormat = SimpleDateFormat(
-                                "dd.MM.yyyy HH:mm",
-                                LocalLocale.current.platformLocale
-                            )
-
-                            Text(
-                                text = "Tarih: ${dateFormat.format(Date(timestamp))}",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-
-                        Row {
-                            Button(
-                                onClick = { viewModel.restoreBackup(item) }
-                            ) {
-                                Text("Geri Yükle")
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            OutlinedButton(
-                                onClick = { viewModel.deleteBackup(item) }
-                            ) {
-                                Text("Sil")
-                            }
-                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BackupRow(
+    fileName: String,
+    targetPath: String,
+    timestamp: Long?,
+    onRestore: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = OmniTheme.spacing
+
+    OmniCard(modifier = modifier) {
+        Text(
+            text = fileName,
+            style = OmniTheme.mono.key,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(spacing.xxs))
+        Text(
+            text = targetPath,
+            style = OmniTheme.mono.micro,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        timestamp?.let {
+            val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", LocalLocale.current.platformLocale)
+            Spacer(modifier = Modifier.height(spacing.xxs))
+            Text(
+                text = dateFormat.format(Date(it)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(spacing.md))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Yedeği sil",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(spacing.sm))
+            OmniPrimaryButton(
+                text = "Geri yükle",
+                onClick = onRestore,
+                icon = Icons.Outlined.Restore,
+                fillWidth = false
+            )
         }
     }
 }

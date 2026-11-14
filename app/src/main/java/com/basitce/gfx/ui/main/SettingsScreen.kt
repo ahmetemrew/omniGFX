@@ -6,18 +6,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.BuildConfig
-import com.basitce.gfx.core.core_ui.components.OmniCard
-import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
-import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniListRow
+import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
+/**
+ * Ayarlar: dört özdeş kart yerine gruplanmış liste. Her satır tek eylem,
+ * ikon + başlık + açıklama + ok. Hiyerarşi bölüm başlıklarıyla kurulur.
+ */
 @Composable
 fun SettingsScreen(
     onOpenShizukuSetup: () -> Unit,
@@ -25,6 +39,9 @@ fun SettingsScreen(
     onOpenGuide: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -35,75 +52,72 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = spacing.screen)
+                .padding(bottom = spacing.section),
+            verticalArrangement = Arrangement.spacedBy(spacing.betweenSections)
         ) {
-            OmniCard {
-                Text(
-                    text = "OmniGFX",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Sürüm ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            OmniCard {
-                Text(
-                    text = "Shizuku",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Gelişmiş dosya erişimi için Shizuku servisi gerekli. Bağlantı sorunu yaşıyorsanız kurulum ekranını açın.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OmniPrimaryButton(
-                    text = "Shizuku Kurulumu",
+            SettingsGroup(title = "Bağlantı") {
+                OmniListRow(
+                    title = "Shizuku",
+                    subtitle = "Dosya erişimi için gerekli. Bağlantı sorunu yaşıyorsan kurulumu aç.",
+                    icon = Icons.Outlined.Bolt,
                     onClick = onOpenShizukuSetup,
-                    modifier = Modifier.padding(top = 12.dp)
+                    trailing = { RowChevron() }
                 )
             }
 
-            OmniCard {
-                Text(
-                    text = "Dosya Atölyesi",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Herhangi bir oyun dosyasını çek, çözümle, düzenle ve geri yaz. Sadece dosya yolunu bilmen yeterli.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OmniPrimaryButton(
-                    text = "Dosya Atölyesini Aç",
+            SettingsGroup(title = "Araçlar") {
+                OmniListRow(
+                    title = "Dosya atölyesi",
+                    subtitle = "Bir oyun dosyasını çek, çözümle, düzenle ve geri yaz.",
+                    icon = Icons.Outlined.FolderOpen,
                     onClick = onOpenFileWorkflow,
-                    modifier = Modifier.padding(top = 12.dp)
+                    trailing = { RowChevron() }
+                )
+                OmniListRow(
+                    title = "Rehber",
+                    subtitle = "Kurulum ve kullanım, adım adım.",
+                    icon = Icons.AutoMirrored.Outlined.MenuBook,
+                    onClick = onOpenGuide,
+                    trailing = { RowChevron() }
                 )
             }
 
-            OmniCard {
-                Text(
-                    text = "Rehber",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Uygulamayı nasıl kullanacağını öğren. Adım adım kurulum ve kullanım kılavuzu.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OmniSecondaryButton(
-                    text = "Rehberi Aç",
-                    onClick = onOpenGuide,
-                    modifier = Modifier.padding(top = 12.dp)
+            SettingsGroup(title = "Hakkında") {
+                OmniListRow(
+                    title = "OmniGFX",
+                    subtitle = "Sürüm ${BuildConfig.VERSION_NAME}",
+                    icon = Icons.Outlined.Info
                 )
             }
         }
     }
+}
+
+@Composable
+private fun SettingsGroup(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    val spacing = OmniTheme.spacing
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
+        OmniSectionHeader(title = title)
+        Surface(
+            shape = RoundedCornerShape(OmniRadius.md),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column { content() }
+        }
+    }
+}
+
+@Composable
+private fun RowChevron() {
+    Icon(
+        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }

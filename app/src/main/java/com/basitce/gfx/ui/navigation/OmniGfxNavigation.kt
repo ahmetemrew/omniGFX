@@ -1,5 +1,9 @@
 package com.basitce.gfx.ui.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -7,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.ui.AppPickerScreen
 import com.basitce.gfx.feature.feature_wizard.ui.GameDetailScreen
 import com.basitce.gfx.feature.feature_wizard.ui.SetupWizardScreen
@@ -36,9 +41,26 @@ object Routes {
 fun OmniGfxNavHost(
     navController: NavHostController = rememberNavController()
 ) {
+    val motion = OmniTheme.motion
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME
+        startDestination = Routes.HOME,
+        enterTransition = {
+            if (motion.reduced) fadeIn(motion.shortTween())
+            else slideInHorizontally(motion.mediumTween()) { it / 4 } + fadeIn(motion.mediumTween())
+        },
+        exitTransition = {
+            if (motion.reduced) fadeOut(motion.shortTween())
+            else slideOutHorizontally(motion.mediumTween()) { -it / 4 } + fadeOut(motion.mediumTween())
+        },
+        popEnterTransition = {
+            if (motion.reduced) fadeIn(motion.shortTween())
+            else slideInHorizontally(motion.mediumTween()) { -it / 4 } + fadeIn(motion.mediumTween())
+        },
+        popExitTransition = {
+            if (motion.reduced) fadeOut(motion.shortTween())
+            else slideOutHorizontally(motion.mediumTween()) { it / 4 } + fadeOut(motion.mediumTween())
+        }
     ) {
         composable(Routes.HOME) {
             MainScreen(

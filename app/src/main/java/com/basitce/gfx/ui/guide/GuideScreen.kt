@@ -5,6 +5,8 @@ package com.basitce.gfx.ui.guide
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,26 +35,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Dangerous
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Games
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Dangerous
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Games
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,29 +67,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniInfo
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSuccess
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
-import com.basitce.gfx.core.core_ui.theme.OmniWarning
 import kotlinx.coroutines.launch
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
 // ═══════════════════════════════════════════════════════════════
 //  REHBER VERİ MODELLERİ
 // ═══════════════════════════════════════════════════════════════
 
 private enum class CalloutType { INFO, TIP, WARNING, DANGER, CODE }
+
+/**
+ * Bölüm vurgusu bir renk değil roldür: veri modeli composable renk taşımaz,
+ * renk çizim anında temadan çözülür (tema değişince bayatlamaz).
+ */
+private enum class GuideAccent {
+    PRIMARY, SECONDARY, SUCCESS, WARNING, INFO, ERROR;
+
+    @Composable
+    fun color(): Color = when (this) {
+        PRIMARY -> MaterialTheme.colorScheme.primary
+        SECONDARY -> MaterialTheme.colorScheme.secondary
+        SUCCESS -> OmniTheme.semantic.success
+        WARNING -> OmniTheme.semantic.warning
+        INFO -> OmniTheme.semantic.info
+        ERROR -> MaterialTheme.colorScheme.error
+    }
+}
 
 private data class GuideParagraph(
     val text: String,
@@ -116,10 +128,10 @@ private sealed class GuideBlock {
     data class Comparison(
         val leftTitle: String,
         val leftItems: List<String>,
-        val leftColor: Color,
+        val leftAccent: GuideAccent,
         val rightTitle: String,
         val rightItems: List<String>,
-        val rightColor: Color
+        val rightAccent: GuideAccent
     ) : GuideBlock()
 }
 
@@ -128,7 +140,7 @@ private data class GuideSection(
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
-    val accentColor: Color,
+    val accent: GuideAccent,
     val blocks: List<GuideBlock>
 )
 
@@ -144,6 +156,7 @@ fun GuideScreen(onBack: () -> Unit) {
     }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val spacing = OmniTheme.spacing
 
     Column(
         modifier = Modifier
@@ -152,7 +165,7 @@ fun GuideScreen(onBack: () -> Unit) {
             .navigationBarsPadding()
     ) {
         OmniTopBar(
-            title = "Kullanım Rehberi",
+            title = "Kullanım rehberi",
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(
@@ -168,9 +181,9 @@ fun GuideScreen(onBack: () -> Unit) {
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 16.dp, end = 16.dp, bottom = 32.dp
+                start = spacing.screen, end = spacing.screen, bottom = spacing.xxxl
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.listItem)
         ) {
             // ─── HERO ──────────────────────────────────────
             item { HeroSection() }
@@ -216,58 +229,49 @@ fun GuideScreen(onBack: () -> Unit) {
 
 @Composable
 private fun HeroSection() {
+    val spacing = OmniTheme.spacing
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        OmniPrimary.copy(alpha = 0.25f),
-                        OmniSurface
-                    )
-                )
-            )
-            .border(1.dp, OmniPrimary.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-            .padding(24.dp)
+            .clip(RoundedCornerShape(OmniRadius.lg))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(spacing.xl)
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(spacing.touchTarget)
                         .clip(CircleShape)
-                        .background(OmniPrimary.copy(alpha = 0.2f)),
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Book,
+                        imageVector = Icons.Outlined.Book,
                         contentDescription = null,
-                        tint = OmniPrimary,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(28.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column {
                     Text(
-                        text = "OmniGFX Rehberi",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
+                        text = "OmniGFX rehberi",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Sıfırdan ustalaşmaya",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.lg))
             Text(
                 text = "Bu rehber, oyunu hiç bilmeyen bir kullanıcının bile adım adım ilerleyebilmesi için hazırlandı. Her bölüm kendi içinde bağımsızdır; istediğin yerden başlayabilirsin. İleri düzey konular da ayrı başlıklar altında detaylıca anlatıldı.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = OmniOnSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -282,71 +286,70 @@ private fun TableOfContents(
     sections: List<GuideSection>,
     onJumpTo: (Int) -> Unit
 ) {
+    val spacing = OmniTheme.spacing
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(OmniSurface)
-            .border(1.dp, OmniSurfaceElevated, RoundedCornerShape(20.dp))
-            .padding(20.dp)
+            .clip(RoundedCornerShape(OmniRadius.xl))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(OmniRadius.xl))
+            .padding(spacing.xl)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                 contentDescription = null,
-                tint = OmniPrimary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(spacing.sm))
             Text(
                 text = "İçindekiler",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = OmniOnSurface
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing.md))
         sections.forEachIndexed { index, section ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(OmniRadius.sm))
                     .clickable { onJumpTo(index) }
-                    .padding(vertical = 10.dp, horizontal = 8.dp),
+                    .padding(vertical = spacing.md, horizontal = spacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(section.accentColor.copy(alpha = 0.15f)),
+                        .background(section.accent.color().copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = section.icon,
                         contentDescription = null,
-                        tint = section.accentColor,
-                        modifier = Modifier.size(16.dp)
+                        tint = section.accent.color(),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = section.title,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = OmniOnSurface
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = section.subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = OmniOnSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -363,16 +366,18 @@ private fun SectionCard(
     isExpanded: Boolean,
     onToggle: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+    val motion = OmniTheme.motion
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(OmniSurface)
+            .clip(RoundedCornerShape(OmniRadius.xl))
+            .background(MaterialTheme.colorScheme.surface)
             .border(
                 width = if (isExpanded) 1.5.dp else 1.dp,
-                color = if (isExpanded) section.accentColor.copy(alpha = 0.5f)
-                else OmniSurfaceElevated,
-                shape = RoundedCornerShape(20.dp)
+                color = if (isExpanded) section.accent.color().copy(alpha = 0.5f)
+                else MaterialTheme.colorScheme.surfaceContainerHighest,
+                shape = RoundedCornerShape(OmniRadius.xl)
             )
     ) {
         // ─── HEADER (tıklanabilir) ─────────────────────
@@ -380,57 +385,57 @@ private fun SectionCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
-                .padding(20.dp),
+                .padding(spacing.xl),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(section.accentColor.copy(alpha = 0.15f)),
+                    .size(spacing.touchTarget)
+                    .clip(RoundedCornerShape(OmniRadius.md))
+                    .background(section.accent.color().copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = section.icon,
                     contentDescription = null,
-                    tint = section.accentColor,
+                    tint = section.accent.color(),
                     modifier = Modifier.size(24.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = section.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = OmniOnSurface
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = section.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = OmniOnSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
-                imageVector = Icons.Default.ExpandMore,
+                imageVector = Icons.Outlined.ExpandMore,
                 contentDescription = if (isExpanded) "Daralt" else "Genişlet",
-                tint = OmniOnSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(28.dp)
             )
         }
 
-        // ─── İÇERİK (animasyonlu) ─────────────────────
+        // ─── İÇERİK (animasyonlu, azaltılmış harekette anında) ─────────────────────
         AnimatedVisibility(
             visible = isExpanded,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
+            enter = if (motion.reduced) EnterTransition.None
+            else expandVertically(motion.mediumTween()) + fadeIn(motion.mediumTween()),
+            exit = if (motion.reduced) ExitTransition.None
+            else shrinkVertically(motion.mediumTween()) + fadeOut(motion.mediumTween())
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = spacing.xl, vertical = spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(spacing.lg)
             ) {
                 section.blocks.forEach { block ->
                     when (block) {
@@ -442,7 +447,7 @@ private fun SectionCard(
                         is GuideBlock.Comparison -> ComparisonBlock(block)
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
             }
         }
     }
@@ -454,28 +459,27 @@ private fun SectionCard(
 
 @Composable
 private fun TextBlock(block: GuideBlock.Text) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val spacing = OmniTheme.spacing
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
         block.paragraphs.forEach { p ->
             if (p.isCode) {
                 SelectionContainer {
                     Text(
                         text = p.text,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = OmniPrimary,
+                        style = OmniTheme.mono.key,
+                        color = OmniTheme.semantic.onCodeSurface,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(OmniSurfaceElevated)
-                            .padding(12.dp)
+                            .clip(RoundedCornerShape(OmniRadius.xs))
+                            .background(OmniTheme.semantic.codeSurface)
+                            .padding(spacing.md)
                     )
                 }
             } else {
                 Text(
                     text = p.text,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = OmniOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (p.isBold) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
@@ -487,45 +491,64 @@ private data class CalloutStyle(
     val bgColor: Color,
     val borderColor: Color,
     val iconColor: Color,
+    val bodyColor: Color,
     val icon: ImageVector
 )
 
 @Composable
 private fun CalloutBlock(callout: GuideCallout) {
+    val semantic = OmniTheme.semantic
+    val colors = MaterialTheme.colorScheme
     val style = when (callout.type) {
-        CalloutType.INFO -> CalloutStyle(Color(0xFF1E3A5F), OmniInfo.copy(alpha = 0.5f), OmniInfo, Icons.Default.Info)
-        CalloutType.TIP -> CalloutStyle(Color(0xFF1A3D2E), OmniSuccess.copy(alpha = 0.5f), OmniSuccess, Icons.Default.Lightbulb)
-        CalloutType.WARNING -> CalloutStyle(Color(0xFF3D2E1A), OmniWarning.copy(alpha = 0.5f), OmniWarning, Icons.Default.Warning)
-        CalloutType.DANGER -> CalloutStyle(Color(0xFF3D1A1A), OmniError.copy(alpha = 0.5f), OmniError, Icons.Default.Dangerous)
-        CalloutType.CODE -> CalloutStyle(Color(0xFF1A1A2E), OmniPrimary.copy(alpha = 0.5f), OmniPrimary, Icons.Default.Terminal)
+        CalloutType.INFO -> CalloutStyle(
+            colors.surfaceContainer, colors.outlineVariant,
+            colors.onSurfaceVariant, colors.onSurface, Icons.Outlined.Info
+        )
+        CalloutType.TIP -> CalloutStyle(
+            semantic.successContainer, semantic.success.copy(alpha = 0.5f),
+            semantic.onSuccessContainer, semantic.onSuccessContainer, Icons.Outlined.Lightbulb
+        )
+        CalloutType.WARNING -> CalloutStyle(
+            semantic.warningContainer, semantic.warning.copy(alpha = 0.5f),
+            semantic.onWarningContainer, semantic.onWarningContainer, Icons.Outlined.Warning
+        )
+        CalloutType.DANGER -> CalloutStyle(
+            colors.errorContainer, colors.error.copy(alpha = 0.5f),
+            colors.onErrorContainer, colors.onErrorContainer, Icons.Outlined.Dangerous
+        )
+        CalloutType.CODE -> CalloutStyle(
+            semantic.codeSurface, colors.outlineVariant,
+            colors.primary, semantic.onCodeSurface, Icons.Outlined.Terminal
+        )
     }
+    val spacing = OmniTheme.spacing
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(OmniRadius.md))
             .background(style.bgColor)
-            .border(1.dp, style.borderColor, RoundedCornerShape(14.dp))
-            .padding(14.dp)
+            .border(1.dp, style.borderColor, RoundedCornerShape(OmniRadius.md))
+            .padding(spacing.lg)
     ) {
         Icon(
             imageVector = style.icon,
             contentDescription = null,
             tint = style.iconColor,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(spacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = callout.title,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleSmall,
                 color = style.iconColor
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.xs))
             SelectionContainer {
                 Text(
                     text = callout.body,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = OmniOnSurface
+                    color = style.bodyColor
                 )
             }
         }
@@ -534,48 +557,47 @@ private fun CalloutBlock(callout: GuideCallout) {
 
 @Composable
 private fun StepsBlock(steps: List<GuideStep>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val spacing = OmniTheme.spacing
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.listItem)) {
         steps.forEach { step ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(spacing.xxxl)
                         .clip(CircleShape)
-                        .background(OmniPrimary),
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = step.number.toString(),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = step.title,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = OmniOnSurface
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = step.description,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     step.code?.let { code ->
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(spacing.sm))
                         SelectionContainer {
                             Text(
                                 text = code,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = FontFamily.Monospace
-                                ),
-                                color = OmniSuccess,
+                                style = OmniTheme.mono.micro,
+                                color = OmniTheme.semantic.onCodeSurface,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF0A1A14))
-                                    .padding(10.dp)
+                                    .clip(RoundedCornerShape(OmniRadius.xs))
+                                    .background(OmniTheme.semantic.codeSurface)
+                                    .padding(spacing.md)
                             )
                         }
                     }
@@ -587,19 +609,20 @@ private fun StepsBlock(steps: List<GuideStep>) {
 
 @Composable
 private fun BulletListBlock(items: List<String>) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    val spacing = OmniTheme.spacing
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
         items.forEach { item ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "•",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = OmniPrimary,
-                    modifier = Modifier.width(16.dp)
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(spacing.lg)
                 )
                 Text(
                     text = item,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = OmniOnSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -608,28 +631,26 @@ private fun BulletListBlock(items: List<String>) {
 
 @Composable
 private fun CodeBlock(block: GuideBlock.CodeBlock) {
+    val spacing = OmniTheme.spacing
     Column {
         SelectionContainer {
             Text(
                 text = block.code,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = FontFamily.Monospace
-                ),
-                color = OmniSuccess,
+                style = OmniTheme.mono.key,
+                color = OmniTheme.semantic.onCodeSurface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF0A1A14))
-                    .border(1.dp, OmniSuccess.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                    .padding(14.dp)
+                    .clip(RoundedCornerShape(OmniRadius.xs))
+                    .background(OmniTheme.semantic.codeSurface)
+                    .padding(spacing.lg)
             )
         }
         block.caption?.let {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.xs))
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = OmniOnSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -639,18 +660,18 @@ private fun CodeBlock(block: GuideBlock.CodeBlock) {
 private fun ComparisonBlock(block: GuideBlock.Comparison) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(OmniTheme.spacing.md)
     ) {
         ComparisonColumn(
             title = block.leftTitle,
             items = block.leftItems,
-            color = block.leftColor,
+            color = block.leftAccent.color(),
             modifier = Modifier.weight(1f)
         )
         ComparisonColumn(
             title = block.rightTitle,
             items = block.rightItems,
-            color = block.rightColor,
+            color = block.rightAccent.color(),
             modifier = Modifier.weight(1f)
         )
     }
@@ -663,31 +684,35 @@ private fun ComparisonColumn(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val spacing = OmniTheme.spacing
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(OmniRadius.md))
             .background(color.copy(alpha = 0.1f))
-            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
-            .padding(14.dp)
+            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(OmniRadius.md))
+            .padding(spacing.md)
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.titleSmall,
             color = color
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(spacing.sm))
         items.forEach { item ->
-            Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                Text(
-                    text = "✓",
-                    color = color,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.width(16.dp)
+            Row(modifier = Modifier.padding(vertical = spacing.xxs)) {
+                Icon(
+                    imageVector = Icons.Outlined.Check,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier
+                        .width(spacing.lg)
+                        .size(16.dp)
                 )
+                Spacer(modifier = Modifier.width(spacing.sm))
                 Text(
                     text = item,
                     style = MaterialTheme.typography.bodySmall,
-                    color = OmniOnSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -696,25 +721,26 @@ private fun ComparisonColumn(
 
 @Composable
 private fun FooterNote() {
+    val spacing = OmniTheme.spacing
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(OmniSurfaceElevated.copy(alpha = 0.5f))
-            .padding(20.dp)
+            .clip(RoundedCornerShape(OmniRadius.lg))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f))
+            .padding(spacing.xl)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Star,
+                imageVector = Icons.Outlined.Star,
                 contentDescription = null,
-                tint = OmniWarning,
+                tint = OmniTheme.semantic.warning,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(spacing.md))
             Text(
                 text = "Bir sorun mu yaşıyorsun? OmniGFX açık kaynaklıdır. GitHub üzerinden sorun kaydı açabilir veya topluluğa katılabilirsin.",
                 style = MaterialTheme.typography.bodySmall,
-                color = OmniOnSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -731,10 +757,10 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "what-is",
-        icon = Icons.Default.Games,
-        title = "OmniGFX Nedir?",
+        icon = Icons.Outlined.Games,
+        title = "OmniGFX nedir?",
         subtitle = "Uygulamanın ne yaptığını 2 dakikada anla",
-        accentColor = OmniPrimary,
+        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -754,7 +780,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.INFO,
-                title = "OmniGFX ne DEĞİLDİR?",
+                title = "OmniGFX ne değildir?",
                 body = "OmniGFX bir hile aracı değildir. Oyun hafızasına müdahale etmez, " +
                     "çok oyunculu maçlarda avantaj sağlamaz. Sadece oyunun kendi config " +
                     "dosyasındaki ayarları düzenler — tıpkı oyunun kendi ayarlar menüsünü " +
@@ -785,10 +811,10 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "shizuku",
-        icon = Icons.Default.Key,
-        title = "Shizuku Kurulumu",
+        icon = Icons.Outlined.Key,
+        title = "Shizuku kurulumu",
         subtitle = "OmniGFX'in çalışması için gereken temel araç",
-        accentColor = OmniSuccess,
+        accent = GuideAccent.SUCCESS,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -807,14 +833,14 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 title = "İki kurulum yöntemi var",
                 body = "Yöntem A: Bilgisayar gerekli (her Android sürümü için çalışır)\n" +
                     "Yöntem B: Bilgisayarsız (sadece Android 11 ve üzeri, Wireless ADB ile)\n\n" +
-                    "Hangi Android sürümünü kullandığını bilmiyorsan Ayarlar → Telefon Hakkında " +
+                    "Hangi Android sürümünü kullandığını bilmiyorsan Ayarlar › Telefon Hakkında " +
                     "bölümünden kontrol edebilirsin."
             )),
 
             // ── Yöntem A: Bilgisayar ile ──
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "━━━  YÖNTEM A: Bilgisayar ile Kurulum  ━━━",
+                    "Yöntem A: Bilgisayar ile kurulum",
                     isBold = true
                 ),
                 GuideParagraph(
@@ -833,9 +859,9 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 GuideStep(
                     number = 2,
                     title = "Telefonunda USB Hata Ayıklama'yı aç",
-                    description = "Ayarlar → Telefon Hakkında → Derleme Numarası'na 7 kez " +
-                        "dokunarak Geliştirici Seçenekleri'ni aktif et. Sonra Ayarlar → " +
-                        "Geliştirici Seçenekleri → USB Hata Ayıklama'yı aç."
+                    description = "Ayarlar › Telefon Hakkında › Derleme Numarası'na 7 kez " +
+                        "dokunarak Geliştirici Seçenekleri'ni aktif et. Sonra Ayarlar › " +
+                        "Geliştirici Seçenekleri › USB Hata Ayıklama'yı aç."
                 ),
                 GuideStep(
                     number = 3,
@@ -851,7 +877,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 ),
                 GuideStep(
                     number = 5,
-                    title = "Bilgisayarında terminal/aç ve şu komutu gir",
+                    title = "Bilgisayarında terminali aç ve şu komutu gir",
                     description = "Windows'ta CMD veya PowerShell, Mac/Linux'ta Terminal:",
                     code = "adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
                 ),
@@ -864,14 +890,14 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 GuideStep(
                     number = 7,
                     title = "OmniGFX'e izin ver",
-                    description = "OmniGFX'i aç → Shizuku izni iste → Onayla."
+                    description = "OmniGFX'i aç, Shizuku izni iste ve onayla."
                 )
             )),
 
             // ── Yöntem B: Bilgisayarsız ──
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "━━━  YÖNTEM B: Bilgisayarsız Kurulum (Android 11+)  ━━━",
+                    "Yöntem B: Bilgisayarsız kurulum (Android 11 ve üzeri)",
                     isBold = true
                 ),
                 GuideParagraph(
@@ -888,19 +914,19 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 GuideStep(
                     number = 2,
                     title = "Geliştirici Seçenekleri'ni aktif et",
-                    description = "Ayarlar → Telefon Hakkında → Derleme Numarası'na 7 kez dokun."
+                    description = "Ayarlar › Telefon Hakkında › Derleme Numarası'na 7 kez dokun."
                 ),
                 GuideStep(
                     number = 3,
                     title = "Wireless Hata Ayıklama'yı aç",
-                    description = "Ayarlar → Geliştirici Seçenekleri → Kablosuz Hata Ayıklama → " +
+                    description = "Ayarlar › Geliştirici Seçenekleri › Kablosuz Hata Ayıklama › " +
                         "Aç. (Wi-Fi'ya bağlı olman gerekir.)"
                 ),
                 GuideStep(
                     number = 4,
                     title = "Shizuku'da \"Wireless Debugging\" ile başlat",
-                    description = "Shizuku uygulamasını aç → \"Start via Wireless Debugging\" " +
-                        "seçeneğine dokun → Eşleştirme kodunu gir."
+                    description = "Shizuku uygulamasını aç, \"Start via Wireless Debugging\" " +
+                        "seçeneğine dokun ve eşleştirme kodunu gir."
                 ),
                 GuideStep(
                     number = 5,
@@ -910,7 +936,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.WARNING,
-                title = "Telefonu yeniden başlatırsan...",
+                title = "Telefonu yeniden başlatırsan…",
                 body = "Shizuku servisi telefon her yeniden başlatıldığında durur. " +
                     "Yukarıdaki komutu (Yöntem A) veya Wireless ADB eşleştirmesini (Yöntem B) " +
                     "tekrar yapman gerekir. Bu, Android'in güvenlik politikasıdır; " +
@@ -924,10 +950,10 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "root-vs-adb",
-        icon = Icons.Default.Shield,
-        title = "Root vs ADB Shell: Farklar",
+        icon = Icons.Outlined.Shield,
+        title = "Root ve ADB: farklar",
         subtitle = "Yetki seviyeleri ve erişim sınırları",
-        accentColor = OmniWarning,
+        accent = GuideAccent.WARNING,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -936,7 +962,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 )
             )),
             GuideBlock.Comparison(
-                leftTitle = "ADB Shell (UID 2000)",
+                leftTitle = "Sınırlı erişim (ADB)",
                 leftItems = listOf(
                     "OmniGFX'in varsayılan modu",
                     "Root gerektirmez",
@@ -945,8 +971,8 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                     "/data/data/ çoğu cihazda KISITLI",
                     "Garanti bozulmaz"
                 ),
-                leftColor = OmniSuccess,
-                rightTitle = "Root (UID 0)",
+                leftAccent = GuideAccent.SUCCESS,
+                rightTitle = "Tam erişim (root)",
                 rightItems = listOf(
                     "Magisk/KernelSU gerekir",
                     "Tam sistem erişimi",
@@ -955,7 +981,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                     "Sistem dosyaları değiştirilebilir",
                     "Garanti geçersiz olabilir"
                 ),
-                rightColor = OmniError
+                rightAccent = GuideAccent.ERROR
             ),
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -964,11 +990,11 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 )
             )),
             GuideBlock.BulletList(listOf(
-                "PUBG Mobile → Config dosyası /sdcard/ altında → ADB Shell yeterli ✓",
-                "Call of Duty Mobile → Config dosyası /sdcard/ altında → ADB Shell yeterli ✓",
-                "Genshin Impact → Config /data/data/ altında → Root gerekli ✗ (ADB ile sınırlı)",
-                "Fortnite → Config /data/data/ altında → Root gerekli ✗",
-                "Çoğu Unity oyunu → /data/data/ altında → Root gerekli ✗"
+                "PUBG Mobile: config dosyası /sdcard/ altında, sınırlı erişim yeterli.",
+                "Call of Duty Mobile: config dosyası /sdcard/ altında, sınırlı erişim yeterli.",
+                "Genshin Impact: config /data/data/ altında, tam erişim (root) gerekir.",
+                "Fortnite: config /data/data/ altında, tam erişim (root) gerekir.",
+                "Çoğu Unity oyunu: /data/data/ altında, tam erişim (root) gerekir."
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.INFO,
@@ -986,10 +1012,10 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "wizard",
-        icon = Icons.Default.Build,
-        title = "Oyun Ekleme ve Sihirbaz",
+        icon = Icons.Outlined.Build,
+        title = "Oyun ekleme ve sihirbaz",
         subtitle = "5 adımda ilk profilini oluştur",
-        accentColor = OmniPrimary,
+        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1000,38 +1026,38 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
             GuideBlock.Steps(listOf(
                 GuideStep(
                     number = 1,
-                    title = "Oyun Seç",
+                    title = "Oyun seç",
                     description = "Ana ekrandaki + butonuna bas. Cihazında yüklü olan oyunlar " +
                         "listelenir. Değiştirmek istediğin oyunu seç."
                 ),
                 GuideStep(
                     number = 2,
-                    title = "Hedef Dosyayı Belirle",
+                    title = "Hedef dosyayı belirle",
                     description = "Oyunun config (ayar) dosyasını seç. Bilinen oyunlar için " +
                         "hazır şablonlar sunulur. Bilmiyorsan Dosya Gezgini ile bulabilirsin."
                 ),
                 GuideStep(
                     number = 3,
-                    title = "Dosyayı Çek ve Analiz Et",
+                    title = "Dosyayı çek ve çözümle",
                     description = "OmniGFX dosyayı Shizuku aracılığıyla çeker, formatını " +
                         "algılar (INI, JSON, XML) ve düzenlenebilir hale getirir."
                 ),
                 GuideStep(
                     number = 4,
-                    title = "Akıllı Editör ile Düzenle",
+                    title = "Düzenleyicide değiştir",
                     description = "Satır satır config dosyasını gör. Değerleri değiştir, " +
-                        "satır ekle/sil, pin'le."
+                        "satır ekle/sil, sabitle."
                 ),
                 GuideStep(
                     number = 5,
-                    title = "Değişkenleri Pin'le ve Kaydet",
-                    description = "Sık değiştirdiğin ayarları slider, dropdown veya toggle " +
-                        "olarak pin'le. Profil adı ver ve kaydet."
+                    title = "Değişkenleri sabitle ve kaydet",
+                    description = "Sık değiştirdiğin ayarları kaydırıcı, liste veya anahtar " +
+                        "olarak sabitle. Profil adı ver ve kaydet."
                 )
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.TIP,
-                title = "Bilinen Oyun Şablonları",
+                title = "Bilinen oyun şablonları",
                 body = "PUBG Mobile, CoD Mobile, Genshin Impact, Honkai Star Rail gibi " +
                     "popüler oyunlar için OmniGFX hazır dosya yolları sunar. Oyunu seçtiğinde " +
                     "\"Bilinen Config Dosyaları\" bölümünde bu şablonları göreceksin. " +
@@ -1041,8 +1067,8 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
                 type = CalloutType.WARNING,
                 title = "Oyunu ilk kez aç",
                 body = "Eğer oyunu hiç açmadıysan config dosyası henüz oluşmamış olabilir. " +
-                    "Dosya bulunamadı hatası alırsan: oyunu bir kez aç → birkaç saniye bekle " +
-                    "→ kapat → OmniGFX'ten tekrar dene."
+                    "Dosya bulunamadı hatası alırsan: oyunu bir kez aç, birkaç saniye bekle, " +
+                    "kapat ve OmniGFX'ten tekrar dene."
             ))
         )
     ),
@@ -1052,10 +1078,10 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "config-files",
-        icon = Icons.Default.Folder,
-        title = "Config Dosyaları Hakkında",
+        icon = Icons.Outlined.Folder,
+        title = "Config dosyaları hakkında",
         subtitle = "INI, JSON, XML — oyunların ayarlarını nasıl sakladığı",
-        accentColor = OmniInfo,
+        accent = GuideAccent.INFO,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1066,7 +1092,7 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
 
             // INI
             GuideBlock.Text(listOf(
-                GuideParagraph("1. INI Formatı", isBold = true),
+                GuideParagraph("1. INI formatı", isBold = true),
                 GuideParagraph(
                     "En yaygın oyun config formatıdır. Bölümler [köşeli parantez] içinde, " +
                     "ayarlar Anahtar=Değer şeklinde yazılır."
@@ -1094,7 +1120,7 @@ MaxSmoothedFrameRate=60""",
 
             // JSON
             GuideBlock.Text(listOf(
-                GuideParagraph("2. JSON Formatı", isBold = true),
+                GuideParagraph("2. JSON formatı", isBold = true),
                 GuideParagraph(
                     "Modern oyunlar ve Unity tabanlı oyunlar genellikle JSON kullanır. " +
                     "İçiçe nesneler ve diziler içerir."
@@ -1123,7 +1149,7 @@ MaxSmoothedFrameRate=60""",
 
             // XML
             GuideBlock.Text(listOf(
-                GuideParagraph("3. XML Formatı", isBold = true),
+                GuideParagraph("3. XML formatı", isBold = true),
                 GuideParagraph(
                     "Bazı eski oyunlar ve Unreal Engine oyunları XML kullanır. " +
                     "Etiketler ve attribute'lar içerir."
@@ -1145,10 +1171,10 @@ MaxSmoothedFrameRate=60""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "regex",
-        icon = Icons.Default.Code,
-        title = "Regex Nedir? (Basit Anlatım)",
+        icon = Icons.Outlined.Code,
+        title = "Regex nedir? (basit anlatım)",
         subtitle = "Metin içinde kalıp bulma ve değiştirme sanatı",
-        accentColor = Color(0xFFE879F9),
+        accent = GuideAccent.SECONDARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1182,10 +1208,10 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                 GuideParagraph("Regex'i parçalayalım:", isBold = true)
             )),
             GuideBlock.BulletList(listOf(
-                "r\\.PUBGDeviceFPSLow → Tam olarak bu metni ara (\\. nokta anlamına gelir)",
-                "= → Eşittir işareti",
-                "(\\d+) → Bir veya daha fazla rakam yakala (bu \"grup 1\" olur)",
-                "{{value}} → OmniGFX buraya kullanıcının slider'dan seçtiği değeri koyar"
+                "r\\.PUBGDeviceFPSLow — Tam olarak bu metni ara (\\. nokta anlamına gelir)",
+                "= — Eşittir işareti",
+                "(\\d+) — Bir veya daha fazla rakam yakala (bu \"grup 1\" olur)",
+                "{{value}} — OmniGFX buraya kullanıcının slider'dan seçtiği değeri koyar"
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.TIP,
@@ -1196,15 +1222,15 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                     "kurallardır."
             )),
             GuideBlock.Text(listOf(
-                GuideParagraph("Yaygın Regex Kalıpları (İleri Düzey)", isBold = true)
+                GuideParagraph("Yaygın regex kalıpları (ileri düzey)", isBold = true)
             )),
             GuideBlock.BulletList(listOf(
-                "\\d+ → Bir veya daha fazla rakam",
-                "[a-zA-Z]+ → Bir veya daha fazla harf",
-                "^ → Satır başı",
-                "$ → Satır sonu",
-                ".* → Herhangi bir karakter, sıfır veya daha fazla kez",
-                "(grup) → Yakalama grubu — sonradan {{value}} ile değiştirilebilir"
+                "\\d+ — Bir veya daha fazla rakam",
+                "[a-zA-Z]+ — Bir veya daha fazla harf",
+                "^ — Satır başı",
+                "$ — Satır sonu",
+                ".* — Herhangi bir karakter, sıfır veya daha fazla kez",
+                "(grup) — Yakalama grubu, sonradan {{value}} ile değiştirilebilir"
             ))
         )
     ),
@@ -1214,10 +1240,10 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "profile-types",
-        icon = Icons.Default.Settings,
-        title = "Profil Tipleri: Dinamik vs Ham Dosya",
+        icon = Icons.Outlined.Settings,
+        title = "Profil tipleri: dinamik ve ham dosya",
         subtitle = "Hangi profil tipi ne zaman kullanılır?",
-        accentColor = OmniPrimary,
+        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1226,7 +1252,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                 )
             )),
             GuideBlock.Comparison(
-                leftTitle = "Dinamik Profil",
+                leftTitle = "Dinamik profil",
                 leftItems = listOf(
                     "Slider, dropdown, toggle içerir",
                     "Tek tek ayar değiştirilebilir",
@@ -1234,8 +1260,8 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                     "Her seferinde patch uygulanır",
                     "Önerilen: Günlük kullanım"
                 ),
-                leftColor = OmniPrimary,
-                rightTitle = "Ham Dosya Profili",
+                leftAccent = GuideAccent.PRIMARY,
+                rightTitle = "Ham dosya profili",
                 rightItems = listOf(
                     "Dosyanın tam yedeğini saklar",
                     "Tek tıkla komple geri yazar",
@@ -1243,10 +1269,10 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                     "Tam geri yükleme garantisi",
                     "Önerilen: Yedekleme, deneme"
                 ),
-                rightColor = OmniWarning
+                rightAccent = GuideAccent.WARNING
             ),
             GuideBlock.Text(listOf(
-                GuideParagraph("Ne zaman Dinamik Profil kullanmalısın?", isBold = true)
+                GuideParagraph("Ne zaman dinamik profil kullanmalısın?", isBold = true)
             )),
             GuideBlock.BulletList(listOf(
                 "Sık sık FPS, grafik kalitesi gibi ayarları değiştiriyorsan",
@@ -1254,7 +1280,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                 "Bir ayarı slider ile hızlıca ayarlamak istiyorsan"
             )),
             GuideBlock.Text(listOf(
-                GuideParagraph("Ne zaman Ham Dosya Profili kullanmalısın?", isBold = true)
+                GuideParagraph("Ne zaman ham dosya profili kullanmalısın?", isBold = true)
             )),
             GuideBlock.BulletList(listOf(
                 "Config dosyasını tamamen değiştirmek istiyorsan",
@@ -1277,10 +1303,10 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "security",
-        icon = Icons.Default.Security,
-        title = "Güvenlik ve Doğrulama",
+        icon = Icons.Outlined.Security,
+        title = "Güvenlik ve doğrulama",
         subtitle = "OmniGFX dosyanı nasıl korur?",
-        accentColor = OmniSuccess,
+        accent = GuideAccent.SUCCESS,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1291,33 +1317,33 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             GuideBlock.Steps(listOf(
                 GuideStep(
                     number = 1,
-                    title = "Remote Backup (Uzak Yedek)",
+                    title = "Uzak yedek",
                     description = "Değişiklik yapmadan ÖNCE orijinal dosyanın bir yedeği " +
                         "aynı cihazda oluşturulur. Dosya adı: .config.omnigfx.<tarih>.bak"
                 ),
                 GuideStep(
                     number = 2,
-                    title = "Local Backup (Yerel Yedek)",
+                    title = "Yerel yedek",
                     description = "Çekilen dosyanın bir kopyası OmniGFX'in kendi " +
                         "cache dizinine kaydedilir."
                 ),
                 GuideStep(
                     number = 3,
-                    title = "Atomic Push (Atomik Yazma)",
+                    title = "Atomik yazma",
                     description = "Yeni dosya önce geçici bir isimle yazılır, sonra " +
                         "orijinal dosya ile tek işlemde değiştirilir. Yazma sırasında " +
                         "telefon kapanırsa bile orijinal dosya bozulmaz."
                 ),
                 GuideStep(
                     number = 4,
-                    title = "Metadata Koruma",
+                    title = "Dosya kimliği koruma",
                     description = "Dosyanın sahibi (UID/GID), izinleri (chmod) ve " +
                         "SELinux context'i (chcon) korunur. Oyun, dosyayı kendi " +
                         "yazmış gibi görür."
                 ),
                 GuideStep(
                     number = 5,
-                    title = "Hash Doğrulama",
+                    title = "Hash doğrulama",
                     description = "Yazma işleminden sonra dosyanın SHA-256 hash'i " +
                         "hesaplanır ve beklenen değerle karşılaştırılır. Eşleşmezse " +
                         "otomatik rollback yapılır."
@@ -1325,7 +1351,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.INFO,
-                title = "Otomatik Rollback",
+                title = "Otomatik geri alma",
                 body = "Eğer doğrulama başarısız olursa (dosya bozuk yazılmışsa, " +
                     "hash eşleşmezse), OmniGFX otomatik olarak son yedekten geri " +
                     "yükleme yapar. Sen hiçbir şey yapmana gerek kalmaz."
@@ -1347,15 +1373,15 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "troubleshooting",
-        icon = Icons.AutoMirrored.Filled.HelpOutline,
-        title = "Sık Karşılaşılan Sorunlar",
+        icon = Icons.AutoMirrored.Outlined.HelpOutline,
+        title = "Sık karşılaşılan sorunlar",
         subtitle = "Çözümler ve ipuçları",
-        accentColor = OmniWarning,
+        accent = GuideAccent.WARNING,
         blocks = listOf(
             // Sorun 1
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Shizuku çalışmıyor\" hatası",
+                    "\"Shizuku çalışmıyor\" hatası",
                     isBold = true
                 )
             )),
@@ -1372,7 +1398,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             // Sorun 2
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Dosya bulunamadı\" hatası",
+                    "\"Dosya bulunamadı\" hatası",
                     isBold = true
                 )
             )),
@@ -1386,7 +1412,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             // Sorun 3
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Dosya okunabiliyor ama yazılamıyor\" hatası",
+                    "\"Dosya okunabiliyor ama yazılamıyor\" hatası",
                     isBold = true
                 )
             )),
@@ -1405,7 +1431,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             // Sorun 4
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Push doğrulanamadı\" hatası",
+                    "\"Push doğrulanamadı\" hatası",
                     isBold = true
                 )
             )),
@@ -1422,22 +1448,22 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             // Sorun 5
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Shizuku izni reddedildi\" hatası",
+                    "\"Shizuku izni reddedildi\" hatası",
                     isBold = true
                 )
             )),
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "Çözüm: Shizuku uygulamasını aç → \"Authorized apps\" bölümünden " +
-                    "OmniGFX'i bul → İzni manuel olarak ver. Veya OmniGFX'ten " +
-                    "\"Tekrar İzin İste\" butonuna bas."
+                    "Çözüm: Shizuku uygulamasını aç, \"Authorized apps\" bölümünden " +
+                    "OmniGFX'i bul ve izni manuel olarak ver. Veya OmniGFX'ten " +
+                    "\"Tekrar izin iste\" butonuna bas."
                 )
             )),
 
             // Sorun 6
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ \"Config parse edilemedi\" hatası",
+                    "\"Config parse edilemedi\" hatası",
                     isBold = true
                 )
             )),
@@ -1454,7 +1480,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
             // Sorun 7
             GuideBlock.Text(listOf(
                 GuideParagraph(
-                    "❌ Xiaomi/Redmi cihazlarda Shizuku duruyor",
+                    "Xiaomi/Redmi cihazlarda Shizuku duruyor",
                     isBold = true
                 )
             )),
@@ -1464,8 +1490,8 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
                 )
             )),
             GuideBlock.BulletList(listOf(
-                "Ayarlar → Uygulamalar → Shizuku → Pil tasarrufu → Kısıtlama yok",
-                "Ayarlar → Uygulamalar → Shizuku → Otomatik başlatma → Açık",
+                "Ayarlar › Uygulamalar › Shizuku › Pil tasarrufu › Kısıtlama yok",
+                "Ayarlar › Uygulamalar › Shizuku › Otomatik başlatma › Açık",
                 "Shizuku'yu kilitli uygulamalar listesine ekle"
             ))
         )
@@ -1476,10 +1502,10 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "advanced",
-        icon = Icons.Default.Psychology,
-        title = "İleri Düzey İpuçları",
+        icon = Icons.Outlined.Psychology,
+        title = "İleri düzey ipuçları",
         subtitle = "Uzmanlar için ince detaylar",
-        accentColor = Color(0xFFE879F9),
+        accent = GuideAccent.SECONDARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1490,7 +1516,7 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
 
             // İpucu 1
             GuideBlock.Text(listOf(
-                GuideParagraph("1. Özel Regex Kuralları Yazma", isBold = true),
+                GuideParagraph("1. Özel regex kuralları yazma", isBold = true),
                 GuideParagraph(
                     "Sihirbazın \"Enjeksiyon Kuralı\" bölümünde kendi regex pattern'larını " +
                     "yazabilirsin. Bu, standart parser'ların desteklemediği formatlar için " +
@@ -1510,7 +1536,7 @@ Replacement: "quality": "{{value}}"
 
             // İpucu 2
             GuideBlock.Text(listOf(
-                GuideParagraph("2. Dosya Gezgini ile Bilinmeyen Dosyaları Bulma", isBold = true),
+                GuideParagraph("2. Dosya gezgini ile bilinmeyen dosyaları bulma", isBold = true),
                 GuideParagraph(
                     "Sihirbazın dosya gezgini, Shizuku üzerinden cihazın tüm dosya " +
                     "sistemini gösterir. Bilinmeyen bir oyun için config dosyasını " +
@@ -1518,15 +1544,15 @@ Replacement: "quality": "{{value}}"
                 )
             )),
             GuideBlock.BulletList(listOf(
-                "/sdcard/Android/data/<paket_adı>/files/ → En yaygın konum",
-                "/data/data/<paket_adı>/files/ → Root gerekli",
-                "/data/data/<paket_adı>/shared_prefs/ → XML tercih dosyaları",
-                "/sdcard/Android/data/<paket_adı>/Saved/Config/ → Unreal Engine oyunları"
+                "/sdcard/Android/data/<paket_adı>/files/ — En yaygın konum",
+                "/data/data/<paket_adı>/files/ — Root gerekli",
+                "/data/data/<paket_adı>/shared_prefs/ — XML tercih dosyaları",
+                "/sdcard/Android/data/<paket_adı>/Saved/Config/ — Unreal Engine oyunları"
             )),
 
             // İpucu 3
             GuideBlock.Text(listOf(
-                GuideParagraph("3. Metadata'nın Önemi", isBold = true),
+                GuideParagraph("3. Metadata'nın önemi", isBold = true),
                 GuideParagraph(
                     "Android'de her dosyanın bir sahibi (UID:GID), izin modu (chmod) ve " +
                     "SELinux context'i vardır. Bunlar yanlışsa oyun dosyayı okuyamaz."
@@ -1554,27 +1580,27 @@ stat -c '%u %g %a %C' /sdcard/Android/data/com.tencent.ig/files/UserCustom.ini
 
             // İpucu 4
             GuideBlock.Text(listOf(
-                GuideParagraph("4. Profil Import/Export", isBold = true),
+                GuideParagraph("4. Profilleri dışa ve içe aktarma", isBold = true),
                 GuideParagraph(
                     "OmniGFX profillerini JSON olarak dışa aktarabilir ve başka " +
                     "cihazlarda içe aktarabilirsin. Marketplace bölümünde topluluk " +
                     "tarafından paylaşılan profilleri güvenlik taramasından geçirerek " +
-                    "import edebilirsin."
+                    "içe aktarabilirsin."
                 )
             )),
             GuideBlock.Callout(GuideCallout(
                 type = CalloutType.DANGER,
-                title = "Güvenlik uyarısı: Import profilleri",
+                title = "Güvenlik uyarısı: içe aktarılan profiller",
                 body = "İnternetten indirilen profiller, /system/ veya /data/system/ " +
                     "gibi kritik dizinlere yazmaya çalışabilir. OmniGFX'in güvenlik " +
                     "tarayıcısı bunları engeller ama yine de dikkatli ol. Sadece " +
-                    "güvenilir kaynaklardan profil import et. Marketplace'teki " +
-                    "\"Risk Skoru\" değerini kontrol et."
+                    "güvenilir kaynaklardan profil içe aktar. Marketplace'teki " +
+                    "\"Risk skoru\" değerini kontrol et."
             )),
 
             // İpucu 5
             GuideBlock.Text(listOf(
-                GuideParagraph("5. Dry Run (Kuru Çalıştırma)", isBold = true),
+                GuideParagraph("5. Dry Run (kuru çalıştırma)", isBold = true),
                 GuideParagraph(
                     "Bir profili gerçekten uygulamadan önce \"Dry Run\" modunda " +
                     "test edebilirsin. Dry Run, tüm adımları yapar ama son yazma " +
@@ -1585,7 +1611,7 @@ stat -c '%u %g %a %C' /sdcard/Android/data/com.tencent.ig/files/UserCustom.ini
 
             // İpucu 6
             GuideBlock.Text(listOf(
-                GuideParagraph("6. Config Dosyası Formatını Elle Belirleme", isBold = true),
+                GuideParagraph("6. Config dosyası formatını elle belirleme", isBold = true),
                 GuideParagraph(
                     "OmniGFX dosya uzantısına ve içeriğe bakarak formatı otomatik " +
                     "algılar. Ama bazen yanlış algılayabilir. Editör ekranında " +
@@ -1596,7 +1622,7 @@ stat -c '%u %g %a %C' /sdcard/Android/data/com.tencent.ig/files/UserCustom.ini
 
             // İpucu 7
             GuideBlock.Text(listOf(
-                GuideParagraph("7. Backup Retention (Yedek Saklama)", isBold = true),
+                GuideParagraph("7. Yedek saklama (backup retention)", isBold = true),
                 GuideParagraph(
                     "Varsayılan olarak OmniGFX her dosya için son 3 yedeği saklar. " +
                     "Eski yedekler otomatik temizlenir. Bu sayıyı Profil Seçenekleri'nden " +
@@ -1606,7 +1632,7 @@ stat -c '%u %g %a %C' /sdcard/Android/data/com.tencent.ig/files/UserCustom.ini
 
             // İpucu 8
             GuideBlock.Text(listOf(
-                GuideParagraph("8. Oyunu Force-Stop Etme", isBold = true),
+                GuideParagraph("8. Oyunu zorla durdurma (force-stop)", isBold = true),
                 GuideParagraph(
                     "Config değişikliğinin etkili olması için oyunun kapalı olması gerekir. " +
                     "OmniGFX, profil uygularken otomatik olarak oyunu force-stop edebilir. " +
@@ -1629,34 +1655,34 @@ monkey -p com.tencent.ig -c android.intent.category.LAUNCHER 1""",
     // ─────────────────────────────────────────────────────────
     GuideSection(
         id = "glossary",
-        icon = Icons.Default.Speed,
-        title = "Terim Sözlüğü",
+        icon = Icons.Outlined.Speed,
+        title = "Terim sözlüğü",
         subtitle = "Karşına çıkabilecek teknik terimler",
-        accentColor = OmniInfo,
+        accent = GuideAccent.INFO,
         blocks = listOf(
             GuideBlock.BulletList(listOf(
-                "ADB (Android Debug Bridge) → Bilgisayar ile telefon arasında köprü kuran araç",
-                "Atomic Push → Dosya yazma işleminin tek seferde, kesintisiz yapılması",
-                "Config → Oyunun ayarlarını saklayan yapılandırma dosyası",
-                "Dry Run → İşlemi gerçekten yapmadan sadece simüle etme",
-                "Force-Stop → Bir uygulamanın tüm süreçlerini zorla durdurma",
-                "Hash (SHA-256) → Dosya içeriğinin benzersiz dijital parmak izi",
-                "INI → Bölümler ve Anahtar=Değer çiftlerinden oluşan config formatı",
-                "JSON → İçiçe nesneler ve dizilerden oluşan veri formatı",
-                "JSONPath → JSON içinde belirli bir alana erişim yolu (örn: graphics.fps)",
-                "Metadata → Dosyanın sahibi, izinleri ve SELinux context'i",
-                "Patch → Config dosyasına yapılan tek bir değişiklik",
-                "Pin → Bir ayarı slider/dropdown olarak profil'e ekleme",
-                "PMP (Pull-Modify-Push) → OmniGFX'in 3 aşamalı dosya işlemi pipeline'ı",
-                "Regex → Metin içinde kalıp bulma dili",
-                "Remote Backup → Cihaz üzerinde oluşturulan orijinal dosya yedeği",
-                "Rollback → Bozuk yazma sonrası yedekten geri yükleme",
-                "Root → Android'in en yüksek yetki seviyesi (UID 0)",
-                "SELinux → Android'in güvenlik modülü; dosya erişim politikalarını yönetir",
-                "Shizuku → Uygulamalara ADB yetkisi veren açık kaynak araç",
-                "UID/GID → Dosya sahibinin kullanıcı ve grup numarası",
-                "Wireless ADB → Kablosuz hata ayıklama (Android 11+)",
-                "XML → Etiket tabanlı yapılandırılmış veri formatı"
+                "ADB (Android Debug Bridge) — Bilgisayar ile telefon arasında köprü kuran araç",
+                "Atomic Push — Dosya yazma işleminin tek seferde, kesintisiz yapılması",
+                "Config — Oyunun ayarlarını saklayan yapılandırma dosyası",
+                "Dry Run — İşlemi gerçekten yapmadan sadece simüle etme",
+                "Force-Stop — Bir uygulamanın tüm süreçlerini zorla durdurma",
+                "Hash (SHA-256) — Dosya içeriğinin benzersiz dijital parmak izi",
+                "INI — Bölümler ve Anahtar=Değer çiftlerinden oluşan config formatı",
+                "JSON — İçiçe nesneler ve dizilerden oluşan veri formatı",
+                "JSONPath — JSON içinde belirli bir alana erişim yolu (örn: graphics.fps)",
+                "Metadata — Dosyanın sahibi, izinleri ve SELinux context'i",
+                "Patch — Config dosyasına yapılan tek bir değişiklik",
+                "Pin — Bir ayarı slider/dropdown olarak profile ekleme",
+                "PMP (Pull-Modify-Push) — OmniGFX'in 3 aşamalı dosya işlemi pipeline'ı",
+                "Regex — Metin içinde kalıp bulma dili",
+                "Remote Backup — Cihaz üzerinde oluşturulan orijinal dosya yedeği",
+                "Rollback — Bozuk yazma sonrası yedekten geri yükleme",
+                "Root — Android'in en yüksek yetki seviyesi (UID 0)",
+                "SELinux — Android'in güvenlik modülü; dosya erişim politikalarını yönetir",
+                "Shizuku — Uygulamalara ADB yetkisi veren açık kaynak araç",
+                "UID/GID — Dosya sahibinin kullanıcı ve grup numarası",
+                "Wireless ADB — Kablosuz hata ayıklama (Android 11+)",
+                "XML — Etiket tabanlı yapılandırılmış veri formatı"
             ))
         )
     )

@@ -207,7 +207,7 @@ class SetupWizardViewModel @Inject constructor(
                     fileMetadata = null,
                     draftId = null,
                     error = null,
-                    pullProgressMessage = "Shizuku bağlantısı kontrol ediliyor...",
+                    pullProgressMessage = "Shizuku bağlantısı kontrol ediliyor…",
                     pathProbeMessages = emptyList(),
                     isFileTooLarge = false
                 )
@@ -225,7 +225,7 @@ class SetupWizardViewModel @Inject constructor(
                 }
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Dosya erişilebilirliği kontrol ediliyor...")
+                    it.copy(pullProgressMessage = "Dosya erişilebilirliği kontrol ediliyor…")
                 }
                 val probeResult = pathProbe.probe(remotePath)
                 _state.update {
@@ -259,7 +259,7 @@ class SetupWizardViewModel @Inject constructor(
                 }
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Dosya bilgileri alınıyor (stat)...")
+                    it.copy(pullProgressMessage = "Dosya bilgileri alınıyor…")
                 }
                 val metadata = try {
                     pmpEngine.stat(remotePath)
@@ -270,7 +270,7 @@ class SetupWizardViewModel @Inject constructor(
                 }
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Dosya Shizuku üzerinden çekiliyor...")
+                    it.copy(pullProgressMessage = "Dosya Shizuku üzerinden çekiliyor…")
                 }
                 val stamp = System.currentTimeMillis()
                 val fileName = remotePath.substringAfterLast('/').ifBlank { "config" }
@@ -314,7 +314,7 @@ class SetupWizardViewModel @Inject constructor(
                 val isLargeFile = fileSize > WARN_FILE_SIZE_BYTES
 
                 _state.update {
-                    it.copy(pullProgressMessage = "İçerik okunuyor...")
+                    it.copy(pullProgressMessage = "İçerik okunuyor…")
                 }
                 val content = withContext(Dispatchers.IO) {
                     val bytes = cacheFile.readBytes()
@@ -325,19 +325,19 @@ class SetupWizardViewModel @Inject constructor(
                 }
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Dosya formatı algılanıyor...")
+                    it.copy(pullProgressMessage = "Dosya formatı algılanıyor…")
                 }
                 val format = detectFormat(remotePath, content)
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Config yapısı çözümleniyor...")
+                    it.copy(pullProgressMessage = "Config yapısı çözümleniyor…")
                 }
                 val nodes = withContext(Dispatchers.IO) {
                     ConfigTreeBuilder.build(content, format)
                 }
 
                 _state.update {
-                    it.copy(pullProgressMessage = "Taslak kaydediliyor...")
+                    it.copy(pullProgressMessage = "Taslak kaydediliyor…")
                 }
                 val draftId = java.util.UUID.randomUUID().toString()
                 val localFileName = "wizard_${stamp}_$safeName"
@@ -384,7 +384,7 @@ class SetupWizardViewModel @Inject constructor(
                         draftId = draftId,
                         pullProgressMessage = "",
                         error = if (isLargeFile) {
-                            "⚠️ Dosya büyük (${fileSize / 1024} KB). Düzenleme yavaş olabilir."
+                            "Dosya büyük (${fileSize / 1024} KB). Düzenleme yavaş olabilir."
                         } else null
                     )
                 }
@@ -716,11 +716,11 @@ class SetupWizardViewModel @Inject constructor(
 
     private fun buildPushSteps(state: SetupWizardState): List<PushProgressStep> {
         return listOf(
-            PushProgressStep("Config Serialize Ediliyor"),
-            PushProgressStep("Geçici Dosya Oluşturuluyor"),
-            PushProgressStep("Shizuku ile Hedefe Yazılıyor"),
-            PushProgressStep("Metadata (UID/SELinux) Korunuyor"),
-            PushProgressStep("Hash Doğrulaması Yapılıyor")
+            PushProgressStep("Config hazırlanıyor"),
+            PushProgressStep("Geçici dosya oluşturuluyor"),
+            PushProgressStep("Hedefe yazılıyor"),
+            PushProgressStep("Dosya izinleri korunuyor"),
+            PushProgressStep("İçerik doğrulanıyor")
         )
     }
 

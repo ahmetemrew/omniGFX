@@ -1,6 +1,5 @@
 package com.basitce.gfx.feature.feature_wizard.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,12 +14,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -40,17 +37,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniOnPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ConfigNode
 import com.basitce.gfx.feature.feature_wizard.viewmodel.PinnedVariable
 import com.basitce.gfx.feature.feature_wizard.viewmodel.UiComponentType
@@ -64,6 +54,8 @@ fun AdvancedPinSheet(
     onSave: (PinnedVariable) -> Unit,
     onRemovePin: () -> Unit
 ) {
+    val spacing = OmniTheme.spacing
+
     var selectedType by remember(currentVariable) {
         mutableStateOf(currentVariable?.uiComponentType ?: UiComponentType.SLIDER)
     }
@@ -93,13 +85,13 @@ fun AdvancedPinSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = OmniSurface,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(topStart = OmniRadius.lg, topEnd = OmniRadius.lg)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = spacing.screen)
                 .navigationBarsPadding()
         ) {
             Row(
@@ -109,46 +101,42 @@ fun AdvancedPinSheet(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Değişken Yapılandır",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
+                        text = "Değişkeni yapılandır",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = node.path,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = OmniOnSurfaceVariant,
+                        style = OmniTheme.mono.micro,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
                     )
                 }
                 if (currentVariable != null) {
                     IconButton(onClick = onRemovePin) {
                         Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Pini Kaldır",
-                            tint = OmniError
+                            Icons.Outlined.Delete,
+                            contentDescription = "Sabiti kaldır",
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xxl))
 
             OutlinedTextField(
                 value = label,
                 onValueChange = { label = it },
-                label = { Text("Kullanıcı Etiketi") },
-                placeholder = { Text("örn: FPS Sınırı") },
+                label = { Text("Görünen ad") },
+                placeholder = { Text("örn: FPS sınırı") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = pinTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(OmniRadius.sm)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.listItem))
 
             OutlinedTextField(
                 value = description,
@@ -158,10 +146,10 @@ fun AdvancedPinSheet(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = pinTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(OmniRadius.sm)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xxl))
 
             var typeExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -169,10 +157,10 @@ fun AdvancedPinSheet(
                 onExpandedChange = { typeExpanded = !typeExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedType.displayName(),
+                    value = selectedType.label,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Arayüz Bileşeni") },
+                    label = { Text("Arayüz bileşeni") },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded)
                     },
@@ -180,15 +168,16 @@ fun AdvancedPinSheet(
                         .fillMaxWidth()
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                     colors = pinTextFieldColors(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(OmniRadius.sm)
                 )
                 ExposedDropdownMenu(
                     expanded = typeExpanded,
-                    onDismissRequest = { typeExpanded = false }
+                    onDismissRequest = { typeExpanded = false },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     UiComponentType.entries.forEach { type ->
                         DropdownMenuItem(
-                            text = { Text(type.displayName()) },
+                            text = { Text(type.label) },
                             onClick = {
                                 selectedType = type
                                 typeExpanded = false
@@ -198,71 +187,67 @@ fun AdvancedPinSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xxl))
 
             when (selectedType) {
                 UiComponentType.SLIDER -> {
                     Text(
-                        text = "Slider Aralığı",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
+                        text = "Kaydırıcı aralığı",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(modifier = Modifier.height(spacing.sm))
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                         OutlinedTextField(
                             value = min,
                             onValueChange = { min = it },
-                            label = { Text("Min") },
+                            label = { Text("En az") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = pinTextFieldColors(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                         OutlinedTextField(
                             value = max,
                             onValueChange = { max = it },
-                            label = { Text("Max") },
+                            label = { Text("En çok") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = pinTextFieldColors(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                         OutlinedTextField(
                             value = step,
                             onValueChange = { step = it },
-                            label = { Text("Step") },
+                            label = { Text("Adım") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = pinTextFieldColors(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                     }
                 }
 
                 UiComponentType.DROPDOWN -> {
                     Text(
-                        text = "Eşleştirme Tablosu",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnSurface
+                        text = "Eşleştirme tablosu",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Kullanıcı sol tarafı seçer, dosyaya sağ taraf yazılır.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(spacing.listItem))
 
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm),
                         modifier = Modifier.heightIn(max = 200.dp)
                     ) {
                         items(mappings.entries.toList(), key = { it.key }) { entry ->
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 OutlinedTextField(
@@ -273,12 +258,12 @@ fun AdvancedPinSheet(
                                     singleLine = true,
                                     readOnly = true,
                                     colors = pinTextFieldColors(),
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(OmniRadius.sm)
                                 )
                                 Icon(
-                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    Icons.AutoMirrored.Outlined.ArrowForward,
                                     contentDescription = null,
-                                    tint = OmniOnSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 OutlinedTextField(
@@ -292,7 +277,7 @@ fun AdvancedPinSheet(
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     colors = pinTextFieldColors(),
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(OmniRadius.sm)
                                 )
                                 IconButton(
                                     onClick = {
@@ -302,20 +287,20 @@ fun AdvancedPinSheet(
                                     }
                                 ) {
                                     Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Sil",
-                                        tint = OmniError,
-                                        modifier = Modifier.size(16.dp)
+                                        Icons.Outlined.Close,
+                                        contentDescription = "Seçeneği sil",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.sm))
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
@@ -325,7 +310,7 @@ fun AdvancedPinSheet(
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = pinTextFieldColors(),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                         OutlinedTextField(
                             value = newOptionValue,
@@ -334,7 +319,7 @@ fun AdvancedPinSheet(
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = pinTextFieldColors(),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                         IconButton(
                             onClick = {
@@ -348,9 +333,9 @@ fun AdvancedPinSheet(
                             }
                         ) {
                             Icon(
-                                Icons.Default.Add,
-                                contentDescription = "Ekle",
-                                tint = OmniPrimary,
+                                Icons.Outlined.Add,
+                                contentDescription = "Seçenek ekle",
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -359,9 +344,9 @@ fun AdvancedPinSheet(
 
                 UiComponentType.TOGGLE -> {
                     Text(
-                        text = "Aç/Kapa: 1 = Açık, 0 = Kapalı",
+                        text = "Aç/kapa: 1 = açık, 0 = kapalı",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -369,14 +354,15 @@ fun AdvancedPinSheet(
                     Text(
                         text = "Serbest metin girişi. Kullanıcı istediği değeri yazabilir.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OmniOnSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.xxl))
 
-            Button(
+            OmniPrimaryButton(
+                text = "Değişkeni kaydet",
                 onClick = {
                     val variable = PinnedVariable(
                         path = node.path,
@@ -392,45 +378,23 @@ fun AdvancedPinSheet(
                     )
                     onSave(variable)
                 },
-                enabled = label.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OmniPrimary)
-            ) {
-                Text(
-                    text = "Değişkeni Kaydet",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = OmniOnPrimary
-                )
-            }
+                enabled = label.isNotBlank()
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.lg))
         }
-    }
-}
-
-private fun UiComponentType.displayName(): String {
-    return when (this) {
-        UiComponentType.SLIDER -> "Slider (Kaydırıcı)"
-        UiComponentType.DROPDOWN -> "Dropdown (Açılır Liste)"
-        UiComponentType.TOGGLE -> "Toggle (Aç/Kapa)"
-        UiComponentType.TEXT_INPUT -> "Metin Girişi"
     }
 }
 
 @Composable
 private fun pinTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = OmniSurfaceElevated,
-    unfocusedContainerColor = OmniSurfaceElevated,
-    focusedBorderColor = OmniPrimary,
-    unfocusedBorderColor = OmniOutline,
-    focusedTextColor = OmniOnSurface,
-    unfocusedTextColor = OmniOnSurface,
-    focusedLabelColor = OmniPrimary,
-    unfocusedLabelColor = OmniOnSurfaceVariant,
-    cursorColor = OmniPrimary
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    cursorColor = MaterialTheme.colorScheme.primary
 )

@@ -3,7 +3,6 @@ package com.basitce.gfx.feature.feature_wizard.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,19 +20,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,23 +42,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.basitce.gfx.core.core_ui.theme.OmniBackground
-import com.basitce.gfx.core.core_ui.theme.OmniError
-import com.basitce.gfx.core.core_ui.theme.OmniOnPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurface
-import com.basitce.gfx.core.core_ui.theme.OmniOnSurfaceVariant
-import com.basitce.gfx.core.core_ui.theme.OmniOutline
-import com.basitce.gfx.core.core_ui.theme.OmniOutlineStrong
-import com.basitce.gfx.core.core_ui.theme.OmniPrimary
-import com.basitce.gfx.core.core_ui.theme.OmniSuccess
-import com.basitce.gfx.core.core_ui.theme.OmniSurface
-import com.basitce.gfx.core.core_ui.theme.OmniSurfaceElevated
-import com.basitce.gfx.core.core_ui.theme.OmniWarning
+import com.basitce.gfx.core.core_engine.workflow.DetectedFormat
+import com.basitce.gfx.core.core_ui.components.OmniErrorCard
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTone
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ConfigNode
 import com.basitce.gfx.feature.feature_wizard.viewmodel.MoveDirection
 import com.basitce.gfx.feature.feature_wizard.viewmodel.NodeType
@@ -79,6 +66,7 @@ fun StepEdit(
     var searchQuery by remember { mutableStateOf("") }
     var showDiffPreview by remember { mutableStateOf(false) }
     var showPinSheetFor by remember { mutableStateOf<ConfigNode?>(null) }
+    val spacing = OmniTheme.spacing
 
     val filteredNodes = remember(state.configNodes, searchQuery) {
         if (searchQuery.isBlank()) state.configNodes
@@ -92,43 +80,34 @@ fun StepEdit(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(OmniBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Surface(
-            color = OmniSurface,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = spacing.screen, vertical = spacing.md)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Akıllı Config Editörü",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = OmniOnSurface
-                        )
-                        Text(
-                            text = "${state.configNodes.size} satır • ${state.detectedFormat.label}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OmniOnSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "${state.configNodes.size} satır, ${state.detectedFormat.label} biçimi",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row {
                         IconButton(
                             onClick = { viewModel.undo() },
                             enabled = state.canUndo
                         ) {
                             Icon(
-                                Icons.AutoMirrored.Filled.Undo,
-                                contentDescription = "Geri Al",
-                                tint = if (state.canUndo) OmniOnSurface
-                                    else OmniOnSurface.copy(alpha = 0.3f),
+                                Icons.AutoMirrored.Outlined.Undo,
+                                contentDescription = "Geri al",
+                                tint = if (state.canUndo) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -137,25 +116,25 @@ fun StepEdit(
                             enabled = state.canRedo
                         ) {
                             Icon(
-                                Icons.AutoMirrored.Filled.Redo,
-                                contentDescription = "İleri Al",
-                                tint = if (state.canRedo) OmniOnSurface
-                                    else OmniOnSurface.copy(alpha = 0.3f),
+                                Icons.AutoMirrored.Outlined.Redo,
+                                contentDescription = "İleri al",
+                                tint = if (state.canRedo) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                         IconButton(onClick = { showDiffPreview = true }) {
                             Icon(
-                                Icons.Default.Visibility,
-                                contentDescription = "Diff Önizleme",
-                                tint = OmniPrimary,
+                                Icons.Outlined.Visibility,
+                                contentDescription = "Değişiklikleri önizle",
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
 
                 OutlinedTextField(
                     value = searchQuery,
@@ -163,24 +142,24 @@ fun StepEdit(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            "Satır, anahtar veya değer ara...",
-                            color = OmniOnSurfaceVariant
+                            "Satır, anahtar veya değer ara",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     leadingIcon = {
                         Icon(
-                            Icons.Default.Search,
+                            Icons.Outlined.Search,
                             contentDescription = null,
-                            tint = OmniOnSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotBlank()) {
                             IconButton(onClick = { searchQuery = "" }) {
                                 Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = "Temizle",
-                                    tint = OmniOnSurfaceVariant
+                                    Icons.Outlined.Clear,
+                                    contentDescription = "Aramayı temizle",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -188,76 +167,72 @@ fun StepEdit(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = OmniSurfaceElevated,
-                        unfocusedContainerColor = OmniSurfaceElevated,
-                        focusedBorderColor = OmniPrimary,
-                        unfocusedBorderColor = OmniOutline,
-                        focusedTextColor = OmniOnSurface,
-                        unfocusedTextColor = OmniOnSurface
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(OmniRadius.sm)
                 )
 
                 if (state.hasUnsavedChanges) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "● Kaydedilmemiş değişiklikler var",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = OmniWarning
+                    Spacer(modifier = Modifier.height(spacing.sm))
+                    OmniStatusChip(
+                        text = "Kaydedilmemiş değişiklik var",
+                        tone = OmniTone.Warning
                     )
                 }
             }
         }
 
-        state.error?.let { Text(it, color = OmniError, modifier = Modifier.padding(16.dp)) }
+        state.error?.let { error ->
+            OmniErrorCard(
+                title = "Düzenleme sorunu",
+                message = error,
+                modifier = Modifier.padding(horizontal = spacing.screen, vertical = spacing.sm)
+            )
+        }
+
         LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = spacing.screen, vertical = spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             items(filteredNodes, key = { it.id }) { node ->
                 ConfigLineItem(
                     node = node,
                     structuralEnabled = state.detectedFormat in listOf(
-                        com.basitce.gfx.core.core_engine.workflow.DetectedFormat.INI,
-                        com.basitce.gfx.core.core_engine.workflow.DetectedFormat.PLAIN_TEXT),
+                        DetectedFormat.INI,
+                        DetectedFormat.PLAIN_TEXT
+                    ),
                     onValueChange = { viewModel.updateNodeValue(node.id, it) },
                     onPinClick = { showPinSheetFor = node },
                     onDelete = { viewModel.deleteNode(node.id) },
                     onMoveUp = { viewModel.moveNode(node.id, MoveDirection.UP) },
                     onMoveDown = { viewModel.moveNode(node.id, MoveDirection.DOWN) },
-                    onAddBelow = { viewModel.addNodeAfter(node.id) }
+                    onAddBelow = { viewModel.addNodeAfter(node.id) },
+                    modifier = Modifier.animateItem()
                 )
             }
         }
 
         Surface(
-            color = OmniSurface,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box(
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(horizontal = spacing.screen, vertical = spacing.md)
                     .navigationBarsPadding()
             ) {
-                Button(
-                    onClick = { viewModel.proceedToStep4() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = OmniPrimary)
-                ) {
-                    Text(
-                        text = "Değişkenleri Yapılandır & Kaydet →",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = OmniOnPrimary
-                    )
-                }
+                OmniPrimaryButton(
+                    text = "Değişkenleri ayarla",
+                    onClick = { viewModel.proceedToStep4() }
+                )
             }
         }
     }
@@ -288,6 +263,11 @@ fun StepEdit(
     }
 }
 
+/**
+ * Config satırı: veri öğesi olduğu için 8dp ve kenarlıksız zemin. Kenarlık yalnızca
+ * durumu anlatır — sabitlenmiş = petrol, değişmiş = pirinç. Satır içi eylemler
+ * ikinci satırda metin butonu olarak durur ki dokunma hedefleri ≥48dp kalsın.
+ */
 @Composable
 private fun ConfigLineItem(
     node: ConfigNode,
@@ -297,60 +277,55 @@ private fun ConfigLineItem(
     onDelete: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
-    onAddBelow: () -> Unit
+    onAddBelow: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var localValue by remember(node.value) { mutableStateOf(node.value) }
+    val spacing = OmniTheme.spacing
 
     val isPinned = node.isPinned
     val isCommentOrBlank = node.type == NodeType.COMMENT ||
         node.type == NodeType.BLANK ||
         node.type == NodeType.SECTION_HEADER
 
-    val bgColor = when {
-        isPinned -> OmniPrimary.copy(alpha = 0.08f)
-        node.isModified -> OmniWarning.copy(alpha = 0.05f)
-        node.type == NodeType.COMMENT -> OmniSurface.copy(alpha = 0.5f)
-        node.type == NodeType.BLANK -> OmniSurface.copy(alpha = 0.3f)
-        else -> OmniSurface
-    }
-
     val borderColor = when {
-        isPinned -> OmniPrimary
-        node.isModified -> OmniWarning.copy(alpha = 0.5f)
-        node.type == NodeType.SECTION_HEADER -> OmniPrimary.copy(alpha = 0.3f)
-        else -> OmniOutline
+        isPinned -> MaterialTheme.colorScheme.primary
+        node.isModified -> MaterialTheme.colorScheme.secondary
+        else -> null
     }
 
     Surface(
-        color = bgColor,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(OmniRadius.sm),
+        modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .then(
+                if (borderColor != null) Modifier.border(
+                    1.dp,
+                    borderColor,
+                    RoundedCornerShape(OmniRadius.sm)
+                ) else Modifier
+            )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(spacing.md)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${node.lineNumber}",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = FontFamily.Monospace
-                    ),
-                    color = OmniOnSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.width(32.dp)
+                    style = OmniTheme.mono.micro,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.width(28.dp)
                 )
 
                 if (!isCommentOrBlank) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = node.key,
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace
-                            ),
-                            color = if (isPinned) OmniPrimary else OmniOnSurface,
+                            style = OmniTheme.mono.key,
+                            color = if (isPinned) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -362,116 +337,85 @@ private fun ConfigLineItem(
                                 onValueChange(it)
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodySmall.copy(
-                                fontFamily = FontFamily.Monospace
-                            ),
+                            textStyle = OmniTheme.mono.key,
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = OmniBackground,
-                                unfocusedContainerColor = OmniBackground,
-                                focusedBorderColor = if (isPinned) OmniPrimary
-                                    else OmniOutlineStrong,
-                                unfocusedBorderColor = OmniOutline,
-                                focusedTextColor = OmniOnSurface,
-                                unfocusedTextColor = OmniOnSurface
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                focusedBorderColor = if (isPinned) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                             ),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(OmniRadius.sm)
                         )
                     }
                 } else {
                     Text(
-                        text = node.rawLine.ifBlank { "↔ Boş Satır" },
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        text = node.rawLine.ifBlank { "Boş satır" },
+                        style = OmniTheme.mono.key,
                         color = when (node.type) {
-                            NodeType.COMMENT -> OmniOnSurfaceVariant.copy(alpha = 0.6f)
-                            NodeType.SECTION_HEADER -> OmniPrimary
-                            else -> OmniOnSurfaceVariant.copy(alpha = 0.3f)
+                            NodeType.COMMENT -> MaterialTheme.colorScheme.onSurfaceVariant
+                            NodeType.SECTION_HEADER -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         },
-                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = spacing.sm),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Row(modifier = Modifier.padding(start = 8.dp)) {
-                    IconButton(
-                        onClick = onPinClick,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isPinned) Icons.Default.PushPin
-                                else Icons.Outlined.PushPin,
-                            contentDescription = "Pin",
-                            tint = if (isPinned) OmniPrimary else OmniOnSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = onAddBelow,
-                        enabled = structuralEnabled,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Altına Ekle",
-                            tint = OmniSuccess,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = onDelete,
-                        enabled = structuralEnabled,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Sil",
-                            tint = OmniError,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                IconButton(onClick = onPinClick) {
+                    Icon(
+                        imageVector = if (isPinned) Icons.Filled.PushPin
+                            else Icons.Outlined.PushPin,
+                        contentDescription = if (isPinned) "Sabiti kaldır" else "Sabitle",
+                        tint = if (isPinned) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 
-            if (!isCommentOrBlank) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = onMoveUp,
-                        enabled = structuralEnabled,
-                        contentPadding = PaddingValues(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.KeyboardArrowUp,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            "Yukarı",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                    TextButton(
-                        onClick = onMoveDown,
-                        enabled = structuralEnabled,
-                        contentPadding = PaddingValues(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            "Aşağı",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = spacing.xxs),
+                horizontalArrangement = Arrangement.End
+            ) {
+                RowAction("Yukarı", structuralEnabled, onMoveUp)
+                RowAction("Aşağı", structuralEnabled, onMoveDown)
+                RowAction("Altına ekle", structuralEnabled, onAddBelow)
+                RowAction("Sil", structuralEnabled, onDelete, destructive = true)
             }
         }
+    }
+}
+
+@Composable
+private fun RowAction(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    destructive: Boolean = false
+) {
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        contentPadding = PaddingValues(horizontal = OmniTheme.spacing.sm, vertical = OmniTheme.spacing.xs),
+        modifier = Modifier.heightIn(min = OmniTheme.spacing.touchTarget)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = when {
+                !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                destructive -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
     }
 }

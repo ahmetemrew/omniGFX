@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Derin Cyber/Neon Mor Temeli -->
-    <color name="premium_dark_bg">#090514</color>
-    <color name="premium_card">#170D30</color>
-    <color name="premium_border">#381F72</color>
+    <!--
+      OmniGFX "kalibrasyon tezgâhı" paleti. Neon mor/camgöbeği şablon renkleri kaldırıldı.
+      Compose tarafındaki tek kaynak: core-ui/theme/OmniColor.kt.
+      Buradaki değerler yalnızca pencere/açılış ekranı için (Compose öncesi çizim).
+    -->
+    <color name="brand_petrol">#0E5F56</color>
+    <color name="brand_brass">#8A5C10</color>
+    <color name="brand_graphite">#121A1B</color>
+    <color name="brand_paper">#F4F7F6</color>
+    <color name="brand_on_paper">#16211F</color>
 
-    <!-- Neon Vurgu Renkleri -->
-    <color name="accent_blue">#00F0FF</color>         <!-- Neon Cyan -->
-    <color name="accent_orange">#FF007F</color>       <!-- Neon Pink/Fuchsia -->
-
-    <!-- Metin Renkleri -->
-    <color name="text_primary">#F5F0FF</color>
-    <color name="text_secondary">#BCA7E8</color>
+    <!-- Açılış ekranı zemini: gündüz kâğıt, gece grafit (values-night). -->
+    <color name="splash_background">#F4F7F6</color>
 </resources>

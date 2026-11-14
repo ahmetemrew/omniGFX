@@ -47,6 +47,9 @@ class ProfileApplyViewModel @Inject constructor(
     val components = MutableStateFlow<List<JSONObject>>(emptyList())
     val values = MutableStateFlow<Map<String, String>>(emptyMap())
 
+    /** Profilin kayıtlı değerleri; değer okumasında "eski" tarafı olarak gösterilir. */
+    val initialValues = MutableStateFlow<Map<String, String>>(emptyMap())
+
     fun prepare(profile: ProfileEntity) {
         if (_applyState.value.isApplying) return
         _applyState.value = ProfileApplyUiState()
@@ -54,6 +57,7 @@ class ProfileApplyViewModel @Inject constructor(
             val json = JSONObject(profile.userValuesJson)
             json.keys().asSequence().associateWith { json.get(it).toString() }
         }.getOrDefault(emptyMap())
+        initialValues.value = values.value
         viewModelScope.launch {
             val schema = schemaDao.getSchemaById(profile.schemaId)
             components.value = runCatching {
@@ -99,7 +103,7 @@ class ProfileApplyViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _applyState.value = ProfileApplyUiState(isApplying = true, progressMessage = "Yedekleniyor ve doğrulanarak yazılıyor...")
+            _applyState.value = ProfileApplyUiState(isApplying = true, progressMessage = "Yedekleniyor ve doğrulanarak yazılıyor…")
             try {
                 pmpPipeline.execute(PmpRequest(profile.targetFilePath, emptyList(), replacementContent = content)).collect { event ->
                     when (event) {
@@ -135,7 +139,7 @@ class ProfileApplyViewModel @Inject constructor(
             _applyState.update {
                 ProfileApplyUiState(
                     isApplying = true,
-                    progressMessage = "Schema ve patch'ler hazırlanıyor..."
+                    progressMessage = "Değişiklikler hazırlanıyor…"
                 )
             }
             try {
@@ -161,7 +165,7 @@ class ProfileApplyViewModel @Inject constructor(
                 }
 
                 _applyState.update {
-                    it.copy(progressMessage = "PMP Pipeline başlatılıyor...")
+                    it.copy(progressMessage = "Uygulama başlatılıyor…")
                 }
                 val request = PmpRequest(
                     remotePath = profile.targetFilePath,
@@ -172,37 +176,37 @@ class ProfileApplyViewModel @Inject constructor(
                     when (event) {
                         is PmpEvent.Started -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Başlatılıyor...")
+                                it.copy(progressMessage = "Başlatılıyor…")
                             }
                         }
                         is PmpEvent.Pulling -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Dosya çekiliyor...")
+                                it.copy(progressMessage = "Dosya çekiliyor…")
                             }
                         }
                         is PmpEvent.Decoding -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Config çözümleniyor...")
+                                it.copy(progressMessage = "Config çözümleniyor…")
                             }
                         }
                         is PmpEvent.Modifying -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Değişiklikler uygulanıyor...")
+                                it.copy(progressMessage = "Değişiklikler uygulanıyor…")
                             }
                         }
                         is PmpEvent.Encoding -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Config serialize ediliyor...")
+                                it.copy(progressMessage = "Config hazırlanıyor…")
                             }
                         }
                         is PmpEvent.Pushing -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Dosya yazılıyor...")
+                                it.copy(progressMessage = "Dosya yazılıyor…")
                             }
                         }
                         is PmpEvent.Verifying -> {
                             _applyState.update {
-                                it.copy(progressMessage = "Doğrulanıyor...")
+                                it.copy(progressMessage = "Doğrulanıyor…")
                             }
                         }
                         is PmpEvent.Completed -> {
@@ -212,7 +216,7 @@ class ProfileApplyViewModel @Inject constructor(
                                         it.copy(
                                             isApplying = false,
                                             isSuccess = true,
-                                            message = "Profil başarıyla uygulandı."
+                                            message = "Profil uygulandı ve doğrulandı."
                                         )
                                     }
                                 }

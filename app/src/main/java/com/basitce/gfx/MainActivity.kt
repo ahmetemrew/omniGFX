@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.basitce.gfx.core.core_ui.theme.OmniGfxTheme
 import com.basitce.gfx.ui.navigation.OmniGfxNavHost
-import com.basitce.gfx.ui.theme.OmniGfxTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

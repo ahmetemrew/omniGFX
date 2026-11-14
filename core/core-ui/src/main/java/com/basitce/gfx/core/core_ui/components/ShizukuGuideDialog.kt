@@ -10,18 +10,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 
@@ -36,49 +32,47 @@ fun ShizukuGuideDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(com.basitce.gfx.core.core_ui.theme.OmniRadius.lg),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = {
             Text(
-                text = "Shizuku Kurulumu",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                text = "Shizuku kurulumu",
+                style = MaterialTheme.typography.headlineSmall
             )
         },
         text = {
+            val spacing = com.basitce.gfx.core.core_ui.theme.OmniTheme.spacing
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "OmniGFX dosya erişimi için Shizuku kullanır. ADB modu yalnızca shell kullanıcısının erişebildiği dosyaları açabilir.",
+                    text = "OmniGFX dosya erişimi için Shizuku kullanır. Sınırlı erişimde yalnızca oyunun erişilebilir config dosyalarını açabilirsin.",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(spacing.lg))
                 Text(
-                    text = "Adım 1: Shizuku uygulamasını indirin.",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                    text = "Adım 1: Shizuku uygulamasını indir.",
+                    style = MaterialTheme.typography.titleSmall
                 )
                 Text(
-                    text = "Adım 2: Shizuku içindeki kablosuz hata ayıklama veya bilgisayarla başlatma yönergelerini izleyin. Komut sürüme göre değişebilir.",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                    text = "Adım 2: Shizuku içindeki kablosuz hata ayıklama veya bilgisayarla başlatma yönergelerini izle. Komut sürüme göre değişebilir.",
+                    style = MaterialTheme.typography.titleSmall
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                OutlinedButton(
-                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/guide/setup/"))) },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.padding(start = 8.dp)
-                ) {
-                    Text("Shizuku başlatma rehberi")
-                }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.xs))
+                OmniTextButton(
+                    text = "Shizuku başlatma rehberi",
+                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/guide/setup/"))) }
+                )
+                Spacer(modifier = Modifier.height(spacing.xs))
                 Text(
-                    text = "Adım 3: OmniGFX'e izin verin.",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                    text = "Adım 3: OmniGFX'e izin ver.",
+                    style = MaterialTheme.typography.titleSmall
                 )
             }
         },
         confirmButton = {
-            Button(
-                onClick = { openShizukuDownload(context) },
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Shizuku'yu İndir")
-            }
+            OmniTextButton(
+                text = "Shizuku'yu indir",
+                onClick = { openShizukuDownload(context) }
+            )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {

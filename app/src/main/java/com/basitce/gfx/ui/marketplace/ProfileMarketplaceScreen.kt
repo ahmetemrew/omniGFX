@@ -3,33 +3,73 @@ package com.basitce.gfx.ui.marketplace
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.basitce.gfx.core.core_engine.profile.FindingSeverity
 import com.basitce.gfx.core.core_engine.profile.ProfileRiskLevel
+import com.basitce.gfx.core.core_ui.components.OmniErrorCard
+import com.basitce.gfx.core.core_ui.components.OmniLoading
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTone
+import com.basitce.gfx.core.core_ui.components.OmniTopBar
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
+private fun ProfileRiskLevel.label(): String = when (this) {
+    ProfileRiskLevel.SAFE -> "Güvenli"
+    ProfileRiskLevel.LOW -> "Düşük risk"
+    ProfileRiskLevel.MEDIUM -> "Orta risk"
+    ProfileRiskLevel.HIGH -> "Yüksek risk"
+    ProfileRiskLevel.CRITICAL -> "Kritik risk"
+}
+
+private fun ProfileRiskLevel.tone(): OmniTone = when (this) {
+    ProfileRiskLevel.SAFE, ProfileRiskLevel.LOW -> OmniTone.Success
+    ProfileRiskLevel.MEDIUM -> OmniTone.Warning
+    ProfileRiskLevel.HIGH, ProfileRiskLevel.CRITICAL -> OmniTone.Error
+}
+
+private fun FindingSeverity.label(): String = when (this) {
+    FindingSeverity.INFO -> "Bilgi"
+    FindingSeverity.WARNING -> "Uyarı"
+    FindingSeverity.HIGH -> "Yüksek"
+    FindingSeverity.CRITICAL -> "Kritik"
+}
+
+private fun FindingSeverity.tone(): OmniTone = when (this) {
+    FindingSeverity.INFO -> OmniTone.Neutral
+    FindingSeverity.WARNING -> OmniTone.Warning
+    FindingSeverity.HIGH, FindingSeverity.CRITICAL -> OmniTone.Error
+}
+
+/**
+ * Profil analizi: dışarıdan gelen bir profilin güvenliğini gösterir.
+ * Ürünün "güven" vaadinin doğrudan karşılığı — puan ve risk net, bulgular okunur.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileMarketplaceScreen(
@@ -37,14 +77,17 @@ fun ProfileMarketplaceScreen(
     viewModel: ProfileMarketplaceViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
 
     Scaffold(
+        containerColor = colors.background,
         topBar = {
-            TopAppBar(
-                title = { Text("JSON Profil Analizi") },
+            OmniTopBar(
+                title = "Profil analizi",
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Geri")
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
                     }
                 }
             )
@@ -54,92 +97,111 @@ fun ProfileMarketplaceScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.screen)
+                .padding(bottom = spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.md)
         ) {
+            Text(
+                text = "Bir profil JSON'u yapıştır, içeriğini çözümle. " +
+                    "İçe aktarmadan önce ne yaptığını gör.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant
+            )
+
             OutlinedTextField(
                 value = state.jsonInput,
                 onValueChange = viewModel::onJsonInputChange,
-                label = { Text("Profile JSON") },
+                label = { Text("Profil JSON'u") },
+                textStyle = OmniTheme.mono.key,
+                shape = RoundedCornerShape(OmniRadius.sm),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colors.surfaceContainerLow,
+                    unfocusedContainerColor = colors.surfaceContainerLow,
+                    focusedBorderColor = colors.primary,
+                    unfocusedBorderColor = colors.outline
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(200.dp)
             )
 
-            Row {
-                Button(onClick = { viewModel.analyze() }) {
-                    Text("Analiz Et")
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Button(
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
+                OmniPrimaryButton(
+                    text = "Çözümle",
+                    onClick = { viewModel.analyze() },
+                    modifier = Modifier.weight(1f)
+                )
+                OmniSecondaryButton(
+                    text = "İçe aktar",
                     onClick = { viewModel.importProfile() },
-                    enabled = state.analysis?.canImport == true && !state.isImporting
-                ) {
-                    Text("İçe Aktar")
-                }
+                    enabled = state.analysis?.canImport == true && !state.isImporting,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             if (state.isAnalyzing || state.isImporting) {
-                CircularProgressIndicator()
+                OmniLoading(
+                    label = if (state.isImporting) "Profil içe aktarılıyor…"
+                    else "Profil çözümleniyor…"
+                )
             }
 
             state.error?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error
-                )
+                OmniErrorCard(title = "İşlem tamamlanamadı", message = error)
             }
 
             state.message?.let { message ->
-                Text(text = message)
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurface
+                )
             }
 
             state.analysis?.let { analysis ->
-                val riskColor = when (analysis.riskLevel) {
-                    ProfileRiskLevel.SAFE -> Color(0xFF4CAF50)
-                    ProfileRiskLevel.LOW -> Color(0xFF8BC34A)
-                    ProfileRiskLevel.MEDIUM -> Color(0xFFFFC107)
-                    ProfileRiskLevel.HIGH -> Color(0xFFFF5722)
-                    ProfileRiskLevel.CRITICAL -> Color(0xFFE53935)
+                OmniSectionHeader(title = "Sonuç")
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    OmniStatusChip(
+                        text = "Puan ${analysis.score}/100",
+                        tone = OmniTone.Neutral
+                    )
+                    OmniStatusChip(
+                        text = analysis.riskLevel.label(),
+                        tone = analysis.riskLevel.tone()
+                    )
                 }
 
-                Text(
-                    text = "Score: ${analysis.score}/100",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = "Risk: ${analysis.riskLevel.name}",
-                    color = riskColor,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Findings",
-                    style = MaterialTheme.typography.titleSmall
-                )
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(analysis.findings) { finding ->
-                        val severityColor = when (finding.severity) {
-                            FindingSeverity.INFO -> Color(0xFF2196F3)
-                            FindingSeverity.WARNING -> Color(0xFFFFC107)
-                            FindingSeverity.HIGH -> Color(0xFFFF5722)
-                            FindingSeverity.CRITICAL -> Color(0xFFE53935)
+                if (analysis.findings.isNotEmpty()) {
+                    OmniSectionHeader(
+                        title = "Bulgular",
+                        count = analysis.findings.size
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm)
+                    ) {
+                        items(analysis.findings) { finding ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                            ) {
+                                OmniStatusChip(
+                                    text = finding.severity.label(),
+                                    tone = finding.severity.tone()
+                                )
+                                Text(
+                                    text = finding.message,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
-
-                        Text(
-                            text = "[${finding.severity.name}] ${finding.message}",
-                            color = severityColor,
-                            style = MaterialTheme.typography.bodySmall
-                        )
                     }
                 }
             }

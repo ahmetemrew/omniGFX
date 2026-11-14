@@ -5,10 +5,10 @@ import com.basitce.gfx.core.core_engine.workflow.DetectedFormat
 import java.util.UUID
 
 enum class SetupWizardStep(val order: Int, val title: String) {
-    SELECT_FILE(1, "Hedef Dosya"),
-    PULL_ANALYZE(2, "Çek & Analiz"),
+    SELECT_FILE(1, "Hedef dosya"),
+    PULL_ANALYZE(2, "Çek ve çözümle"),
     EDIT(3, "Düzenle"),
-    PIN_VARIABLES(4, "Değişkenler & Profil"),
+    PIN_VARIABLES(4, "Değişkenler ve profil"),
     PUSH_APPLY(5, "Uygula"),
     DONE(6, "Tamamlandı");
 
@@ -70,11 +70,11 @@ data class PinnedVariable(
     val applyCondition: String? = null
 )
 
-enum class UiComponentType {
-    SLIDER,
-    DROPDOWN,
-    TOGGLE,
-    TEXT_INPUT
+enum class UiComponentType(val label: String) {
+    SLIDER("Kaydırıcı"),
+    DROPDOWN("Liste"),
+    TOGGLE("Anahtar"),
+    TEXT_INPUT("Metin")
 }
 
 enum class ProfileType {

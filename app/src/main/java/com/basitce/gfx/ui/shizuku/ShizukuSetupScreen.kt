@@ -2,7 +2,6 @@ package com.basitce.gfx.ui.shizuku
 
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,18 +17,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,15 +33,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.basitce.gfx.core.core_ui.components.OmniCard
+import com.basitce.gfx.core.core_ui.components.OmniEmphasisPanel
+import com.basitce.gfx.core.core_ui.components.OmniLoading
+import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniTextButton
 import com.basitce.gfx.core.core_ui.components.ShizukuGuideDialog
+import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
 @Composable
 fun ShizukuSetupScreen(
@@ -59,6 +56,7 @@ fun ShizukuSetupScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showGuide by remember { mutableStateOf(false) }
+    val spacing = OmniTheme.spacing
 
     if (showGuide) {
         ShizukuGuideDialog(
@@ -86,33 +84,35 @@ fun ShizukuSetupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = spacing.screen),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.lg))
             Text(
-                text = "OmniGFX'e Hoş Geldin",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+                text = "Önce bağlantıyı kuralım",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(spacing.sm))
             Text(
-                text = "Cihazındaki dosyalara erişebilmemiz için Shizuku altyapısına ihtiyacımız var.",
+                text = "OmniGFX, oyunların config dosyalarına Shizuku üzerinden erişir. " +
+                    "İki adımda hazır olursun.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(spacing.xxxl))
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.lg)
             ) {
                 item {
                     SetupStepCard(
                         stepNumber = 1,
-                        title = "Shizuku'yu Yükle",
-                        description = "Önce Shizuku uygulamasını telefonunuza kurun.",
+                        title = "Shizuku'yu yükle",
+                        description = "Önce Shizuku uygulamasını telefonuna kur.",
                         actionText = "İndir",
                         onAction = {
                             val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -132,9 +132,10 @@ fun ShizukuSetupScreen(
                 item {
                     SetupStepCard(
                         stepNumber = 2,
-                        title = "Servisi Başlat",
-                        description = "Shizuku uygulamasını açıp \"Start\" butonuna basın. Bilgisayarınız varsa ADB komutu ile de başlatabilirsiniz.",
-                        actionText = "Shizuku'yu Aç",
+                        title = "Servisi başlat",
+                        description = "Shizuku uygulamasını aç ve servisi başlat. " +
+                            "Bilgisayarın varsa ADB ile de başlatabilirsin.",
+                        actionText = "Shizuku'yu aç",
                         onAction = {
                             val intent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
                             if (intent != null) {
@@ -146,44 +147,42 @@ fun ShizukuSetupScreen(
                     )
                 }
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
+                    OmniEmphasisPanel {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                imageVector = if (state.canContinue) Icons.Default.CheckCircle else Icons.Default.Info,
+                                imageVector = if (state.canContinue) Icons.Outlined.CheckCircle
+                                    else Icons.Outlined.Info,
                                 contentDescription = null,
-                                tint = if (state.canContinue) Color(0xFF3DDC84) else MaterialTheme.colorScheme.primary,
+                                tint = if (state.canContinue) OmniTheme.semantic.success
+                                    else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(32.dp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(spacing.sm))
                             Text(
-                                text = state.message ?: "Durum kontrol ediliyor...",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                text = state.message ?: "Durum kontrol ediliyor…",
+                                style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(spacing.lg))
                             if (state.isChecking) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                OmniLoading(label = "Bağlantı denetleniyor")
                             } else {
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = { viewModel.check() }) {
-                                        Text("Tekrar Kontrol Et")
-                                    }
+                                Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
+                                    OmniSecondaryButton(
+                                        text = "Tekrar denetle",
+                                        onClick = { viewModel.check() },
+                                        fillWidth = false
+                                    )
                                     if (!state.permissionGranted) {
-                                        Button(onClick = { viewModel.requestPermission() }) {
-                                            Text("İzin İste")
-                                        }
+                                        OmniPrimaryButton(
+                                            text = "İzin iste",
+                                            onClick = { viewModel.requestPermission() },
+                                            fillWidth = false
+                                        )
                                     }
                                 }
                             }
@@ -192,27 +191,13 @@ fun ShizukuSetupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
+            Spacer(modifier = Modifier.height(spacing.lg))
+            OmniPrimaryButton(
+                text = "OmniGFX'i başlat",
                 onClick = onContinue,
-                enabled = state.canContinue,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text(
-                    text = "OmniGFX'i Başlat",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = if (state.canContinue) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
+                enabled = state.canContinue
+            )
+            Spacer(modifier = Modifier.height(spacing.xxl))
         }
     }
 }
@@ -227,15 +212,11 @@ fun SetupStepCard(
     secondaryActionText: String? = null,
     onSecondaryAction: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp)
-    ) {
+    val spacing = OmniTheme.spacing
+
+    OmniCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
             Box(
@@ -248,44 +229,27 @@ fun SetupStepCard(
                 Text(
                     text = stepNumber.toString(),
                     color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.xxs))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = actionText,
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                            .clickable { onAction() }
-                    )
+                Spacer(modifier = Modifier.height(spacing.sm))
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
+                    OmniTextButton(text = actionText, onClick = onAction)
                     secondaryActionText?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                .clickable { onSecondaryAction?.invoke() }
-                        )
+                        OmniTextButton(text = it, onClick = { onSecondaryAction?.invoke() })
                     }
                 }
             }
