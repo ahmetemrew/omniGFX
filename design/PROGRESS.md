@@ -67,7 +67,13 @@ Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adım
 - [x] REVIEW.md: 7 dolu ekran puanlandı (21: 8.89, 22: 8.67, 23: 9.00, 24: 9.00,
       24b: 9.00, 25: 8.89, 26: 9.00). 29 ekran, genel ≈8.89, en düşük kriter 8.
       Eski "Shizuku emülatörde çalışmadı" notu kaldırıldı; kanıt katmanları güncellendi.
-- [ ] commit + push + CI yeşil + QWEN_DESIGN_DONE.md güncelleme.
+- [x] commit + push + CI yeşil + QWEN_DESIGN_DONE.md güncelleme.
+      Commit'ler: 6c0cff7 fix(ui) copy · 98204e7 chore(res) ikon · c90ef91 fix(design)
+      dolu durum araçları · 63cbe23 docs(design) kanıt+puan. Push fb4a4d4..63cbe23
+      (fast-forward, force yok, sır/APK yok). **CI YEŞİL: run 43640757953,
+      conclusion=success** (verify job, JDK 17). QWEN_DESIGN_DONE.md yeniden yazıldı
+      (tüm sonuçlar bu oturumda doğrulandı). Tur TAMAM — 29 ekran, ort ≈8.89,
+      en düşük kriter 8; build+test+lint+release yeşil; CRASH_NONE.
 
 ## Durum: F12 dolu durum görüntüleri — kök neden + betik düzeltmesi (2026-11-14, 9. oturum)
 
