@@ -8,8 +8,6 @@
     <color name="brand_petrol">#0E5F56</color>
     <color name="brand_brass">#8A5C10</color>
     <color name="brand_graphite">#121A1B</color>
-    <color name="brand_paper">#F4F7F6</color>
-    <color name="brand_on_paper">#16211F</color>
 
     <!-- Açılış ekranı zemini: gündüz kâğıt, gece grafit (values-night). -->
     <color name="splash_background">#F4F7F6</color>
