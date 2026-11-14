@@ -28,7 +28,9 @@ Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adım
 - [x] Kod denetimi: Color(0x yalnız OmniColor.kt; fontSize yalnız OmniTypography.kt;
       yasaklı copy 0; emoji 0.
 - [x] F8 REVIEW.md: 22 ekran ort 8.56–9.00, genel ≈8.88, en düşük kriter 8 (hiçbiri <7).
-- [ ] F10: commit (araçlar + taze görüntüler + PROGRESS/REVIEW) + push + CI + QWEN_DESIGN_DONE.md.
+- [x] F10: 4 anlamlı commit (feat ui, docs design, fix design araçları, docs kanıt) +
+      push origin main (fast-forward, force yok, sır/APK yok) + CI YEŞİL
+      (run 43569944917, ✓ verify 5m15s) + QWEN_DESIGN_DONE.md yazıldı. Tur TAMAM.
 
 ## Durum (önceki): F8 puanlama + F9 tam doğrulama (2026-11-14, 5. oturum)
 
