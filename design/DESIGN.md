@@ -206,3 +206,41 @@ bir araç uygulamasına uygulanırdı.** Değiştirilenler:
   olan "sayıyı değiştir"i görselleştirir. Başka uygulamada anlamı olmaz.
 - Roboto/Inter yerine **Barlow + JetBrains Mono**: ikincisi uygulamanın malzemesi config
   metni olduğu için *işlevsel* zorunluluk, dekoratif tercih değil.
+
+## 11. F14 — bağımsız eleştirmen turu 1 kararları (2026-11-15)
+
+Eleştirmen 6.31/10 verdi; ana teşhis: imza anları vaat edilip ekranlarda kullanılmamış,
+tekrar listeler ve jargon. Kararlar:
+
+1. **Değer Okuması editörün kendisidir.** Config satırı = okuma penceresi: anahtar solda,
+   değişimde üstü çizili eski + › + pirinç yeni (monoReadout), altında tik rayı. Düzenleme
+   okumaya dokununca yerinde açılır; salt metin kutusu listesi yok. Yapısal eylemler
+   (taşı/ekle/sil) kart başına tekrarlanan 4 düğme değil, tek taşma menüsü.
+2. **Başarı okuması dosyaya göre okur.** "Eski" taraf pin anındaki değer değil, dosyadan
+   çekilen ilk değerdir (`originalValue`); ray uçlarında min–max mikro etiketleri.
+3. **Profil kartının işi "Uygula".** 36dp stadium birincil buton görünür; Sil taşma
+   menüsünde; kart dosya adı + değişken sayısını monoMicro ile söyler.
+4. **Aynı içerik iki kez listelenmez.** Rehberde İçindekiler kutusu kaldırıldı; akordeon
+   bölümleri tek liste. Bölüm ikonları tek stil (36dp/8dp/surfaceContainerHigh/nötr ikon)
+   + 01..11 gerçek sıra numarası. Rastgele renkli ikon kutusu slop'tur.
+5. **Bağlantı göstergesi kalibrasyon segmentidir.** 3 eşit göz (4×16dp): oksit=kesik,
+   pirinç=izin bekliyor, 2 petrol=sınırlı (ADB), 3 petrol=tam (root). Telefon şebeke
+   ikonu çağrışımı yasak. Bağlantı yokken birincil vurgu "Bağla" hapında; "Oyun ekle"
+   ikincil seviyeye düşer.
+6. **Teknik iç yapı son kullanıcıya gösterilmez.** UID/izin/SELinux varsayılan gizli;
+   "Korunuyor" rozeti + insani açıklama, ham değerler "Teknik detayları göster" arkasında.
+   Hata mesajı jargon değil eylem söyler ("Shizuku'yu bağla").
+7. **Yedek kartının başlığı insandır.** Tarih/saat birincil, hedef yol ikinci, kısaltılmış
+   kimlik (#<ts> · .bak) üçüncü satır. Sistem dosya adı başlık olamaz. Yenile üst bar
+   eylemi; liste başlığı sağda ikincil temizleme eylemi taşır.
+8. **Üç ana sekme tek başlık şablonu.** `OmniTabHeader`: sola hizalı headlineMedium +
+   tek satır açıklama + sağ eylemler. Sekmeler arası geçişte üst bar zıplamaz.
+9. **Ara adım finali taklit etmez.** Mühür/hero yalnızca "Dosya uygulandı"da; çek-analiz
+   kompakt durum satırıyla geçer. FAB stadium + container tonunda, kartın önüne geçmez.
+10. **Splash marka kilididir.** 72dp kalibrasyon kadranı + gerçek font glifleriyle
+    (fontTools) Barlow wordmark + mono etiket. Daire arka plan yok, kırpma yok; açık/koyu
+    ayrı kaynak. Üstteki BÜYÜK HARFLİ etiket bölüm başlığı değil, marka kilidi parçası
+    (slop listesindeki "eyebrow label"dan bilinçli ayrım).
+11. **Sihirbaz konumu söyler.** Üst bar sağında monoMicro "n / 5"; ray aktif 4dp/pasif 2dp.
+12. **Boş girdiyle birincil eylem çağrılmaz.** "Çözümle" boşken disabled; "Panodan
+    yapıştır" çipi gerçek bir kısayol; placeholder mono ve gerçek şema örneği.

@@ -3,6 +3,252 @@
 Proje: OmniGFX Pro (Shizuku tabanlı oyun config düzenleyici, Kotlin + Compose, 6 modül)
 Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adımda güncellenir.
 
+## Durum: F17 bağımsız yeniden doğrulama + teslim (2026-11-15, 14. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md (tur 1, GENEL 6.31 KALDI) esas.
+13. oturumun iki açık maddesi kapatıldı; TÜM kanıt bu oturumda yeniden üretildi.
+
+### 14. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose → material-3-expressive).
+      CRITIQUE.md + PROGRESS.md + REVIEW.md okundu.
+- [x] 13. oturumun main18 koşusu logdan doğrulandı: TAP_MISS_COUNT=0, SHOTS_RC=0,
+      CRASH_NONE; 03 taze (04:28). 03 layout+palet denetimi TEMİZ → 29/29 tamam.
+- [x] **BUILD GATE (bu oturum, 04:35, build19.log):** flock -o ile clean
+      assembleDebug testDebugUnitTest lintDebug assembleRelease → **BUILD
+      SUCCESSFUL 18s (cache), GRADLE_RC=0** (572 görev). **76 test, 0 fail,
+      0 error, 0 skip** (XML sayımı). lint: **0 error**, 1 warning
+      (UnusedResources ic_launcher_foreground). APK 30.5 MB, 04:35.
+- [x] **verify19 (bu oturum, 04:35–04:44, design-verify19.log):** design_verify17.sh
+      sürücüsüyle iki emülatör oturumu, SON APK'dan:
+      • Ana set (00–20): **TAP_MISS_COUNT=0, SHOTS_RC=0, CRASH_NONE, SESSION_RC=0.**
+      • Dolu set (21–26+24b): Shizuku SERVER UP, izin 1. denemede, FPSLimit 60→90 +
+        Brightness 80→75, gerçek yazma + yedek → **FILLED_TAP_MISS_COUNT=0,
+        FILLED_SHOTS_RC=0, CRASH_NONE, FILLED_SESSION_RC=0.**
+      Emülatörler trap ile kapatıldı (port 5560); adb'deki emulator-5570 kardeş
+      oturuma ait, dokunulmadı.
+- [x] Sayısal denetim (verify19 görüntüleri): layout audit **28/28 dump TEMİZ**;
+      palet **29/29 PNG TEMİZ** (koyu #121A1B / açık #F4F7F6, scrim türevleri dahil).
+- [x] before/after denkliği: 14/14 çift SAME_SIDE (köşe pikselleri birebir
+      #121A1B); 4 çiftteki parlaklık farkı (02/21/23/25, Δ≤16) tema değil meşru
+      içerik değişimi (eklenen Uygula/okuma/başlık) — tema tarafı + durum denk.
+- [x] Görsel (vision, 3 kare): 03 (Yenile üst bar ikonu, davetkâr boş durum),
+      01 (3 segment gösterge + Bağla hapı + ikincil Oyun ekle + OmniTabHeader),
+      25 (Uygula birincil + "UserCustom.ini · 2 değişken" + Dinamik çipi + menü).
+- [x] Kod disiplini: Color(0x tema dışı 0; fontSize tema dışı 0; gradyan 0;
+      yasaklı copy 0 (tek KDoc yorumu, kullanıcı metni değil).
+- [x] Sürüm uyumu teyit: AGP 9.5.1 / Kotlin 2.4.21 / Gradle 9.9.1; CI JDK 17 +
+      testDebugUnitTest lintDebug assembleDebug assembleRelease (check.yml).
+- [ ] commit + push + CI yeşil + QWEN_DESIGN_DONE.md.
+
+## Durum: F16 dolu durum kök nedenleri + verify17 (2026-11-15, 13. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md (tur 1, GENEL 6.31 KALDI) esas.
+12. oturumun kod düzeltmeleri + build kanıtı doğrulandı; dolu durum görüntüleri
+GEÇERSİZ bulundu (after/21–26 + 24b invalid PNG'lerle doluydu).
+
+### 13. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose). CRITIQUE.md + PROGRESS.md okundu.
+- [x] verify15 (02:25): build YEŞİL, 22 ana görüntü TAP_MISS=0 CRASH_NONE; ama dolu
+      oturum FILLED_TAP_MISS_COUNT=13. Sonra design-filled16 (03:04–03:19) dolu
+      PNG'leri 31 MISS'lik daha kötü koşuyla ezmiş. İki koşu da Shizuku izin
+      aşamasında farklı noktalarda kırılmış.
+- [x] Kök neden 1 (filled16): font_scale 2.0 kalıntısı — ayarlar satırı y=504 yerine
+      y=738'de, kurulum ekranı açılmadı, izin hiç istenmedi. Düzeltme: her iki
+      görüntü betiği başlangıçta `settings put system font_scale 1.0`.
+- [x] Kök neden 2 (verify15): editörde IME onay ikonunu örtüyor; kök Column'da
+      imePadding YOK → düzenlenen satır/CTA klavye altında kalıyor. Düzeltme:
+      SetupWizardScreen köküne `.imePadding()` (tüm adımlar; UX düzeltmesi,
+      işlevsellik aynı). Betikte düzenleme kapatma artık IME Done (ENTER) ile —
+      klavye altındaki ikona dokunma yok.
+- [x] Betik sertleştirme (design_shots_filled.sh): grant_shizuku() en çok 3 deneme,
+      ana ekranda "Bağlantı hazır" DOĞRULAMALI (wait_quiet, MISS kirletmez);
+      kurulum denetimi 30 s; edit_value() düzenleme açılmasını doğrular + ENTER +
+      kapanmayı doğrular; CTA tap'i IME korumalı retry.
+- [x] **BUILD GATE (bu oturum, 03:33):** flock -o ile clean assembleDebug
+      testDebugUnitTest lintDebug assembleRelease → **BUILD SUCCESSFUL 2m12s,
+      GRADLE_RC=0** (572 görev). **76 test, 0 fail, 0 error, 0 skip.** lint:
+      1 warning (UnusedResources ic_launcher_foreground), **0 error**.
+      APK: app/build/outputs/apk/debug/app-debug.apk (30.5 MB, 03:33).
+- [x] verify17 (log design-verify17.log): dolu oturum **FILLED_TAP_MISS_COUNT=0,
+      CRASH_NONE, FILLED_SESSION_RC=0** — izin 1. denemede, ENTER ile düzenleme,
+      imePadding sayesinde CTA geçişi temiz; 21–26+24b SON APK'dan geçerli.
+      Ana oturumda TAP_MISS=2 (ilk overflow start_app korumasızdı → 03 launcher).
+- [x] main18 (log design-main18.log): düzeltilmiş design_shots.sh ile ana set
+      yeniden (ilk overflow erişimine start_app+Profiller eklendi).
+- [x] Sayısal denetim (yeni görüntüler): layout audit 28/29 TEMİZ (03 main18'i
+      bekliyor); palet 28/29 TEMİZ. Audit araçları düzeltildi: long-clickable
+      substring sahte pozitifi, yatay kesik dilim (breadcrumb Root), content-desc
+      kesik imzası, scrim türevleri palet katmanı, 26 needle ".bak".
+- [x] Eleştirmen maddeleri dump kanıtı: 17/17 kontrol OK (İçindekiler yok, 01 sıra
+      no, bottom sheet, › + Shizuku'yu bağla, Korunuyor + teknik detay gizli,
+      Uygula 89×48dp, Bağla hapı, Panodan yapıştır, 1/5 sayacı…).
+- [x] Görsel (vision): 00 splash (kadran + wordmark; etiket bbox piksel eşleşmesi
+      tam), 22 editör (60›90 pirinç okuma + tik rayı + tek menü), 23 başarı
+      (üstü çizili 60 → pirinç 90, min–max ray, mühür yalnız final).
+- [x] 07b scrim piksel ölçümü: (6,9,9) = bg×0.35 → tam %65.
+- [x] before/after parlaklık denkliği: 13/14 çift denk (tek fark geçersiz 03).
+- [x] REVIEW.md tur 2 yazıldı: eleştirmen çapasıyla kalibre (6=jenerik, 8=ürüne
+      özgü+kusursuz, 9=imza kusursuz). **29 ekran ≥8.56, genel 8.63, en düşük
+      kriter 8.** 15 madde → kanıt eşleme tablosu REVIEW.md'de. Tur 1'in 6.31'i
+      esas alındı; şişirme yok (tek 9.00: 23, imza final).
+- [x] material-3-expressive skill okundu; checklist doğrulamalarla örtüşüyor
+      (dinamik renk bilinçli kapalı — DESIGN.md §1).
+- [x] Sürüm uyumu teyit: AGP 9.5.1 / Kotlin 2.4.21 / KSP 2.3.12 / Hilt 2.60.1 /
+      Gradle 9.9.1 / JVM 17 / CI JDK 17 (AS 2026.1.4 destek aralığında).
+- [x] main18 sonucu: 03 taze + TAP_MISS=0 (log doğrulandı; 14. oturumda 03
+      layout+palet TEMİZ, verify19 ile yeniden üretildi).
+- [x] commit + push + CI yeşil + QWEN_DESIGN_DONE.md → 14. oturumda kapatıldı.
+
+## Durum: F15 eleştirmen düzeltmelerinin bağımsız doğrulaması (2026-11-15, 12. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md (tur 1, GENEL 6.31 KALDI) esas alındı.
+11. oturumun 15 maddelik düzeltmesi working tree'de mevcut; bu oturum işi DOĞRULUYOR.
+
+### 12. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose). CRITIQUE.md + PROGRESS.md okundu.
+- [x] 15 düzeltmenin TAMAMI kodda doğrulandı (grep + read):
+      P0-1 StepEdit ValueReadoutRow + ValueEditor + RowActionsMenu, ConfigNode.originalValue
+      (ConfigTreeBuilder 5 nokta), StepPushApply previous=originalValue + min/maxLabel;
+      P0-2 ProfileRow "Uygula" + dosya/değişken özeti; P0-3 GuideScreen TableOfContents yok;
+      P0-4 ShizukuGuideDialog ModalBottomSheet + scrim 0.65; P0-5 breadcrumb animateScrollToItem
+      + "›" + connectShizuku; P0-6 FileIdentityCard "Korunuyor" + teknik detay açılır;
+      P0-7 BackupManager Refresh TopAppBar actions; P1-8 OmniTabHeader 3 sekmede;
+      P1-9 SignalGauge 3 segment + "Bağla"/"İzin ver"; P1-10 FAB + gameProfiles;
+      P2-13 Çözümle enabled=false + Panodan yapıştır; P2-14 ic_splash_brand (drawable+night,
+      fontTools glif yolları) + themes.xml; P2-15 adım sayacı "N / 5".
+- [x] 11. oturum build kanıtı: build11b.log BUILD SUCCESSFUL (39s), test11.log BUILD
+      SUCCESSFUL (1m6s) → F14 kodu derleniyor, testler yeşil.
+- [x] Kilit açlığı kök nedeni + çözüm: flock shim'i betik metninde adb görünce tüm
+      komutu emu.lock kuyruğuna sokuyor; verify11 (karma gate) 45 dk açlıktan öldü.
+      Çözüm (memory "karma gate'i build-only + emülatör çağrısına böl"): verify11
+      kaldırıldı, `tools/design_verify_split.sh` yazıldı — build AYRI flock (gradlew'de
+      adb yok → boş build slotu), emülatör oturumu AYRI flock (emu kuyruğu). Sürücü
+      flock ile sarılmaz (iç flock self-deadlock). nohup setsid, log design-verify15.log.
+- [x] **BUILD DOĞRULANDI (verify15, build.lock.2):** clean assembleDebug testDebugUnitTest
+      lintDebug assembleRelease → **BUILD SUCCESSFUL 2m5s, GRADLE_RC=0** (572 görev).
+      **76 test, 0 fail, 0 error, 0 skip** (XML sayımı). lint: 1 issue, **0 error**.
+      APK: app/build/outputs/apk/debug/app-debug.apk (30.5 MB, 01:40 taze).
+- [ ] Emülatör oturumu (emu kuyruğunda): 22 ana + 7 dolu görüntü, CRASH_NONE.
+- [ ] Yeni görüntülerle sayısal audit + palet + before/after denklik (parlaklık/köşe).
+- [ ] REVIEW.md eleştirmen kalibrasyonuyla yeniden puanlama (madde madde delta).
+- [ ] commit + push + CI yeşil + QWEN_DESIGN_DONE.md.
+
+## Durum: F14 eleştirmen turu 1 düzeltmeleri (2026-11-15, 11. oturum)
+
+Bağımsız eleştirmen (design/CRITIQUE.md, 2026-11-15 00:20) 29 ekranı puanladı:
+**GENEL 6.31/10, KALDI** (eşik ≥8.0). Kendi REVIEW.md puanlarım (~8.89) kalibre
+değil; eleştirmen puanları esas alındı. 15 maddelik düzeltme listesi (P0: 7, P1: 4,
+P2: 4) bu oturumda çözülüyor. Madde madde çözüm aşağıda "Eleştiri çözümleri"nde.
+
+### Plan
+- [ ] P0-1 ValueReadout düzenleyiciye (22) + başarı ekranı eski→yeni (23) + min/max etiketleri
+- [ ] P0-2 Profil kartına "Uygula" birincil butonu + dosya/değişken özeti (25)
+- [ ] P0-3 Rehber: İçindekiler kartı kaldır, akordeon doğrudan, clipping düzelt (08/09/16/20)
+- [ ] P0-4 Shizuku rehberi ModalBottomSheet + scrim 0.65 + numaralı adımlar (07b)
+- [ ] P0-5 Breadcrumb otomatik sona kaydır + "›" + Shizuku hata eylemi (12)
+- [ ] P0-6 SELinux/UID/octal varsayılan gizli, "Korunuyor" rozeti + teknik detay açılır (21)
+- [ ] P0-7 Yedekler: Yenile üst bara, kart tarihi başlık + yol + kısaltılmış kimlik (03/26)
+- [ ] P1-8 Üç ana sekmede aynı sol hizalı başlık şablonu (OmniTabHeader)
+- [ ] P1-9 SignalGauge 3 kalibrasyon segmenti + "Bağla" hapı + Oyun ekle ikincil (01/13/24)
+- [ ] P1-10 FAB stadium + primaryContainer tonu, oyun kartına profil özeti (24b)
+- [ ] P1-11 Ara adım hero kaldır (21), mühür yalnız finalde (23)
+- [ ] P2-12 Rehber ikonları tek stil + 01..09 sıra numarası
+- [ ] P2-13 Çözümle boşken disabled + Panodan yapıştır + mono placeholder (04)
+- [ ] P2-14 Splash: kalibrasyon kadranı + Barlow wordmark (fontTools ile gerçek glif yolları)
+- [ ] P2-15 Sihirbaz adım sayacı "1 / 5" + segment 4dp/2dp
+- [ ] Betik güncellemeleri (editör akışı değişti), build+test+lint, emülatör görüntüleri,
+      REVIEW.md yeniden puanlama, commit+push+CI, QWEN_DESIGN_DONE.md
+
+### Eleştiri çözümleri (madde madde, CRITIQUE.md 2026-11-15 00:20)
+
+**P0-1 — Değer Okuması düzenleyiciye (22) + başarı eski→yeni (23):**
+`ConfigNode.originalValue` eklendi (UI modeli; DB şeması değişmedi), `ConfigTreeBuilder`
+5 üretim noktasında dosyadan çekilen ilk değeri yazıyor. `StepEditScreen` yeniden yazıldı:
+KEY_VALUE satırları artık Değer Okuması — monoKey anahtar, değişimde üstü çizili eski
+değer + › + pirinç yeni değer (monoReadout 28sp), sayısal satırlarda 14dp tik rayı
+(pinli SLIDER ise min/max'tan gerçek konum). Okumaya dokununca satır yerinde düzenleme
+alanına dönüşüyor (FocusRequester + IME Done + "Değeri kaydet"/"Vazgeç"); canlı güncelleme
+ve undo/redo davranışı korundu. Kart başına 4 metin düğmesi ("Yukarı Aşağı Altına ekle Sil")
+kaldırıldı → tek MoreVert menüsü ("Satır işlemleri"). Kart ~96dp. Başarı ekranı
+(`StepPushApplyScreen.VariableReadouts`) "eski" tarafı artık pin anı değil dosya değeri
+(originalValue); compact kaldırıldı (28sp okuma), ray uçlarına min–max mikro etiketleri
+(`OmniValueReadout.minLabel/maxLabel`) eklendi. Dolu betik FPSLimit 60→90 + Brightness
+80→75 yapıyor → 23'te gerçek 60→90 geçişi görünür.
+
+**P0-2 — Profil kartında "Uygula" (25):** `ProfileRow`'a 36dp stadium birincil "Uygula"
+(`OmniPrimaryButton.compact`) eklendi; Sil taşma menüsüne alındı (swipe-to-delete korunuyor).
+Karta monoMicro dosya özeti: "UserCustom.ini · 1 değişken" (userValuesJson'dan gerçek sayım;
+ham profilde yalnız dosya adı). Dokunma hedefi kartın tamamı ≥72dp.
+
+**P0-3 — Rehber çift liste + kesilme (08/09/16/20):** `TableOfContents` bileşeni tamamen
+kaldırıldı; akordeon bölümleri hero'nun hemen altında 12dp aralıkla başlıyor. contentPadding
+top 12dp / bottom 32dp + navigationBarsPadding. Bölüm satırları doğal sarmaya bırakıldı
+(büyük fontta kesilme yok). İlk durum: tüm bölümler kapalı (08 temiz liste, 09 açılmış bölüm).
+
+**P0-4 — Shizuku rehberi (07b):** `ShizukuGuideDialog` AlertDialog → ModalBottomSheet
+(tam genişlik, üst köşe 16dp, surfaceContainerHigh, scrim %65). Adımlar 24dp numaralı
+rozetlerle; "Shizuku başlatma rehberi" Adım 2 içinde 36dp OutlinedButton (8dp radius).
+Altta "Shizuku'yu indir" birincil + "Kapat" (betik uyumu korundu).
+
+**P0-5 — Breadcrumb + hata (12):** LazyRow son segmente otomatik kayıyor
+(LaunchedEffect + animateScrollToItem), ayraç "›" (monoMicro). Shizuku bağlı değilken
+hata kartı: "Dosya gezgini için Shizuku bağlantısı gerekli. Shizuku'yu başlatıp tekrar
+dene." + "Shizuku'yu bağla" eylemi (`SetupWizardViewModel.connectShizuku`: izin gerekiyorsa
+requestPermission, değilse Shizuku uygulamasını aç). "Shizuku process oluşturulamadı."
+jargonu ViewModel'de "Shizuku servisi yanıt vermedi." olarak eşlendi.
+
+**P0-6 — SELinux/UID/octal (21):** `FileIdentityCard` varsayılanı insani: "Orijinal dosya
+izinleri ve güvenlik kimliği yedeklendi — yazma sırasında korunur" + petrol "Korunuyor"
+çipi. Ham değerler (Sahip/İzinler/Güvenlik etiketi, monoMicro) yalnızca "Teknik detayları
+göster" (labelMedium, ExpandMore) ile açılır.
+
+**P0-7 — Yedekler (03/26):** "Yenile" yüzen buton → TopAppBar sağ ikon eylemi
+(contentDescription "Yenile"). "Eski yedekleri temizle" liste başlığı satırının sağında
+(OmniSectionHeader action). Kart başlığı insanca tarih "14 Kasım 2026 · 23:56"
+(titleMedium SemiBold, Locale tr), 2. satır hedef yol (monoKey), 3. satır "#<ts> · .bak"
+(monoMicro, outline). Sil ikonu sağ üst köşede; "Geri yükle" alt sağda birincil.
+
+**P1-8 — Üç sekme başlığı:** Yeni `OmniTabHeader` (sola hizalı headlineMedium 26sp +
+bodyMedium alt başlık, paddingStart 20 / paddingTop 16, sağda eylemler). Oyunlar
+("Oyunlar" / "Ayarlarını değiştir, yedeğini al, güvenle yaz."), Profiller ("Profiller" /
+"Kayıtlı ayar profillerin" + MoreVert), Ayarlar ("Ayarlar" / "Bağlantı, araçlar ve rehber").
+Ortalı OmniTopBar yalnız alt ekranlarda kaldı.
+
+**P1-9 — SignalGauge + CTA hiyerarşisi:** Hazır şebeke ikonu / artan çubuklar gitti;
+3 eşit kalibrasyon segmenti (4×16dp, 2dp radius, 3dp aralık). Bağlantı yok: 1 oksit +
+2 errorContainer sönük + sağda "Bağla" hapı (primaryContainer); izin gerekli: 1 pirinç +
+"İzin ver"; ADB sınırlı: 2 petrol + 1 sönük; root tam: 3 petrol. Panel nötr
+surfaceContainerLow. Shizuku çalışmıyorken "Oyun ekle" OmniSecondaryButton'a düşürüldü
+(birincil vurgu "Bağla" hapında).
+
+**P1-10 — FAB + oyun kartı (24b):** ExtendedFAB stadium (OmniRadius.full) +
+primaryContainer/onPrimaryContainer tonuna çekildi. Oyun kartına 3. mikro satır:
+"1 profil · Dengeli 60 FPS" (labelSmall, primary). `HomeViewModel.gameProfiles`
+(ProfileDao akışından gerçek sayım + en son profil adı; veri modeli değişmedi).
+
+**P1-11 — 21/23 hero tekrarı:** 21'deki 96dp hero kutusu kaldırıldı; "Dosya çekildi"
+başlığı + kompakt durum satırı (CheckCircle 20dp + "Dosya okundu · 128 B · 11 satır",
+success rengi). Mühür/hero yalnız 23'te (final). Betik "Dosya çekildi" needle'ı korundu.
+
+**P2-12 — Rehber ikonları:** Tek stil: 36dp kutu, 8dp radius, surfaceContainerHigh zemin,
+onSurfaceVariant ikon; rastgele renkli kutular ve GuideSection.accent kaldırıldı.
+Bölüm başına 01..11 monoMicro sıra numarası (gerçek sıra — meşru). Genişleme kenarlığı
+primary. Karşılaştırma bloklarının anlamlı SUCCESS/ERROR aksanları korundu.
+
+**P2-13 — Profil analizi (04):** "Çözümle" boş girdide disabled (surfaceContainerHighest +
+%38 içerik). Alanın üstünde "Panodan yapıştır" çipi (ContentPaste 18dp + labelMedium,
+LocalClipboardManager). Placeholder mono: `{ "name": "...", "rules": [...] }`.
+
+**P2-14 — Splash (00):** `tools/gen_splash_vector.py` gerçek Barlow SemiBold + JetBrains
+Mono glif dış hatlarını fontTools ile Android path'e çeviriyor (elle çizme taklit yok).
+72dp kalibrasyon kadranı (petrol halka + 24 tik + pirinç ibre/göbek), altında 22sp
+"OmniGFX" + 11sp "CALIBRATION SUITE". Açık/koyu iki kaynak (drawable + drawable-night);
+windowSplashScreenAnimatedIcon bu kilide bağlandı, daire arka plan kaldırıldı (kırpma yok).
+API 26-30 windowBackground layer-list ile aynı kilidi gösteriyor.
+
+**P2-15 — Sihirbaz sayacı:** TopAppBar sağında monoMicro "1 / 5" .. "5 / 5"; ray segmentleri
+aktif 4dp / pasif 2dp. Semantics off-by-one düzeltildi ("Adım 2/5" → "Adım 1/5").
+
 ## Durum: F13 tam yeniden doğrulama + dolu durum teslimi (2026-11-14, 10. oturum)
 
 ### 10. oturum bulguları ve yapılanlar
