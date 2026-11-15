@@ -3,6 +3,209 @@
 Proje: OmniGFX Pro (Shizuku tabanlı oyun config düzenleyici, Kotlin + Compose, 6 modül)
 Tur başladı: 2026-11-14. Bu dosya turun TEK hafızasıdır; her anlamlı adımda güncellenir.
 
+## Durum: F20 breadcrumb örtü padding düzeltmesi + doğrulama (2026-11-15, 17. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md tur 2 (GENEL 7.33 KALDI) esas.
+16. oturumun verify21'i hâlâ emu kuyruğunda (kardeş oturumlar aktif); APK'yı
+kurulum ANINDA okuduğu için düzeltme + build şimdi yapıldı, verify21 SON kodu çekecek.
+
+### 17. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose). CRITIQUE.md + PROGRESS.md +
+      REVIEW.md okundu. Tur 2'nin 8 düzeltmesi kodda grep/read ile doğrulandı
+      (HomeScreen LazyColumn, GuideScreen widthIn+softWrap, CalibrationGauge
+      10/14/18dp+outline, ShizukuSetup koşullu birincil, OmniSectionHeader tek sol
+      grup, splash fit_tag/assert_safe, readoutPrevious, trailingLabel).
+- [x] **YENİ KUSUR (tur 3, P0-4 devamı) — örtü 12dp KISA:** 16. oturumun dinamik
+      örtü genişliği `first.offset + first.size` idi; layoutInfo koordinatları
+      LazyRow'ın viewport'una göre, örtü ise dış Box'ın solundan başlıyor.
+      LazyRow'ın `padding(horizontal = spacing.md)` (12dp) farkı kadar örtü kısa
+      kalıp kısmi segmentin sağ ucunu sızdırıyordu. Düzeltme: `startPadPx +
+      first.offset + first.size` (LocalDensity ile px'e çevrilen spacing.md).
+      `StepSelectFileScreen.kt` BreadcrumbRow.
+- [x] **BUILD 23 (07:01):** flock -o ile assembleDebug → BUILD SUCCESSFUL 28s,
+      GRADLE_RC=0. APK 30.9 MB 07:01 (breadcrumb padding düzeltmesi dahil).
+- [x] **TEST+LINT 23 (07:04):** flock -o ile testDebugUnitTest lintDebug →
+      BUILD SUCCESSFUL 49s, GRADLE_RC=0; **76 test 0 fail 0 error 0 skip**;
+      lint tüm modüllerde **0 hata**. (clean'siz — verify21'in APK'sı korundu.)
+- [x] **verify21 TAMAMLANDI (07:53–08:00:54, build23 APK 07:53:38 kuruldu):**
+      ana set TAP_MISS_COUNT=0, SHOTS_RC=0, CRASH_NONE, SESSION_RC=0; dolu set
+      SHIZUKU PERMISSION OK (1. deneme), FILLED_TAP_MISS_COUNT=0,
+      FILLED_SHOTS_RC=0, CRASH_NONE, FILLED_SESSION_RC=0. 29 görüntü taze.
+- [x] Sayısal audit (verify21 seti): layout **28/28 TEMİZ**; palet **29/29 TEMİZ**;
+      parity **14/14 SAME_SIDE** (02 oran 2.03 = meşru içerik: davet butonu).
+- [x] Vision (4 kare, transkripsiyon köprüsü): 12 breadcrumb "… sdcard › Android ›
+      data › com.android.settings" temiz; 26 "Yedek geçmişi 2" tek satır + sayaç
+      yapışık + Sil solda/Geri yükle sağda; 22 üstü çizili 60 › pirinç 90 + canlı
+      tik rayları (0–100/0–100/0–4) + tek menü; 24 üç gözlü yuva (2 petrol +
+      1 çerçeveli) Pause çağrışımı yok.
+- [x] Piksel kanıtı: 12 örtü bölgesinde (x104–148) glif SIZINTISI YOK — padding
+      düzeltmesi çalışıyor (dump: kök ayraç 115–133 örtü altında, sdcard 149'dan
+      başlıyor). 00 etiket bbox 273px ≤ wordmark 275px, merkez farkı 1px (kırpma
+      yok). 18 "Oyun ekle" alt barın 299px üstünde; 19 "Sürüm" 171px üstünde;
+      20 "01"/"02" 76px tek satır.
+- [x] **YENİ DÜZELTME (tur 3, P1-8 tamamlama):** pasif BİRİNCİL buton metni tam
+      parlak onSurfaceVariant idi (#A8B6B5); ikincil %38 kullanıyor, eleştirmen
+      #647673 önermişti. OmniPrimaryButton disabledContentColor →
+      onSurfaceVariant %38 (blend #5B6869 ≈ öneri; M3 pasif dili + tutarlılık).
+      Etkilenen ekranlar: 04/07/12 (pasif birincil içeren tek ekranlar).
+- [x] **BUILD 24 (08:09):** assembleDebug 20s GRADLE_RC=0.
+- [x] **TAM CLEAN GATE (build25, 08:10–08:12):** flock -o ile clean assembleDebug
+      testDebugUnitTest lintDebug assembleRelease → **BUILD SUCCESSFUL 2m,
+      GRADLE_RC=0** (572 görev); **76 test 0 fail 0 error 0 skip**; lint **0 hata**.
+      debug APK 30.6 MB 08:10; release unsigned 3.4 MB 08:12.
+- [x] **verify22 TAMAMLANDI (09:03:13, build25 APK):** ana set 22 görüntü
+      TAP_MISS_COUNT=0, SHOTS_RC=0, CRASH_NONE, SESSION_RC=0. Emülatör trap ile
+      kapatıldı (kalan qemu port 5570 kardeş oturuma ait). Dolu set (21–26+24b)
+      verify21'den geçerli: build23→25 farkı yalnız pasif birincil metin alfası;
+      dolu ekranların hiçbirinde pasif birincil yok (tüm CTA'lar enabled).
+- [x] **SON set denetimleri:** layout **28/28 TEMİZ**, palet **29/29 TEMİZ**,
+      parity **14/14 SAME_SIDE**. Piksel: 04 Çözümle #5B6869, 07 İzin iste
+      #5B6869, 12 Dosyayı çek ve çözümle #5B6869 (%38 blend ✓); 07 Tekrar
+      denetle #06231F/petrol ✓; 04 İçe aktar #4B5556 ✓; 12 örtü sızıntısı YOK ✓.
+- [x] DESIGN.md karar 13 (tek pasif dili) + 14 (örtü koordinat geometrisi);
+      NOTES.md madde 11 padding notu; REVIEW.md **tur 3** yazıldı: 29 ekran
+      genel **8.63**, en düşük ekran 8.56, en düşük kriter 8; eleştirmen tur 2
+      çapasıyla madde madde Δ tablosu + kanıt eşlemesi.
+- [ ] commit/push/CI + QWEN_DESIGN_DONE.md.
+
+## Durum: F19 bağımsız doğrulama + breadcrumb kök düzeltmesi (2026-11-15, 16. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md tur 2 (GENEL 7.33 KALDI) esas.
+15. oturumun 8 düzeltmesi kodda bağımsız doğrulandı; verify20'nin ana seti
+(00–20) SON APK'dan taze ve temiz; dolu set (21–26+24b) hâlâ verify19'dan
+(04:41, tur 2 düzeltmelerinden ÖNCEki APK) → yeniden çekilecek.
+
+### 16. oturum bulguları ve yapılanlar
+- [x] Skill'ler okundu (tasarim-temel → tasarim-compose). CRITIQUE.md + PROGRESS.md okundu.
+- [x] 8 düzeltme kodda doğrulandı: HomeScreen LazyColumn; GuideScreen widthIn(min=24)+
+      softWrap=false; StepSelectFileScreen "…" örtüsü; OmniTypography.readoutPrevious;
+      CalibrationGauge 10/14/18dp + surfaceContainerHighest dolgu/outline çerçeve;
+      ShizukuSetupScreen durum-koşullu birincil; OmniValueReadout.trailingLabel;
+      StepPushApply "Uygulandı" etiketi.
+- [x] **BUILD GATE (bu oturum, 06:02, build21.log):** flock -o ile clean assembleDebug
+      testDebugUnitTest lintDebug assembleRelease → **BUILD SUCCESSFUL 2m2s, GRADLE_RC=0**
+      (572 görev). **76 test 0 fail 0 error 0 skip**; lint tüm modüllerde **0 hata**.
+      APK 30.5 MB 06:02; release unsigned 06:03.
+- [x] verify20 ana set (05:48–05:52, design-verify20.log): TAP_MISS_COUNT=0, SHOTS_RC=0,
+      CRASH_NONE, SESSION_RC=0. Layout audit **21/21 TEMİZ**; palet **22/22 TEMİZ**;
+      before/after **14/14 SAME_SIDE** (02 parlaklık oranı 2.04 = meşru içerik: davet butonu).
+- [x] Vision (4 kare): 00 splash "CALIBRATION SUITE" TAM (P0-1 ✓); 20 büyük font
+      "01"/"02" tek satır + alt başlık tam (P0-3 ✓); 18 "Oyun ekle" alt bar üstünde
+      tam + 3 gözlü gauge (P0-2 ✓); 12 breadcrumb "…" öneki var AMA kırpık Root
+      glifi sızıyor (yeni kusur).
+- [x] Piksel kanıtı (dump enabled alanı Compose'da GÜVENİLMEZ — disabled butonlar
+      true görünür): 07 "Tekrar denetle" petrol dolgulu birincil, "İzin iste"
+      #2C393A zemin + soluk metin (P1-8 ✓); 04 "İçe aktar" #4B5556 soluk metin +
+      görünür çerçeve (P1-8 ✓).
+- [x] **YENİ KUSUR + KÖK DÜZELTME (tur 3, P0-4 devamı):** breadcrumb "…" örtüsü
+      sabit genişlikliydi (metin+2×12dp); kaydırma konumuna göre kısmi kök öğenin
+      sağ ucu örtünün dışında kalıp kırpık glif sızdırıyordu (PNG'de "… t › sdcard",
+      dump'ta Root [114,132]). Düzeltme: örtü genişliği DİNAMİK — layoutInfo'dan
+      ilk görünür öğenin sağ ucu (offset+size); ayraç öğe SONUNA taşındı (derin
+      kaydırmada satır çıplak "›" ile başlayamaz); örtü fillMaxHeight + clipToBounds.
+      build21b: BUILD SUCCESSFUL 25s.
+- [x] **Dolu oturum kök nedeni (verify20 FAIL, logcat kanıtlı):** Shizuku'nun izin
+      veritabanı AVD userdata'sında koşular arası kalıyor (Shizuku hiç pm clear
+      edilmiyordu; verify19'da verilen izin hâlâ geçerli). Servis çalışırken
+      checkSelfPermission()=GRANTED → CONNECTED → canContinue=true → kurulum
+      ekranı LaunchedEffect ile KENDİNİ anında popBackStack ediyor (logcat:
+      row tap +40ms nav back callback, +130ms Activity callback'ine dönüş).
+      Grant akışı açılır açılmaz kapanan ekranda "Tekrar denetle" arıyordu.
+      Düzeltme: design_filled_session.sh Shizuku'yu da pm clear ediyor;
+      grant_shizuku ana ekranda "Bağlantı hazır" görürse akışı atlıyor.
+- [x] **BUILD GATE 2 (bu oturum, 06:37, build22.log):** flock -o ile clean
+      assembleDebug testDebugUnitTest lintDebug assembleRelease → **BUILD
+      SUCCESSFUL 2m15s, GRADLE_RC=0**; **76 test 0 fail 0 error 0 skip**;
+      lint **0 hata**. APK 30.5 MB 06:37 (breadcrumb düzeltmesi dahil).
+- [ ] verify21 (PID 2100832, nohup setsid, log design-verify21.log): ana + dolu
+      oturum, 29 görüntü SON APK'dan; emu kuyruğunda (kardeş emülatörler aktif).
+- [ ] Sayısal audit + palet + parity (yeni set) + vision (imza anları 22/23/24/26).
+- [ ] REVIEW.md tur 3 + commit/push/CI + QWEN_DESIGN_DONE.md.
+
+## Durum: F18 eleştirmen turu 2 düzeltmeleri (2026-11-15, 15. oturum)
+
+Brief yeniden koştu (sıfır context). CRITIQUE.md artık **tur 2** (2026-11-15 05:03,
+design/critic/round-2.md ile birebir aynı, md5 doğrulandı): **GENEL 7.33, KALDI**
+(eşik: ort ≥8.0, hiçbir ekran <7.0, sıfır Bitmişlik kusuru). Tur 1'in 15 maddesi
+çözülmüş; tur 2 yeni kusurlar buldu. 8 madde (P0: 5, P1: 3) bu oturumda çözülüyor.
+
+### Tur 2 çözümleri (madde madde, CRITIQUE.md 2026-11-15 05:03)
+
+**P0-1 — Splash "ALIBRATION SUIT":** Kök neden sayısal: eski etiket 11sp+1.2track
+≈131dp genişlik, baseline y=181'de 160dp maskenin kirişi ~104dp → C/E kırpılıyordu.
+`gen_splash_vector.py` yeniden yazıldı: wordmark baseline 156, etiket baseline 169;
+`fit_tag()` en büyük puntoyu 0.12em track ile seçiyor (genişlik ≤ wordmark VE
+kiriş−32dp); `assert_safe()` tüm glif bbox köşelerini r≤78'de doğruluyor. Sonuç:
+**word=88.9dp, tag=87.9dp, size=7.25, track=0.87, kenar payı 19.3dp** — üretici
+assert'leri geçti, iki tema vektörü yeniden üretildi. Eleştirmenin 9.5–10sp önerisi
+kendi genişlik kısıtıyla çelişiyordu; sert kısıtlar (kırpma yok + ≤wordmark + ≥16dp
+pay) esas alındı, karar DESIGN.md'ye not edildi.
+
+**P0-2 — 18/19 büyük font kesilmesi:** HomeScreen gövdesi tek LazyColumn'a taşındı
+(boş durum artık kaydırılabilir; eskiden sabit Column'du, buton alt bar altında
+kesiliyordu). Alt pay: boş 24dp, dolu liste 72dp (FAB yüksekliği). OmniEmptyState
+fontScale>1.15'te dikey padding 32→16dp, aralık 12→8dp, eylem üstü 8→4dp.
+OmniListRow dikey padding büyük fontta 12→8dp (heightIn 48dp korunuyor).
+SettingsScreen grup arası büyük fontta 24→16dp, üst boşluk 20→12dp; zaten
+verticalScroll + 40dp alt pay vardı.
+
+**P0-3 — 20/09 rehber kırılması:** Sıra numarası `width(24.dp)` sabitti → 2.0
+fontta "01" dikey kırılıyordu; `widthIn(min=24.dp)` + `maxLines=1` + `softWrap=false`.
+Hero büyük fontta kompakt (padding 20→16, paragraf üstü 16→8). Açılan kart
+`animateScrollToItem(index+1)` ile görünür alana giriyor (azaltılmış harekette
+anında scrollToItem) — içerik alt kenarda kesik başlamıyor. Alt 32dp +
+navigationBarsPadding zaten mevcuttu.
+
+**P0-4 — 12 breadcrumb + hata rengi:** TextButton'un 58dp asgari genişliği "data"
+segmentinde ~24dp anlamsız boşluk üretiyordu → eşit 4dp yatay padding'li, 48dp
+yükseklikli düz clickable hedefler; ayraçlar önde (2dp padding → segment+ayraç
+arası 6dp). Kök kaydırılınca başa sabit "…" öneki (derivedStateOf, remember'lı);
+satır asla çıplak "›" ile başlamıyor. OmniErrorCard eylemi OmniTextButton (petrol)
+yerine 36dp hap OutlinedButton: onErrorContainer metin + error %35 çerçeve.
+
+**P0-5 — 26 başlık + kart çukuru:** OmniSectionHeader'da başlık ve Spacer ayrı
+weight(1f) alınca kalan genişlik yarı yarıya bölünüyor, "Yedek geçmişi" iki satıra
+kırılıp "1" ortada yüzüyordu → başlık+sayaç tek sol grup (weight 1f, başlık
+maxLines=1 ellipsis, sayaç 8dp yapışık), eylem sağda intrinsic. BackupRow: Sil
+üst köşeden alt satırın soluna alındı (48dp IconButton), Geri yükle sağda birincil,
+arada 1dp outlineVariant ayraç — sol alt çukur dengelendi.
+
+**P1-6 — 22/23 Değer Okuması birliği:** Yeni `OmniMonoType.readoutPrevious`
+(19sp Medium) her iki ekranda üstü çizili eski değer + "›" + 28sp Bold yeni değer.
+22'nin rayları ölüydü çünkü görüntü anında henüz pin yoktu (fraction=null);
+pinsiz sayısal satırlara da türetilmiş ölçek geldi (`derivedScaleMax`: 2→4, 90→100,
+75→80…) → canlı iğne + aktif tikler + min/max mikro etiketleri. OmniValueReadout'taki
+14dp kalem ikonu kaldırıldı → `trailingLabel` parametresi; 23 "Uygulandı" etiketi
+taşıyor (idle özet etiketsiz). 22 alt barı: 1dp outlineVariant üst sınır + tam opak
+surfaceContainerLow + 16dp dikey pay.
+
+**P1-7 — 24/24b Pause benzetmesi:** CalibrationGauge eşit 4×16dp çubuklardan
+kademeli 10/14/18dp gözlere geçti (4.5dp genişlik, 3dp aralık, alt hizalı) — iki
+yanan göz artık "||" değil, 2/3 kademeli seviye. Pasif gözler outlineVariant
+(#2E3B3A, 1.25:1) yerine surfaceContainerHighest (#2C393A) dolgu + 1dp outline
+(#647673) çerçeve: yuva her koşulda "3 gözlü" okunuyor. Renkler token'dan;
+eleştirmenin hex'leriyle birebir. KDoc + NOTES.md kararı güncellendi.
+
+**P1-8 — 07/04 durum-çelişkili vurgu:** ShizukuSetupScreen durum paneli:
+`shizukuAvailable` (CONNECTED||PERMISSION_REQUIRED) false iken birincil dolgulu
+"Tekrar denetle", "İzin iste" disabled (surfaceContainerHighest zemin); servis
+kalkınca "İzin iste" birincileşiyor, "Tekrar denetle" ikincileşiyor.
+OmniSecondaryButton disabled metni onSurfaceVariant %38 + görünür outlineVariant
+çerçeve → 04'te boş "İçe aktar" artık aktif gibi parlamıyor (enabled koşulu
+zaten analysis.canImport'tı, görsel pasiflik eksikti).
+
+### Doğrulama (bu oturum)
+- [x] Build gate: flock -o ile clean+assembleDebug+testDebugUnitTest+lintDebug+
+      assembleRelease → **BUILD SUCCESSFUL, GRADLE_RC=0** (build20c.log, 1m49s).
+      **76 test 0 fail 0 error 0 skip**; lint 0 hata (app 1 warning: UnusedResources
+      ic_launcher_foreground; feature-wizard 13 warning önceden mevcut SdCardPath/
+      QueryPermissionsNeeded). APK 30.5 MB, 05:26. İlk koşuda 2 hata yakalandı ve
+      düzeltildi: StepEditScreen Box import'u + derivedStateOf remember (lint).
+- [ ] verify20: iki emülatör oturumu (design_verify17.sh sürücüsü, nohup setsid,
+      log .qwen/tmp/design-verify20.log) — 29 görüntü SON APK'dan.
+- [ ] Sayısal audit + palet + before/after denklik + vision (imza anları).
+- [ ] REVIEW.md tur 3 + commit/push/CI + QWEN_DESIGN_DONE.md.
+
 ## Durum: F17 bağımsız yeniden doğrulama + teslim (2026-11-15, 14. oturum)
 
 Brief yeniden koştu (sıfır context). CRITIQUE.md (tur 1, GENEL 6.31 KALDI) esas.

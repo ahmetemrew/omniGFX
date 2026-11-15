@@ -223,10 +223,13 @@ tekrar listeler ve jargon. Kararlar:
 4. **Aynı içerik iki kez listelenmez.** Rehberde İçindekiler kutusu kaldırıldı; akordeon
    bölümleri tek liste. Bölüm ikonları tek stil (36dp/8dp/surfaceContainerHigh/nötr ikon)
    + 01..11 gerçek sıra numarası. Rastgele renkli ikon kutusu slop'tur.
-5. **Bağlantı göstergesi kalibrasyon segmentidir.** 3 eşit göz (4×16dp): oksit=kesik,
-   pirinç=izin bekliyor, 2 petrol=sınırlı (ADB), 3 petrol=tam (root). Telefon şebeke
-   ikonu çağrışımı yasak. Bağlantı yokken birincil vurgu "Bağla" hapında; "Oyun ekle"
-   ikincil seviyeye düşer.
+5. **Bağlantı göstergesi kalibrasyon segmentidir.** 3 kademeli göz (10/14/18dp,
+   4.5dp genişlik, alt hizalı): oksit=kesik, pirinç=izin bekliyor, 2 petrol=sınırlı
+   (ADB), 3 petrol=tam (root). Eşit boyutlu çubuklar tur 2'de "Duraklat (⏸)"
+   ikonuna benzediği için kademeli boyuta geçildi; pasif gözler surfaceContainerHighest
+   dolgu + 1dp outline çerçeve taşır (zeminle 1.25:1 kalan outlineVariant dolgu
+   "3 gözlü yuva" okumasını bozuyordu). Telefon şebeke ikonu çağrışımı yasak.
+   Bağlantı yokken birincil vurgu "Bağla" hapında; "Oyun ekle" ikincil seviyeye düşer.
 6. **Teknik iç yapı son kullanıcıya gösterilmez.** UID/izin/SELinux varsayılan gizli;
    "Korunuyor" rozeti + insani açıklama, ham değerler "Teknik detayları göster" arkasında.
    Hata mesajı jargon değil eylem söyler ("Shizuku'yu bağla").
@@ -238,9 +241,26 @@ tekrar listeler ve jargon. Kararlar:
 9. **Ara adım finali taklit etmez.** Mühür/hero yalnızca "Dosya uygulandı"da; çek-analiz
    kompakt durum satırıyla geçer. FAB stadium + container tonunda, kartın önüne geçmez.
 10. **Splash marka kilididir.** 72dp kalibrasyon kadranı + gerçek font glifleriyle
-    (fontTools) Barlow wordmark + mono etiket. Daire arka plan yok, kırpma yok; açık/koyu
-    ayrı kaynak. Üstteki BÜYÜK HARFLİ etiket bölüm başlığı değil, marka kilidi parçası
-    (slop listesindeki "eyebrow label"dan bilinçli ayrım).
+    (fontTools) Barlow wordmark + mono etiket. Daire arka plan yok; açık/koyu ayrı
+    kaynak. Üstteki BÜYÜK HARFLİ etiket bölüm başlığı değil, marka kilidi parçası
+    (slop listesindeki "eyebrow label"dan bilinçli ayrım). **Güvenli çember kuralı
+    (tur 2 P0-1):** Android 12+ splash ikonu ~160dp çaplı çembere maskelenir; tüm
+    kilit r≤78dp içinde kalır. Etiket genişliği wordmark'ı aşmaz ve kenar payı
+    ≥16dp'dir; `gen_splash_vector.py` bunu fitting + assert ile garanti eder
+    (word=88.9dp, tag=87.9dp @7.25sp/0.12em, pay 19.3dp). 9.5–10sp etiket önerisi
+    bu kısıtlarla çeliştiği için uygulanmadı — kırpılmayan okuma önceliklidir.
 11. **Sihirbaz konumu söyler.** Üst bar sağında monoMicro "n / 5"; ray aktif 4dp/pasif 2dp.
 12. **Boş girdiyle birincil eylem çağrılmaz.** "Çözümle" boşken disabled; "Panodan
     yapıştır" çipi gerçek bir kısayol; placeholder mono ve gerçek şema örneği.
+13. **Pasif buton dili tektir (tur 2 P1-8, tur 3).** Birincil ve ikincil buton
+    pasifken aynı dili konuşur: birincil surfaceContainerHighest zemin + onSurfaceVariant
+    %38 metin (blend ≈ #5B6869, eleştirmenin #647673 önerisiyle aynı aile); ikincil
+    outlineVariant çerçeve + %38 metin. Durum-çelişkili vurgu yasak: Shizuku servisi
+    çalışmıyorken birincil "Tekrar denetle"dir, "İzin iste" pasiftir; servis kalkınca
+    roller değişir. Tam parlak pasif metin "aktif gibi parlamak"tır (M3 %38 kuralı).
+14. **Breadcrumb örtüsü viewport değil, dış kutu koordinatındadır (tur 3).** Kök
+    kaydırılınca başa "…" gelir; örtü genişliği DİNAMİK = LazyRow yatay padding'i
+    (spacing.md) + ilk görünür öğenin sağ ucu (layoutInfo offset+size). layoutInfo
+    koordinatları LazyRow viewport'una göredir; padding eklenmezse örtü 12dp kısa
+    kalır ve kırpık glif sızar. Ayraç öğe SONUNDADIR: örtüden sonra gelen ilk şey
+    daima segment adıdır, çıplak "›" olamaz. Örtü fillMaxHeight + clipToBounds.

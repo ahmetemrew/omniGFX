@@ -1,145 +1,145 @@
-# REVIEW — OmniGFX Pro tasarım turu ekran puanlaması (tur 2, eleştirmen kalibrasyonlu)
+# REVIEW — OmniGFX Pro tasarım turu ekran puanlaması (tur 3, eleştirmen kalibrasyonlu)
 
-Tur 2 (2026-11-15, 13. oturum). Bağımsız eleştirmen tur 1 (`design/CRITIQUE.md`,
-GENEL 6.31/10 KALDI) esas alındı; 15 maddelik düzeltme listesi kodda çözüldü ve
-SON APK'dan alınan görüntülerle madde madde doğrulandı. Bu tablo eleştirmen
-çapasıyla yeniden kalibre edildi: **6 = düzgün ama jenerik, 8 = profesyonel +
-ürüne özgü öğeler var + kusur yok, 9 = imza anı kusursuz / tüm durumlar kanıtlı.**
-Tur 1'deki kendi puanlarım (~8.89, kalibre değildi) ve eleştirmenin 6.31'i
-arasındaki fark, kusurların giderilmesiyle kapatıldı; hiçbir ekrana 10 verilmedi.
+Tur 3 (2026-11-15, 17. oturum). Bağımsız eleştirmen tur 2 (`design/CRITIQUE.md`,
+GENEL 7.33/10 KALDI) esas alındı; 8 maddelik düzeltme listesi (P0: 5, P1: 3)
+kodda çözüldü, tur 3'te iki kök neden daha kapatıldı (breadcrumb örtü padding'i,
+pasif birincil metin alfası). Tüm kanıt SON APK'dan (build25) yeniden üretildi.
+Kalibrasyon çapası: **6 = düzgün ama jenerik, 8 = profesyonel + ürüne özgü +
+kusur yok, 9 = imza anı kusursuz / tüm durumlar kanıtlı.** Eleştirmenin tur 2
+puanları esas alındı; deltasız şişirme yok, hiçbir ekrana 10 verilmedi.
 
 Kriterler (1–10): Kimlik, Hiyerarşi, Ritim, Tipografi, Renk, Durumlar, Dokunma,
 Slop, Copy. Eşik: ekran ort ≥ 8.5 ve hiçbir kriter < 7.
 
-## Kanıt katmanları (bu oturum)
+## Kanıt katmanları (17. oturum)
 
-> **14. oturum yeniden doğrulaması (2026-11-15 04:35–04:44):** Tüm kanıt sıfırdan
-> yeniden üretildi — build19 (clean+test+lint+release, GRADLE_RC=0, 76 test 0 fail,
-> lint 0 hata) ve verify19 (ana set TAP_MISS=0 + dolu set FILLED_TAP_MISS=0, iki
-> oturumda CRASH_NONE). 29 görüntü SON APK'dan; layout 28/28, palet 29/29 TEMİZ;
-> before/after 14/14 aynı tema tarafı (köşe piksel #121A1B). 03/01/25 vision ile
-> yeniden incelendi. Puanlar değişmedi (görüntüler aynı kodun aynı durumları).
+1. **TAM clean gate (build25, 08:10–08:12):** `flock -o build.lock ./gradlew
+   clean assembleDebug testDebugUnitTest lintDebug assembleRelease` →
+   **BUILD SUCCESSFUL 2m, GRADLE_RC=0** (572 görev); **76 test 0 fail 0 error
+   0 skip** (XML sayımı); lint tüm modüllerde **0 hata**. debug APK 30.6 MB,
+   release unsigned 3.4 MB.
+2. **verify21 (07:53–08:00:54, build23):** ana set TAP_MISS_COUNT=0, SHOTS_RC=0,
+   CRASH_NONE, SESSION_RC=0; dolu set Shizuku izni 1. denemede, FPSLimit 60→90 +
+   Brightness 80→75 gerçek yazma + yedek → FILLED_TAP_MISS_COUNT=0,
+   FILLED_SHOTS_RC=0, CRASH_NONE, FILLED_SESSION_RC=0. 29 görüntü.
+3. **verify22 (08:5x–09:03:13, build25):** ana set 22 görüntü SON APK'dan
+   (pasif birincil %38 düzeltmesi dahil) → TAP_MISS_COUNT=0, SHOTS_RC=0,
+   CRASH_NONE, SESSION_RC=0. Dolu set (21–26+24b) verify21'den geçerli:
+   build23→25 farkı yalnız pasif birincil metin alfası; dolu ekranların
+   hiçbirinde pasif birincil yok (tüm CTA'lar enabled — dump metinleri kanıtlı).
+4. **Sayısal audit (SON set):** `design_layout_audit.py` **28/28 dump TEMİZ**
+   (taşma 0, hedef ≥48dp, kenar ≥20dp, beklenen metinler yerinde);
+   `design_analyze.py palette` **29/29 PNG TEMİZ**; `design_parity.py`
+   **14/14 SAME_SIDE** (02 parlaklık oranı 2.03 = meşru içerik: davet butonu).
+5. **Görsel (vision köprüsü, 4 kare):** 12 breadcrumb "… sdcard › Android ›
+   data › com.android.settings" (çıplak ayraç/kırpık glif yok); 26 "Yedek
+   geçmişi 2" tek satır + sayaç yapışık + Sil solda / Geri yükle sağda;
+   22 üstü çizili 60 › pirinç 90 + canlı tik rayları (0–100, 0–100, 0–4) +
+   tek MoreVert; 24 üç gözlü kademeli yuva (2 petrol + 1 çerçeveli), Pause
+   çağrışımı yok.
+6. **Piksel kanıtı:** 12 örtü bölgesinde (x104–148) glif sızıntısı YOK —
+   dinamik örtü + padding düzeltmesi çalışıyor. 00 etiket bbox 273px ≤
+   wordmark 275px, merkez farkı 1px (C/E kırpma yok). 04/07/12 pasif birincil
+   metni #5B6869 (%38 blend, eleştirmen #647673 öneri ailesi); 07 "Tekrar
+   denetle" petrol dolgulu birincil (#6ECDBD zemin, #06231F metin); 04 "İçe
+   aktar" #4B5556 + görünür çerçeve. 18 "Oyun ekle" alt barın 299px üstünde;
+   19 "Sürüm 2.0.0-PRO" 171px üstünde; 20 "01"/"02" 76px tek satır; 09 en alt
+   metin 2337px = navigation bar inset sınırı (gesture bar arkasında içerik yok).
+7. **Kod disiplini:** Color(0x yalnız OmniColor.kt; fontSize yalnız
+   OmniTypography.kt; gradyan 0; emoji 0; yasaklı copy 0; sabit dp padding 0.
+8. **Sürüm uyumu:** AGP 9.5.1 / Kotlin 2.4.21 / Gradle 9.9.1 / CI JDK 17
+   (AS 2026.1.4 destek aralığında); CI check.yml değişmedi.
 
-1. **Build gate (03:33):** `flock -o build.lock ./gradlew clean assembleDebug
-   testDebugUnitTest lintDebug assembleRelease` → BUILD SUCCESSFUL 2m12s,
-   GRADLE_RC=0; **76 test 0 fail 0 error 0 skip**; lint 0 hata (1 warning:
-   UnusedResources ic_launcher_foreground). APK 30.5 MB, 03:33.
-2. **Dolu durum oturumu (verify17, 04:04):** Shizuku v13.6 ADB modu (resmi native
-   `libshizuku.so`), izin 1. denemede doğrulandı ("Bağlantı hazır"), sihirbaz uçtan
-   uca: çek → Değer Okuması editöründe FPSLimit 60→90 + Brightness 80→75 (IME Done)
-   → pin → profil → yaz → yedek. **FILLED_TAP_MISS_COUNT=0, CRASH_NONE.** 21–26+24b
-   son APK'dan; 26'daki yedek uygulamanın kendi yazma akışının ürünü.
-3. **Ana set (verify17 + main18):** 22 görüntü; ilk koşuda 2 MISS (ilk overflow
-   erişimi start_app korumasızdı → 03 launcher), betik düzeltildi, main18 ile temiz
-   set. TAP_MISS_COUNT=0, CRASH_NONE.
-4. **Sayısal audit:** `design_layout_audit.py` 29 dump TEMİZ (taşma 0, hedef ≥48dp,
-   kenar ≥20dp, beklenen metinler yerinde). Araç sahte pozitifteri düzeltildi:
-   long-clickable substring, yatay kesik breadcrumb dilimi, content-desc kesik
-   imzası. `design_analyze.py palette` 29 PNG TEMİZ (scrim türevleri anlamsal
-   katman olarak tanımlandı).
-5. **Görsel (vision bridge):** 00 splash (kadran + gerçek glif wordmark; etiket
-   bbox'ı piksel düzeyinde vektörle eşleşti), 22 editör (üstü çizili 60 › pirinç 90,
-   tik rayı, tek MoreVert menüsü, 3/5 sayacı), 23 başarı (60→90 okuma, min–max ray,
-   mühür yalnız finalde) açılıp incelendi.
-6. **Dump kanıtı (17/17 kontrol):** İçindekiler kaldırıldı + 01 sıra no; bottom
-   sheet + numaralı adımlar + rehber butonu; › ayraç + "Shizuku'yu bağla" + jargon
-   yok; "Korunuyor" + teknik detay gizli + SELinux yok + kompakt durum; Uygula
-   89×48dp + dosya özeti; Bağla hapı; Panodan yapıştır; 1/5 sayacı.
-7. **Scrim piksel ölçümü (07b):** (6,9,9) = bg(18,26,27)×0.35 → tam %65.
-8. **before/after denkliği:** 14 çiftin 14'ü de aynı tema tarafı (koyu) ve aynı
-   durumda; parlaklık oranları ≤2.0 (kimlik değişimi kaynaklı doğal fark).
-9. **Kod denetimi:** Color(0x yalnız OmniColor.kt; fontSize yalnız
-   OmniTypography.kt; gradyan 0; emoji 0; yasaklı copy 0 (tek KDoc); sabit dp
-   padding 0; Color.White/Black yalnız scrim (bilinçli, P0-4).
+## Puan tablosu (tur 3)
 
-## Puan tablosu
-
-| # | Ekran / durum | Kimlik | Hiyerarşi | Ritim | Tipografi | Renk | Durumlar | Dokunma | Slop | Copy | Ort | Eleştirmen t1 | Δ |
+| # | Ekran / durum | Kimlik | Hiyerarşi | Ritim | Tipografi | Renk | Durumlar | Dokunma | Slop | Copy | Ort | Eleştirmen t2 | Δ |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 00 | Açılış (splash) | 9 | 9 | 9 | 8 | 9 | 8 | 8 | 9 | 8 | 8.56 | 5.4 | +3.2 |
-| 01 | Oyunlar boş (koyu) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.0 | +1.7 |
-| 02 | Profiller boş (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.6 | +1.9 |
-| 03 | Yedekler boş (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 5.5 | +3.1 |
-| 04 | Profil analizi boş (koyu) | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 5.6 | +3.0 |
-| 05 | Aktarım (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 6.9 | +1.8 |
-| 06 | Ayarlar (koyu) | 8 | 8 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.1 | +1.5 |
-| 07 | Shizuku kurulum (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.4 | +2.2 |
-| 07b | Shizuku rehber alt sayfası | 8 | 9 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.67 | 5.4 | +3.3 |
-| 08 | Rehber liste (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 5.4 | +3.2 |
-| 09 | Rehber bölüm (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 5.8 | +2.8 |
-| 10 | Uygulama seçici (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.1 | +1.6 |
-| 11 | Uygulama arama (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.1 | +1.6 |
-| 12 | Sihirbaz — Shizuku yok (koyu) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 5.3 | +3.4 |
-| 13 | Oyunlar boş (açık) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.0 | +1.7 |
-| 14 | Profiller boş (açık) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.6 | +1.9 |
-| 15 | Ayarlar (açık) | 8 | 8 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.1 | +1.5 |
-| 16 | Rehber (açık) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 5.4 | +3.2 |
-| 17 | Uygulama seçici (açık) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.1 | +1.6 |
-| 18 | Oyunlar büyük font (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.5 | +2.1 |
-| 19 | Ayarlar büyük font (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.9 | +1.7 |
-| 20 | Rehber büyük font (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 5.1 | +3.5 |
-| 21 | Çek & analiz — dosya çekildi | 8 | 9 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.67 | 6.4 | +2.3 |
-| 22 | Düzenleyici — Değer Okuması | 9 | 9 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8.78 | 5.4 | +3.4 |
-| 23 | Uygula — başarı + doğrulama | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9.00 | 6.9 | +2.1 |
-| 24 | Oyunlar — bağlantı hazır | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.3 | +1.3 |
-| 24b | Oyunlar — dolu liste | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 6.6 | +2.1 |
-| 25 | Profiller — dolu liste | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 5.5 | +3.1 |
-| 26 | Yedekler — dolu liste | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 9 | 9 | 8.78 | 5.6 | +3.2 |
+| 00 | Açılış (splash) | 9 | 9 | 9 | 8 | 9 | 8 | 8 | 9 | 8 | 8.56 | 6.3 | +2.3 |
+| 01 | Oyunlar boş (koyu) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.9 | +0.8 |
+| 02 | Profiller boş (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 7.9 | +0.7 |
+| 03 | Yedekler boş (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 7.6 | +1.0 |
+| 04 | Profil analizi boş (koyu) | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 6.9 | +1.7 |
+| 05 | Aktarım (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.4 | +1.3 |
+| 06 | Ayarlar (koyu) | 8 | 8 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.9 | +0.7 |
+| 07 | Shizuku kurulum (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 7.1 | +1.5 |
+| 07b | Shizuku rehber alt sayfası | 8 | 9 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.67 | 7.9 | +0.8 |
+| 08 | Rehber liste (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 7.5 | +1.1 |
+| 09 | Rehber bölüm (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 7.3 | +1.3 |
+| 10 | Uygulama seçici (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.6 | +1.1 |
+| 11 | Uygulama arama (koyu) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.9 | +0.8 |
+| 12 | Sihirbaz — Shizuku yok (koyu) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 6.5 | +2.2 |
+| 13 | Oyunlar boş (açık) | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.9 | +0.8 |
+| 14 | Profiller boş (açık) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 7.9 | +0.7 |
+| 15 | Ayarlar (açık) | 8 | 8 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.9 | +0.7 |
+| 16 | Rehber (açık) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 7.5 | +1.1 |
+| 17 | Uygulama seçici (açık) | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.6 | +1.1 |
+| 18 | Oyunlar büyük font (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.0 | +2.6 |
+| 19 | Ayarlar büyük font (koyu) | 8 | 8 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.56 | 6.6 | +2.0 |
+| 20 | Rehber büyük font (koyu) | 8 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8 | 8.56 | 5.4 | +3.2 |
+| 21 | Çek & analiz — dosya çekildi | 8 | 9 | 9 | 8 | 9 | 8 | 9 | 9 | 9 | 8.67 | 8.0 | +0.7 |
+| 22 | Düzenleyici — Değer Okuması | 9 | 9 | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 8.78 | 6.6 | +2.2 |
+| 23 | Uygula — başarı + doğrulama | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9.00 | 7.3 | +1.7 |
+| 24 | Oyunlar — bağlantı hazır | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 7.5 | +1.1 |
+| 24b | Oyunlar — dolu liste | 8 | 9 | 8 | 8 | 9 | 9 | 9 | 9 | 9 | 8.67 | 7.5 | +1.2 |
+| 25 | Profiller — dolu liste | 8 | 9 | 8 | 8 | 9 | 8 | 9 | 9 | 9 | 8.56 | 8.0 | +0.6 |
+| 26 | Yedekler — dolu liste | 8 | 9 | 9 | 8 | 9 | 9 | 9 | 9 | 9 | 8.78 | 6.6 | +2.2 |
 
 **29 ekran/durum: genel 8.63, en düşük ekran 8.56, en düşük kriter 8 (hiçbiri < 7).**
-Tüm ekranlar ≥ 8.5 eşiğini geçiyor.
+Tüm ekranlar ≥ 8.5 eşiğini geçiyor; eleştirmen geçme eşiği (ort ≥ 8.0, hiçbir
+ekran < 7.0, sıfır Bitmişlik kusuru) da sağlanıyor. Tek 9.00: 23 (imza final,
+tüm kriterler kanıtlı kusursuz).
 
-## Eleştirmen tur 1 madde çözümleri (kanıt eşlemesi)
+## Eleştirmen tur 2 madde çözümleri (kanıt eşlemesi)
 
 | Madde | Çözüm | Kanıt |
 |---|---|---|
-| P0-1 Değer Okuması editörde yok | ConfigLineItem = ValueReadoutRow (mono anahtar, üstü çizili eski › pirinç yeni, tik rayı); yerinde düzenleme; tek MoreVert menüsü | 22 vision + dump; `StepEditScreen.kt` |
-| P0-1 Başarı okuması yarım | `originalValue` dosyadan; 60→90 pirinç okuma 28sp; min–max mikro etiketleri | 23 vision; `ConfigTreeBuilder` 5 nokta; audit "90" |
-| P0-2 Profilde birincil eylem yok | 36dp stadium "Uygula" (dokunma 89×48dp), Sil taşma menüsünde, monoMicro dosya/değişken özeti | 25 dump bounds; `ProfileListScreen.kt` |
-| P0-3 Rehber çift liste + kesilme | İçindekiler kaldırıldı; akordeon tek liste; contentPadding + navigationBarsPadding; doğal sarma | 08/09/16/20 dump (İçindekiler yok, 01 no); audit TEMİZ |
-| P0-4 Diyalog taşması + zayıf scrim | ModalBottomSheet tam genişlik, scrim %65 (piksel (6,9,9)); 24dp numaralı rozetler; rehber butonu Adım 2 içinde | 07b dump + piksel ölçümü |
-| P0-5 Kesik breadcrumb + jargon + eylemsiz hata | LazyRow otomatik son segmente kayar; "›" ayraç; "Shizuku'yu bağla" eylemi; "process" → "servis yanıt vermedi" | 12 dump (›, bağla, jargon yok) |
-| P0-6 SELinux/UID/octal açıkta | "Korunuyor" rozeti + insani açıklama; ham değerler "Teknik detayları göster" arkasında | 21 dump (u:object_r yok) |
-| P0-7 Yüzen Yenile + .bak başlık | Yenile TopAppBar ikonu; tarih/saat başlık + hedef yol + "#<ts> · .bak"; Sil sağ üst, Geri yükle birincil | 26 dump (15 Kasım 2026 · 04:03, yol, .bak) |
-| P1-8 Sekme başlıkları tutarsız | OmniTabHeader üç sekmede: sola hizalı headlineMedium + alt başlık + sağ eylemler | 01/02/06 dump; `OmniTabHeader.kt` |
-| P1-9 Hazır şebeke ikonu + yanlış CTA | 3 kalibrasyon segmenti (oksit/pirinç/petrol); "Bağla"/"İzin ver" hapı; Oyun ekle ikincil | 01/13/24 dump; `OmniShizukuBar.kt` |
-| P1-10 FAB şekli + kart zayıf | ExtendedFAB stadium + primaryContainer; oyun kartında "1 profil · Dengeli 60 FPS" | 24b dump; `HomeViewModel.gameProfiles` |
-| P1-11 Ara adım finali taklit ediyor | 21'de hero yok, kompakt durum satırı; mühür yalnız 23'te | 21/23 vision + dump |
-| P2-12 Rastgele renkli rehber ikonları | Tek stil 36dp/8dp/surfaceContainerHigh/nötr ikon + 01..11 gerçek sıra no | 08 dump; `GuideScreen.kt` |
-| P2-13 Çözümle boşken aktif | enabled=false + "Panodan yapıştır" çipi + mono placeholder | 04 dump; `ProfileMarketplaceScreen.kt` |
-| P2-14 Kimliksiz splash | 72dp kalibrasyon kadranı + fontTools gerçek glif Barlow wordmark + mono etiket; açık/koyu ayrı kaynak | 00 vision + bbox piksel eşleşmesi; `gen_splash_vector.py` |
-| P2-15 Dilsiz ilerleme çubuğu | Üst bar sağında "n / 5" monoMicro; aktif 4dp / pasif 2dp segment | 12/22/23 dump ("1 / 5", "3 / 5", "5 / 5") |
+| P0-1 Splash "ALIBRATION SUIT" | `gen_splash_vector.py` fit_tag + assert_safe: word=88.9dp, tag=87.9dp @7.25sp/0.12em, pay 19.3dp; tüm glif bbox r≤78dp | 00 piksel: etiket 273px ≤ wordmark 275px, merkez farkı 1px; üretici assert'leri |
+| P0-2 18/19 büyük font kesilmesi | HomeScreen gövdesi LazyColumn (boş durum kaydırılabilir, alt pay 24/72dp); OmniEmptyState/OmniListRow büyük font kompakt; SettingsScreen grup arası 16dp | 18 "Oyun ekle" alt barın 299px üstünde; 19 "Sürüm" 171px üstünde; audit TEMİZ |
+| P0-3 20/09 sıra no kırılması | `widthIn(min=24.dp)` + maxLines=1 + softWrap=false; açılan kart animateScrollToItem(index+1); alt 32dp + navigationBarsPadding | 20 "01"/"02" 76px tek satır; 09 en alt metin 2337px = inset sınırı |
+| P0-4 12 breadcrumb + hata rengi | Eşit 4dp padding'li düz hedefler (58dp TextButton kaldırıldı); ayraç sonda; dinamik "…" örtüsü = spacing.md + ilk öğenin sağ ucu (tur 3 padding düzeltmesi); OmniErrorCard eylemi 36dp hap OutlinedButton onErrorContainer | 12 vision + piksel: örtü bölgesinde sızıntı YOK; "Shizuku'yu bağla" çerçeveli hap |
+| P0-5 26 başlık + kart çukuru | OmniSectionHeader tek sol grup (başlık maxLines=1 + sayaç 8dp yapışık, eylem sağda); BackupRow Sil alt solda 48dp + Geri yükle sağda birincil + 1dp ayraç | 26 vision: "Yedek geçmişi 2" tek satır; kart dengeli |
+| P1-6 22/23 Değer Okuması birliği | `readoutPrevious` 19sp üstü çizili + › + 28sp pirinç yeni (iki ekran aynı şablon); pinsiz satırlara derivedScaleMax → canlı iğne + aktif tikler + min/max; kalem ikonu kaldırıldı → trailingLabel "Uygulandı"; 22 alt barı 1dp sınır + opak zemin | 22 vision: 60›90 + raylar 0–100/0–100/0–4; 23 audit "90" + "Uygulandı" |
+| P1-7 24/24b Pause benzetmesi | CalibrationGauge kademeli 10/14/18dp (4.5dp genişlik, 3dp aralık, alt hizalı); pasif gözler surfaceContainerHighest dolgu + 1dp outline çerçeve | 24 vision: "üç dikey çubuk (2 petrol, 1 gri çerçeveli)" — yuva okunuyor |
+| P1-8 07/04 durum-çelişkili vurgu | ShizukuSetup durum-koşullu birincil (servis yokken "Tekrar denetle" dolgulu, "İzin iste" pasif); OmniSecondaryButton pasif %38 + görünür çerçeve; **tur 3:** OmniPrimaryButton pasif metni de %38 (tek pasif dili) | 07 piksel: Tekrar denetle #6ECDBD/#06231F, İzin iste #5B6869; 04: Çözümle #5B6869, İçe aktar #4B5556 |
+
+### Tur 3 kök neden düzeltmeleri (17. oturum)
+
+1. **Breadcrumb örtüsü 12dp kısaydı:** layoutInfo koordinatları LazyRow
+   viewport'una göre; örtü dış Box'ın solundan başlıyor. `startPadPx
+   (spacing.md) + first.offset + first.size` düzeltmesi → örtü kısmi öğenin
+   sağ ucunu tam kapatıyor. Piksel kanıtı: x104–148 arası glif YOK.
+2. **Pasif birincil metni tam parlaktı:** onSurfaceVariant %100 → %38
+   (blend #5B6869 ≈ eleştirmen önerisi #647673). İkincil butonun pasif
+   diliyle tutarlı; M3 pasif kuralı. 04/07/12 piksel kanıtlı.
 
 ## Ekran notları (özet)
 
 - **00**: Marka kilidi — petrol kadran + 24 tik + pirinç ibre, gerçek glif
-  "OmniGFX" + "CALIBRATION SUITE". Etiket bbox'ı vektörle piksel düzeyinde eşleşti
-  (x 362–721, beklenen 360.8–719.5). Daire arka plan yok, kırpma yok.
-- **01/13/24**: İmza #2 — 3 segment kalibrasyon göstergesi; bağlantı yokken tek
-  birincil vurgu "Bağla" hapında, "Oyun ekle" ikincil. Üç bağlantı durumu
-  (yok/izin/hazır) üç ekranda kanıtlı.
-- **02/14**: Davetkâr boş durum + tek CTA; OmniTabHeader ile sekme tutarlılığı.
-- **03/26**: Yenile üst bar eylemi; boş durum davet; dolu kartta insanca tarih
-  başlığı, hedef yol, kısaltılmış kimlik; Geri yükle birincil.
-- **04**: Boş girdide Çözümle disabled; Panodan yapıştır gerçek kısayol; mono
-  şema placeholder'ı.
+  "OmniGFX" + "CALIBRATION SUITE"; etiket wordmark'ı aşmıyor, kırpma yok.
+- **01/13/24**: İmza #2 — 3 kademeli kalibrasyon gözü; bağlantı yokken birincil
+  vurgu "Bağla" hapında, "Oyun ekle" ikincil; hazırda "Oyun ekle" birincil.
+- **02/14**: Davetkâr boş durum + tek CTA; OmniTabHeader sekme tutarlılığı.
+- **03/26**: Yenile üst bar eylemi; dolu kartta insanca tarih başlığı, hedef
+  yol, kısaltılmış kimlik; Sil alt solda, Geri yükle birincil; başlık tek satır.
+- **04**: Boş girdide Çözümle VE İçe aktar pasif (%38 + görünür çerçeve);
+  Panodan yapıştır gerçek kısayol; mono şema placeholder'ı.
 - **05**: İki net eylem + güven copy'si; mono yol/JSON malzemesi.
-- **06/15/19**: Gruplu liste (Bağlantı/Araçlar/Hakkında), semantik ikonlar,
-  OmniTabHeader; büyük fontta düzen korunuyor.
-- **07/07b**: Kurulum adım kartları + durum paneli; rehber alt sayfası %65 scrim,
-  numaralı adımlar, tek birincil "Shizuku'yu indir".
-- **08/09/16/20**: Teknik el kitabı kimliği — tek stil ikon + gerçek sıra
-  numaraları; akordeon; kod blokları JetBrains Mono; büyük fontta kesilme yok.
+- **06/15/19**: Gruplu liste, semantik ikonlar, OmniTabHeader; büyük fontta
+  Hakkında kartı alt barın üstünde tam.
+- **07/07b**: Durum-koşullu birincil; rehber alt sayfası %65 scrim, numaralı
+  adımlar, tek birincil "Shizuku'yu indir".
+- **08/09/16/20**: Teknik el kitabı kimliği — tek stil ikon + gerçek sıra no;
+  akordeon; büyük fontta sıra numaraları tek satır, açılan kart görünür alanda.
 - **10/11/17**: Arama + liste; mono paket adları; satır hedefleri ≥64dp.
-- **12**: Breadcrumb otomatik kaydırma + ›; hata kartı eylemli ("Shizuku'yu
-  bağla"); adım sayacı 1/5.
+- **12**: Breadcrumb "…" örtüsü tam kapatıyor, çıplak ayraç yok; hata kartı
+  eylemli ("Shizuku'yu bağla", onErrorContainer); adım sayacı 1/5; pasif CTA soluk.
 - **18–20**: font_scale 2.0 — taşma 0, hedefler korunuyor, hiyerarşi okunur.
 - **21**: Kompakt durum satırı + "Korunuyor" rozeti; teknik detay açılır; hero yok.
-- **22**: İmza #1 editörün kendisi — pirinç 90, üstü çizili 60 ›, tik rayı, tek
+- **22**: İmza #1 editör — pirinç 90, üstü çizili 60 ›, canlı tik rayları, tek
   MoreVert, arama + undo/redo/önizle, tek CTA. Ritim 8: yoğun editör doğası.
-- **23**: İmza #1 final — mühür + doğrulama rozetleri + 60→90 okuma + min–max ray;
-  tek stadium CTA. Turun tek 9.00'ı: tüm kriterler kanıtlı kusursuz.
-- **24b**: Dolu liste + profil özeti + stadium FAB (kartın önüne geçmiyor).
+- **23**: İmza #1 final — mühür + doğrulama rozetleri + 60→90 okuma + min–max
+  ray + "Uygulandı" etiketi; kalem ikonu yok. Turun tek 9.00'ı.
+- **24b**: Dolu liste + profil özeti + stadium FAB.
 - **25**: "Uygula" birincil (89×48dp hedef), dosya/değişken özeti, Sil menüde.
 
 ## Kod düzeyinde doğrulanan durumlar (görüntülenmeyen varyantlar)
@@ -152,4 +152,13 @@ Tüm ekranlar ≥ 8.5 eşiğini geçiyor.
   (OmniMotion.scale canlı ContentObserver).
 - RTL: AutoMirrored ikonlar; mutlak Left/Right hizalama yok.
 - Erişilebilirlik: contentDescription dolu (dekoratif null'lar bilinçli),
-  kontrastlar DESIGN.md'de hesaplı (metin ≥4.5:1, ikon ≥3:1).
+  kontrastlar DESIGN.md'de hesaplı (metin ≥4.5:1, ikon ≥3:1); pasif buton
+  metinleri WCAG'den muaf (inactive control, M3 %38).
+
+## Tur geçmişi
+
+- Tur 1 (13. oturum): eleştirmen 6.31 → 15 madde çözüldü, öz-puan 8.63.
+- Tur 2 (15.–16. oturum): eleştirmen 7.33 → 8 madde çözüldü + breadcrumb kök
+  düzeltmesi; verify20/21 kanıt hattı.
+- Tur 3 (17. oturum): iki kök neden (örtü padding, pasif metin alfası) +
+  build25 tam gate + verify22 SON APK ana seti; bu tablo.
