@@ -66,7 +66,14 @@ kurulum ANINDA okuduğu için düzeltme + build şimdi yapıldı, verify21 SON k
       NOTES.md madde 11 padding notu; REVIEW.md **tur 3** yazıldı: 29 ekran
       genel **8.63**, en düşük ekran 8.56, en düşük kriter 8; eleştirmen tur 2
       çapasıyla madde madde Δ tablosu + kanıt eşlemesi.
-- [ ] commit/push/CI + QWEN_DESIGN_DONE.md.
+- [x] material-3-expressive skill okundu; ilkeler mevcut sistemle örtüşüyor
+      (şekil kontrastı, 2 imza anı, dinamik renk bilinçli kapalı, reduced-motion,
+      semantik token, etiketler korunuyor).
+- [x] **commit + push + CI YEŞİL + QWEN_DESIGN_DONE.md:** d1439d8 fix(ui) 17
+      dosya · aa389bc fix(design) 6 dosya · ae33bfd docs(design) 40 dosya.
+      Push 7400b19..ae33bfd (fast-forward, force yok; sır taraması temiz).
+      **CI run 43684202424 conclusion=success, headSha=ae33bfd.**
+      QWEN_DESIGN_DONE.md kökte (gitignore'lı). Tur TAMAM.
 
 ## Durum: F19 bağımsız doğrulama + breadcrumb kök düzeltmesi (2026-11-15, 16. oturum)
 
