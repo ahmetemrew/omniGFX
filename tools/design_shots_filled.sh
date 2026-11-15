@@ -183,6 +183,12 @@ grant_shizuku() {
   local attempt
   for attempt in 1 2 3; do
     start_app
+    # İzin zaten verilmişse (Shizuku DB kalıntısı) ana ekran "Bağlantı hazır"
+    # gösterir; kurulum ekranı canContinue ile kendini kapatır, akış gerekmez.
+    if wait_quiet "Bağlantı hazır" 5; then
+      echo "SHIZUKU PERMISSION OK (zaten hazır, deneme $attempt)"
+      return 0
+    fi
     tap "Ayarlar"
     tap "Dosya erişimi için gerekli"
     if ! wait_quiet "Tekrar denetle" 30; then
@@ -243,6 +249,10 @@ dismiss_ime
 # değişmezse pipeline NoChange yolundan döner; dosya yazılmaz, yedek oluşmaz
 # ve 26 boş kalır. FPSLimit değişimi başarı ekranındaki eski→yeni okumasını
 # (60→90) da görünür kılar.
+# Needle olarak okumanın content-desc'i kullanılır ("FPSLimit: 60"): tur 2'den
+# beri rayın min/max mikro etiketleri de değerle aynı metni taşıyabiliyor
+# (60→tavan 60); çıplak değer needle'ı en küçük düğüm kuralıyla etikete
+# denk gelip düzenlemeyi açmazdı. Desc benzersizdir.
 # Kapatma, klavyenin örttüğü onay ikonuna dokunmakla DEĞİL IME Done (ENTER)
 # ile yapılır: singleLine + ImeAction.Done → onEndEdit. Deterministik.
 edit_value() { # $1 = eski değer (needle), $2 = yeni değer
@@ -266,8 +276,8 @@ edit_value() { # $1 = eski değer (needle), $2 = yeni değer
   fi
   wait_for "$2" 8
 }
-edit_value "60" "90"
-edit_value "80" "75"
+edit_value "FPSLimit: 60" "90"
+edit_value "Brightness: 80" "75"
 dismiss_ime
 sleep 1
 # Görüntü için listenin başına dön: FPSLimit 60→90 okuması + tik rayları görünür.

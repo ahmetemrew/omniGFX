@@ -56,6 +56,11 @@ fi
 
 # ── Shizuku kur + servisi ADB modunda başlat ──
 adb install -r -g "$SHIZUKU_APK" || { echo "SHIZUKU INSTALL FAIL"; exit 1; }
+# Shizuku'nun izin veritabanı AVD userdata'sında koşular arası kalır: önceki
+# koşuda verilen izin CONNECTED döndürür, kurulum ekranı canContinue ile
+# kendini anında kapatır ve grant akışı "Tekrar denetle" bulamaz (16. oturum
+# kök nedeni). Temiz durum için Shizuku verisi de sıfırlanır.
+adb shell pm clear "$SHIZUKU_PKG" >/dev/null 2>&1
 adb shell monkey -p "$SHIZUKU_PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 sleep 8
 START_SH="/sdcard/Android/data/$SHIZUKU_PKG/start.sh"

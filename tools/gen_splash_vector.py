@@ -21,6 +21,13 @@ VIEW = 240.0
 CX = 120.0
 EMBLEM_CY = 90.0
 RING_R = 36.0
+# Android 12+ splash ikonu ~160dp çaplı çembere maskelenir (240dp tuvalin 2/3'ü).
+# Tur 2 eleştirisi: etiket bu çemberin dışında kalıp "ALIBRATION SUIT" okunmuştu.
+# Tüm mürekkep r<=78 içinde kalır (2dp emniyet payı).
+SAFE_R = 78.0
+MASK_R = 80.0
+WORD_BASELINE = 156.0
+TAG_BASELINE = 169.0
 
 
 class AndroidPen(BasePen):
@@ -57,12 +64,14 @@ class AndroidPen(BasePen):
 
 
 def text_path(font_path, text, size, baseline_y, tracking=0.0):
+    """Glif yolları + (genişlik, sol, sağ, üst, alt) mürekkep kutusu döndürür."""
     font = TTFont(font_path)
     upem = font["head"].unitsPerEm
     scale = size / upem
     cmap = font.getBestCmap()
     glyph_set = font.getGlyphSet()
     hmtx = font["hmtx"]
+    glyf = font["glyf"]
 
     advances = []
     for ch in text:
@@ -73,6 +82,7 @@ def text_path(font_path, text, size, baseline_y, tracking=0.0):
 
     paths = []
     x = ox
+    ink_top, ink_bottom = baseline_y, baseline_y
     for ch, adv in zip(text, advances):
         gname = cmap[ord(ch)]
         if ch != " ":
@@ -81,8 +91,20 @@ def text_path(font_path, text, size, baseline_y, tracking=0.0):
             d = pen.path()
             if d:
                 paths.append(d)
+            g = glyf[gname]
+            if g.numberOfContours != 0:
+                ink_top = min(ink_top, baseline_y - g.yMax * scale)
+                ink_bottom = max(ink_bottom, baseline_y - g.yMin * scale)
         x += adv
-    return " ".join(paths)
+    return " ".join(paths), total, ox, ox + total, ink_top, ink_bottom
+
+
+def assert_safe(name, left, right, top, bottom):
+    """Satırın mürekkep kutusunun dört köşesi güvenli çember içinde kalmalı."""
+    for x in (left, right):
+        for y in (top, bottom):
+            r = math.hypot(x - CX, y - CX)
+            assert r <= SAFE_R, f"{name} guvenli cember disinda: ({x:.1f},{y:.1f}) r={r:.1f}"
 
 
 def emblem_paths(petrol, brass):
@@ -129,11 +151,40 @@ def emblem_paths(petrol, brass):
     return out
 
 
+def fit_tag(mono, word_width):
+    """Etiketi güvenli çembere sığdır: en büyük punto + 0.12em track öyle ki
+    genişlik wordmark'ı aşmasın ve baseline kirişinde ≥16dp kenar payı kalsın."""
+    chord = 2.0 * math.sqrt(MASK_R ** 2 - (TAG_BASELINE - CX) ** 2)
+    limit = min(word_width, chord - 32.0)
+    size = 10.0
+    while size >= 5.0:
+        tracking = 0.12 * size
+        width = 17 * (0.6 * size + tracking) - tracking  # JetBrains Mono advance = 0.6em
+        if width <= limit:
+            return size, tracking
+        size -= 0.25
+    raise AssertionError("etiket guvenli cembere sigmadi")
+
+
 def build(petrol, brass, wordmark, micro):
     barlow = os.path.join(FONT_DIR, "barlow_semibold.ttf")
     mono = os.path.join(FONT_DIR, "jetbrains_mono_regular.ttf")
-    word = text_path(barlow, "OmniGFX", 22.0, 160.0)
-    tag = text_path(mono, "CALIBRATION SUITE", 11.0, 181.0, tracking=1.2)
+    word, word_w, wl, wr, wt, wb = text_path(barlow, "OmniGFX", 22.0, WORD_BASELINE)
+    assert_safe("wordmark", wl, wr, wt, wb)
+
+    tag_size, tag_track = fit_tag(mono, word_w)
+    tag, tag_w, tl, tr, tt, tb = text_path(
+        mono, "CALIBRATION SUITE", tag_size, TAG_BASELINE, tracking=tag_track
+    )
+    assert_safe("tagline", tl, tr, tt, tb)
+    assert tag_w <= word_w + 0.5, "etiket wordmark'tan genis"
+    # Kadran mürekkebi: halka + stroke yarıçapı, merkez (CX, EMBLEM_CY).
+    assert math.hypot(0.0, CX - EMBLEM_CY) + RING_R + 1.5 <= SAFE_R
+    print(
+        f"SPLASH FIT word={word_w:.1f}dp tag={tag_w:.1f}dp "
+        f"size={tag_size:.2f} track={tag_track:.2f} "
+        f"margin={(2 * math.sqrt(MASK_R ** 2 - (TAG_BASELINE - CX) ** 2) - tag_w) / 2:.1f}dp"
+    )
 
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>',
@@ -141,6 +192,8 @@ def build(petrol, brass, wordmark, micro):
         "  Açılış ekranı marka kilidi: kalibrasyon kadranı (72dp halka + tik rayı +",
         "  pirinç ibre) altında Barlow SemiBold wordmark ve JetBrains Mono etiket.",
         "  Glif yolları tools/gen_splash_vector.py ile gerçek fontlardan üretildi.",
+        "  Tüm kilit 160dp splash güvenli çemberine sığar (tur 2 P0-1): etiket",
+        "  genişliği wordmark'ı aşmaz, kenar payı >=16dp; üretici assert ile doğrular.",
         "  Üstteki BÜYÜK HARFLİ etiket bölüm başlığı değil, marka kilidinin parçası.",
         "  VectorRaster/VectorPath uyarıları bilinçli susturuldu: bu bir ikon değil,",
         "  tek seferlik çizilen açılış kilidi; 240dp ve uzun glif yolları gerekli.",

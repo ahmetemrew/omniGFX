@@ -98,6 +98,12 @@ def audit(path, scale):
             # hedefi değil, Compose semantics artefaktı; eşik denetimine girmez.
             if wdp < 5 or hdp < 5:
                 continue
+            # Kaydırma dilimi: metni/desc'i OLMAYAN küçük clickable konteyner,
+            # LazyColumn görünür alanının kenarında kesilmiş kart başlığıdır
+            # (ör. 09'da üst kenarda kalan 24dp header dilimi). Gerçek küçük
+            # hedefler bu kodda daima metin veya content-desc taşır.
+            if not txt and not desc and (wdp < 47.5 or hdp < 47.5):
+                continue
             if wdp < 47.5 or hdp < 47.5:
                 problems.append(f"KUCUK_HEDEF {(txt or desc or '?')[:24]} {wdp:.0f}x{hdp:.0f}dp")
         if len(txt) >= 24 and abs((x1 + x2) / 2 - W / 2) > 40:
