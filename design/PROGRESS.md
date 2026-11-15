@@ -38,7 +38,12 @@ Brief yeniden koştu (sıfır context). CRITIQUE.md (tur 1, GENEL 6.31 KALDI) es
       yasaklı copy 0 (tek KDoc yorumu, kullanıcı metni değil).
 - [x] Sürüm uyumu teyit: AGP 9.5.1 / Kotlin 2.4.21 / Gradle 9.9.1; CI JDK 17 +
       testDebugUnitTest lintDebug assembleDebug assembleRelease (check.yml).
-- [ ] commit + push + CI yeşil + QWEN_DESIGN_DONE.md.
+- [x] commit + push + CI yeşil + QWEN_DESIGN_DONE.md:
+      a06776a fix(ui) 27 dosya · bc35939 fix(design) 7 dosya · 4100b60 docs(design)
+      39 dosya. Push 6253185..4100b60 (fast-forward, force yok; sır taraması temiz,
+      keystore/APK/QWEN_* yok). **CI YEŞİL: run 43664735297, verify=success.**
+      QWEN_DESIGN_DONE.md kökte (gitignore'lı). Tur TAMAM — 29 ekran ort 8.63,
+      en düşük kriter 8; build+test+lint+release yeşil; iki oturumda CRASH_NONE.
 
 ## Durum: F16 dolu durum kök nedenleri + verify17 (2026-11-15, 13. oturum)
 
