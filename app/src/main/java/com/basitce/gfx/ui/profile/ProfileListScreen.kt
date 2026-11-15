@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,8 +49,8 @@ import com.basitce.gfx.core.core_ui.components.OmniEmptyState
 import com.basitce.gfx.core.core_ui.components.OmniLoading
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
 import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTabHeader
 import com.basitce.gfx.core.core_ui.components.OmniTone
-import com.basitce.gfx.core.core_ui.components.OmniTopBar
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.presentation.profile.ProfileListViewModel
@@ -73,8 +74,9 @@ fun ProfileListScreen(
     Scaffold(
         containerColor = colors.background,
         topBar = {
-            OmniTopBar(
+            OmniTabHeader(
                 title = "Profiller",
+                subtitle = "Kayıtlı ayar profillerin",
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Outlined.MoreVert, contentDescription = "Diğer işlemler")
@@ -206,6 +208,17 @@ private fun ProfileRow(
     val spacing = OmniTheme.spacing
     val colors = MaterialTheme.colorScheme
     val isManual = profile.profile.isManual
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    val fileName = profile.profile.targetFilePath.substringAfterLast('/')
+    val variableCount = remember(profile.profile.userValuesJson) {
+        runCatching { org.json.JSONObject(profile.profile.userValuesJson).length() }.getOrDefault(0)
+    }
+    val fileSummary = when {
+        fileName.isBlank() -> null
+        isManual -> fileName
+        else -> "$fileName · $variableCount değişken"
+    }
 
     Row(
         modifier = Modifier
@@ -235,18 +248,55 @@ private fun ProfileRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (fileSummary != null) {
+                Text(
+                    text = fileSummary,
+                    style = OmniTheme.mono.micro,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             OmniStatusChip(
                 text = if (isManual) "Ham dosya" else "Dinamik",
                 tone = if (isManual) OmniTone.Warning else OmniTone.Success
             )
         }
 
-        IconButton(onClick = onDelete) {
-            Icon(
-                imageVector = Icons.Outlined.Delete,
-                contentDescription = "${profile.profile.name} profilini sil",
-                tint = colors.onSurfaceVariant
-            )
+        // Birincil eylem görünür: profil kartının işi "uygula".
+        OmniPrimaryButton(
+            text = "Uygula",
+            onClick = onLoad,
+            fillWidth = false,
+            compact = true
+        )
+
+        Box {
+            IconButton(onClick = { menuExpanded = true }) {
+                Icon(
+                    imageVector = Icons.Outlined.MoreVert,
+                    contentDescription = "${profile.profile.name} profil işlemleri",
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                shape = RoundedCornerShape(OmniRadius.md),
+                containerColor = colors.surfaceContainer
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            "Sil",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.error
+                        )
+                    },
+                    onClick = { onDelete(); menuExpanded = false }
+                )
+            }
         }
     }
 }

@@ -36,7 +36,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Check
@@ -62,7 +61,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +70,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
-import kotlinx.coroutines.launch
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
@@ -140,7 +137,6 @@ private data class GuideSection(
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
-    val accent: GuideAccent,
     val blocks: List<GuideBlock>
 )
 
@@ -151,11 +147,8 @@ private data class GuideSection(
 @Composable
 fun GuideScreen(onBack: () -> Unit) {
     val sections = remember { buildGuideSections() }
-    val expandedSections = remember {
-        mutableStateOf(setOf(sections.firstOrNull()?.id ?: ""))
-    }
+    val expandedSections = remember { mutableStateOf(emptySet<String>()) }
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val spacing = OmniTheme.spacing
 
     Column(
@@ -177,33 +170,25 @@ fun GuideScreen(onBack: () -> Unit) {
             }
         )
 
+        // İçindekiler kutusu YOK: bölümlerin kendisi zaten başlık + alt başlık taşıyan
+        // bir liste. Aynı içeriği iki kez listelemek hem yer israfı hem kesilme riskiydi.
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = spacing.screen, end = spacing.screen, bottom = spacing.xxxl
+                start = spacing.screen, end = spacing.screen,
+                top = spacing.md, bottom = spacing.xxxl
             ),
             verticalArrangement = Arrangement.spacedBy(spacing.listItem)
         ) {
             // ─── HERO ──────────────────────────────────────
             item { HeroSection() }
 
-            // ─── İÇİNDEKİLER ───────────────────────────────
-            item {
-                TableOfContents(
-                    sections = sections,
-                    onJumpTo = { index ->
-                        scope.launch {
-                            listState.animateScrollToItem(index + 2)
-                        }
-                    }
-                )
-            }
-
-            // ─── BÖLÜMLER ─────────────────────────────────
-            itemsIndexed(sections, key = { _, s -> s.id }) { _, section ->
+            // ─── BÖLÜMLER (genişleyebilir satırlar) ─────────
+            itemsIndexed(sections, key = { _, s -> s.id }) { index, section ->
                 SectionCard(
                     section = section,
+                    number = index + 1,
                     isExpanded = expandedSections.value.contains(section.id),
                     onToggle = {
                         val current = expandedSections.value.toMutableSet()
@@ -278,106 +263,34 @@ private fun HeroSection() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  İÇİNDEKİLER
-// ═══════════════════════════════════════════════════════════════
-
-@Composable
-private fun TableOfContents(
-    sections: List<GuideSection>,
-    onJumpTo: (Int) -> Unit
-) {
-    val spacing = OmniTheme.spacing
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(OmniRadius.xl))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(OmniRadius.xl))
-            .padding(spacing.xl)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(spacing.sm))
-            Text(
-                text = "İçindekiler",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        Spacer(modifier = Modifier.height(spacing.md))
-        sections.forEachIndexed { index, section ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(OmniRadius.sm))
-                    .clickable { onJumpTo(index) }
-                    .padding(vertical = spacing.md, horizontal = spacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(section.accent.color().copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = section.icon,
-                        contentDescription = null,
-                        tint = section.accent.color(),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(spacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = section.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = section.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════
 //  SECTION CARD (ACCORDION)
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * Bölüm satırı: teknik el kitabı kimliği. İkon kutuları tek stil (yüzey adımı +
+ * nötr ikon rengi) — rastgele renkli kutular yok. Sıra numarası gerçek bir sıra
+ * olduğu için meşru (kılavuz bölümleri 01..09).
+ */
 @Composable
 private fun SectionCard(
     section: GuideSection,
+    number: Int,
     isExpanded: Boolean,
     onToggle: () -> Unit
 ) {
     val spacing = OmniTheme.spacing
     val motion = OmniTheme.motion
+    val colors = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(OmniRadius.xl))
-            .background(MaterialTheme.colorScheme.surface)
+            .clip(RoundedCornerShape(OmniRadius.lg))
+            .background(colors.surface)
             .border(
                 width = if (isExpanded) 1.5.dp else 1.dp,
-                color = if (isExpanded) section.accent.color().copy(alpha = 0.5f)
-                else MaterialTheme.colorScheme.surfaceContainerHighest,
-                shape = RoundedCornerShape(OmniRadius.xl)
+                color = if (isExpanded) colors.primary.copy(alpha = 0.5f)
+                else colors.surfaceContainerHighest,
+                shape = RoundedCornerShape(OmniRadius.lg)
             )
     ) {
         // ─── HEADER (tıklanabilir) ─────────────────────
@@ -385,41 +298,47 @@ private fun SectionCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
-                .padding(spacing.xl),
+                .padding(spacing.lg),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text = "%02d".format(number),
+                style = OmniTheme.mono.micro,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.width(24.dp)
+            )
             Box(
                 modifier = Modifier
-                    .size(spacing.touchTarget)
-                    .clip(RoundedCornerShape(OmniRadius.md))
-                    .background(section.accent.color().copy(alpha = 0.15f)),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(OmniRadius.sm))
+                    .background(colors.surfaceContainerHigh),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = section.icon,
                     contentDescription = null,
-                    tint = section.accent.color(),
-                    modifier = Modifier.size(24.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(spacing.lg))
+            Spacer(modifier = Modifier.width(spacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = section.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.onSurface
                 )
                 Text(
                     text = section.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = colors.onSurfaceVariant
                 )
             }
             Icon(
                 imageVector = Icons.Outlined.ExpandMore,
                 contentDescription = if (isExpanded) "Daralt" else "Genişlet",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(28.dp)
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
             )
         }
 
@@ -760,7 +679,6 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
         icon = Icons.Outlined.Games,
         title = "OmniGFX nedir?",
         subtitle = "Uygulamanın ne yaptığını 2 dakikada anla",
-        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -814,7 +732,6 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
         icon = Icons.Outlined.Key,
         title = "Shizuku kurulumu",
         subtitle = "OmniGFX'in çalışması için gereken temel araç",
-        accent = GuideAccent.SUCCESS,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -953,7 +870,6 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
         icon = Icons.Outlined.Shield,
         title = "Root ve ADB: farklar",
         subtitle = "Yetki seviyeleri ve erişim sınırları",
-        accent = GuideAccent.WARNING,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1015,7 +931,6 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
         icon = Icons.Outlined.Build,
         title = "Oyun ekleme ve sihirbaz",
         subtitle = "5 adımda ilk profilini oluştur",
-        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1081,7 +996,6 @@ private fun buildGuideSections(): List<GuideSection> = listOf(
         icon = Icons.Outlined.Folder,
         title = "Config dosyaları hakkında",
         subtitle = "INI, JSON, XML — oyunların ayarlarını nasıl sakladığı",
-        accent = GuideAccent.INFO,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1174,7 +1088,6 @@ MaxSmoothedFrameRate=60""",
         icon = Icons.Outlined.Code,
         title = "Regex nedir? (basit anlatım)",
         subtitle = "Metin içinde kalıp bulma ve değiştirme sanatı",
-        accent = GuideAccent.SECONDARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1243,7 +1156,6 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
         icon = Icons.Outlined.Settings,
         title = "Profil tipleri: dinamik ve ham dosya",
         subtitle = "Hangi profil tipi ne zaman kullanılır?",
-        accent = GuideAccent.PRIMARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1306,7 +1218,6 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
         icon = Icons.Outlined.Security,
         title = "Güvenlik ve doğrulama",
         subtitle = "OmniGFX dosyanı nasıl korur?",
-        accent = GuideAccent.SUCCESS,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1376,7 +1287,6 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
         icon = Icons.AutoMirrored.Outlined.HelpOutline,
         title = "Sık karşılaşılan sorunlar",
         subtitle = "Çözümler ve ipuçları",
-        accent = GuideAccent.WARNING,
         blocks = listOf(
             // Sorun 1
             GuideBlock.Text(listOf(
@@ -1505,7 +1415,6 @@ Replacement: r.PUBGDeviceFPSLow={{value}}""",
         icon = Icons.Outlined.Psychology,
         title = "İleri düzey ipuçları",
         subtitle = "Uzmanlar için ince detaylar",
-        accent = GuideAccent.SECONDARY,
         blocks = listOf(
             GuideBlock.Text(listOf(
                 GuideParagraph(
@@ -1658,7 +1567,6 @@ monkey -p com.tencent.ig -c android.intent.category.LAUNCHER 1""",
         icon = Icons.Outlined.Speed,
         title = "Terim sözlüğü",
         subtitle = "Karşına çıkabilecek teknik terimler",
-        accent = GuideAccent.INFO,
         blocks = listOf(
             GuideBlock.BulletList(listOf(
                 "ADB (Android Debug Bridge) — Bilgisayar ile telefon arasında köprü kuran araç",

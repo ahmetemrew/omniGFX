@@ -83,6 +83,7 @@ object ConfigTreeBuilder {
                             path = path,
                             key = key,
                             value = value,
+                            originalValue = value,
                             rawLine = rawLine,
                             section = currentSection
                         )
@@ -152,6 +153,7 @@ object ConfigTreeBuilder {
                         path = currentPath,
                         key = key,
                         value = value.toString(),
+                        originalValue = value.toString(),
                         rawLine = "$key: $value",
                         section = currentPath.substringBefore('.', "")
                     )
@@ -211,6 +213,7 @@ object ConfigTreeBuilder {
                         path = "xpath:$currentPath/@${attr.nodeName}",
                         key = "@${attr.nodeName}",
                         value = attr.nodeValue,
+                        originalValue = attr.nodeValue,
                         rawLine = "@${attr.nodeName}=\"${attr.nodeValue}\"",
                         section = currentPath
                     )
@@ -240,6 +243,7 @@ object ConfigTreeBuilder {
                         path = "xpath:$currentPath",
                         key = element.tagName,
                         value = textContent,
+                        originalValue = textContent,
                         rawLine = "<${element.tagName}>$textContent</${element.tagName}>",
                         section = currentPath
                     )
@@ -266,6 +270,8 @@ object ConfigTreeBuilder {
                 key = if (type == NodeType.KEY_VALUE) trimmed.substringBefore("=").trim()
                     else "Satır ${index + 1}",
                 value = if (type == NodeType.KEY_VALUE) trimmed.substringAfter("=").trim()
+                    else line,
+                originalValue = if (type == NodeType.KEY_VALUE) trimmed.substringAfter("=").trim()
                     else line,
                 rawLine = line
             )

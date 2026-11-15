@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -37,12 +37,13 @@ import com.basitce.gfx.core.core_ui.components.OmniDropdown
 import com.basitce.gfx.core.core_ui.components.OmniEmptyState
 import com.basitce.gfx.core.core_ui.components.OmniLoading
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
-import com.basitce.gfx.core.core_ui.components.OmniSecondaryButton
+import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
 import com.basitce.gfx.core.core_ui.components.OmniTextButton
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 @Composable
 fun BackupManagerScreen(
@@ -66,6 +67,15 @@ fun BackupManagerScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Geri"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.loadBackupsForSelectedProfile() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Refresh,
+                            contentDescription = "Yenile",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -92,24 +102,6 @@ fun BackupManagerScreen(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OmniSecondaryButton(
-                    text = "Yenile",
-                    onClick = { viewModel.loadBackupsForSelectedProfile() },
-                    fillWidth = false
-                )
-                if (state.backups.isNotEmpty()) {
-                    OmniTextButton(
-                        text = "Eski yedekleri temizle",
-                        onClick = { viewModel.cleanOldBackups(3) }
-                    )
-                }
-            }
-
             state.message?.let { message ->
                 Text(
                     text = message,
@@ -131,6 +123,18 @@ fun BackupManagerScreen(
                     contentPadding = PaddingValues(bottom = spacing.section),
                     verticalArrangement = Arrangement.spacedBy(spacing.listItem)
                 ) {
+                    item(key = "header") {
+                        OmniSectionHeader(
+                            title = "Yedek geçmişi",
+                            count = state.backups.size,
+                            action = {
+                                OmniTextButton(
+                                    text = "Eski yedekleri temizle",
+                                    onClick = { viewModel.cleanOldBackups(3) }
+                                )
+                            }
+                        )
+                    }
                     items(state.backups, key = { it.entry.fileName }) { item ->
                         BackupRow(
                             fileName = item.entry.fileName,
@@ -147,6 +151,11 @@ fun BackupManagerScreen(
     }
 }
 
+/**
+ * Yedek kartı: birincil başlık insanca tarih/saat; sistem dosya adı değil.
+ * Hedef yol ikinci satır, kısaltılmış yedek kimliği üçüncü satır mikro metin.
+ * Silme eylemi sağ üst köşede hizalı — kartın ortasında yüzmez.
+ */
 @Composable
 private fun BackupRow(
     fileName: String,
@@ -157,31 +166,53 @@ private fun BackupRow(
     modifier: Modifier = Modifier
 ) {
     val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+
+    val dateFormat = SimpleDateFormat("d MMMM yyyy · HH:mm", Locale("tr"))
+    val backupId = fileName.substringAfter(".omnigfx.", "").substringBeforeLast(".bak")
 
     OmniCard(modifier = modifier) {
-        Text(
-            text = fileName,
-            style = OmniTheme.mono.key,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(spacing.xxs))
-        Text(
-            text = targetPath,
-            style = OmniTheme.mono.micro,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        timestamp?.let {
-            val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", LocalLocale.current.platformLocale)
-            Spacer(modifier = Modifier.height(spacing.xxs))
-            Text(
-                text = dateFormat.format(Date(it)),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = timestamp?.let { dateFormat.format(Date(it)) } ?: fileName,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                    ),
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(spacing.xxs))
+                Text(
+                    text = targetPath,
+                    style = OmniTheme.mono.key,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (backupId.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(spacing.xxs))
+                    Text(
+                        text = "#$backupId · .bak",
+                        style = OmniTheme.mono.micro,
+                        color = colors.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Yedeği sil",
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(spacing.md))
@@ -191,15 +222,6 @@ private fun BackupRow(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = "Yedeği sil",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(spacing.sm))
             OmniPrimaryButton(
                 text = "Geri yükle",
                 onClick = onRestore,

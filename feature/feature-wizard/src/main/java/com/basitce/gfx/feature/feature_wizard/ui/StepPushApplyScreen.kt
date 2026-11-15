@@ -405,7 +405,10 @@ private fun IdleContent(
 
 /**
  * İMZA ANI 1 — uygulama özetinde değer okumaları: her sabitlenmiş değişken
- * eski → yeni olarak tik raylı okuma penceresinde gösterilir.
+ * dosyadaki eski değer → yeni değer olarak tik raylı okuma penceresinde gösterilir.
+ * "Eski" taraf pin anındaki değer değil, dosyadan çekilen ilk değerdir (originalValue);
+ * böylece bu uygulamanın gerçekten neyi değiştirdiği görünür. Ray uçlarında ölçek
+ * sınırları (min–max) mikro etiketle yazılır.
  */
 @Composable
 private fun VariableReadouts(state: SetupWizardState) {
@@ -417,21 +420,28 @@ private fun VariableReadouts(state: SetupWizardState) {
     OmniSectionHeader(title = "Değer okumaları")
     Spacer(modifier = Modifier.height(spacing.sm))
     state.pinnedVariables.values.forEach { variable ->
-        val current = state.configNodes.firstOrNull { it.path == variable.path }?.value
-            ?: variable.defaultValue.orEmpty()
-        val fraction = if (variable.uiComponentType == UiComponentType.SLIDER && variable.max > variable.min) {
+        val node = state.configNodes.firstOrNull { it.path == variable.path }
+        val current = node?.value ?: variable.defaultValue.orEmpty()
+        val previous = node?.originalValue?.takeIf { it.isNotEmpty() } ?: variable.defaultValue
+        val isSlider = variable.uiComponentType == UiComponentType.SLIDER &&
+            variable.max > variable.min
+        val fraction = if (isSlider) {
             ((current.toFloatOrNull() ?: variable.min) - variable.min) / (variable.max - variable.min)
         } else null
         OmniValueReadout(
             label = variable.label,
             value = current,
-            previousValue = variable.defaultValue,
+            previousValue = previous,
             fraction = fraction,
-            compact = true
+            minLabel = if (isSlider) formatScale(variable.min) else null,
+            maxLabel = if (isSlider) formatScale(variable.max) else null
         )
         Spacer(modifier = Modifier.height(spacing.sm))
     }
 }
+
+private fun formatScale(value: Float): String =
+    if (value == value.toLong().toFloat()) value.toLong().toString() else value.toString()
 
 @Composable
 private fun SummaryRow(

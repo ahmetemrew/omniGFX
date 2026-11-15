@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
@@ -49,6 +48,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_engine.shizuku.RemoteFileSystemEntry
+import com.basitce.gfx.core.core_engine.shizuku.ShizukuConnectionState
+import com.basitce.gfx.core.core_ui.components.OmniErrorCard
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
 import com.basitce.gfx.core.core_ui.components.OmniStatusChip
 import com.basitce.gfx.core.core_ui.components.OmniTone
@@ -167,16 +168,21 @@ fun StepSelectFile(
 
             state.browserError?.let { error ->
                 item {
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(OmniRadius.md),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = error,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(spacing.md),
-                            style = MaterialTheme.typography.bodyMedium
+                    val connection by viewModel.shizukuState.collectAsState()
+                    if (connection.connectionState != ShizukuConnectionState.CONNECTED) {
+                        OmniErrorCard(
+                            title = "Shizuku bağlantısı gerekli",
+                            message = "Dosya gezgini için Shizuku bağlantısı gerekli. " +
+                                "Shizuku'yu başlatıp tekrar dene.",
+                            actionLabel = "Shizuku'yu bağla",
+                            onAction = { viewModel.connectShizuku() }
+                        )
+                    } else {
+                        OmniErrorCard(
+                            title = "Dizin okunamadı",
+                            message = error,
+                            actionLabel = "Tekrar dene",
+                            onAction = { viewModel.browseTo(currentPath) }
                         )
                     }
                 }
@@ -361,8 +367,17 @@ private fun BreadcrumbRow(
 ) {
     val parts = viewModel.getBreadcrumb()
     val spacing = OmniTheme.spacing
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Yol derinleşince son segment görünür kalsın: açılışta en sağa odaklan.
+    androidx.compose.runtime.LaunchedEffect(parts.size, path) {
+        if (parts.isNotEmpty()) {
+            listState.animateScrollToItem(parts.size - 1)
+        }
+    }
 
     LazyRow(
+        state = listState,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(OmniRadius.md))
@@ -384,11 +399,10 @@ private fun BreadcrumbRow(
                 )
             }
             if (fullPath != path) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(16.dp)
+                Text(
+                    text = "›",
+                    style = OmniTheme.mono.micro,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         }

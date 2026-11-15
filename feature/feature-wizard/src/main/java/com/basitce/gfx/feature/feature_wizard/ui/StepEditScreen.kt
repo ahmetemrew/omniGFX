@@ -2,6 +2,7 @@ package com.basitce.gfx.feature.feature_wizard.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,15 +18,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,29 +40,38 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_engine.workflow.DetectedFormat
 import com.basitce.gfx.core.core_ui.components.OmniErrorCard
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
 import com.basitce.gfx.core.core_ui.components.OmniStatusChip
+import com.basitce.gfx.core.core_ui.components.OmniTickRail
 import com.basitce.gfx.core.core_ui.components.OmniTone
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.ConfigNode
 import com.basitce.gfx.feature.feature_wizard.viewmodel.MoveDirection
 import com.basitce.gfx.feature.feature_wizard.viewmodel.NodeType
+import com.basitce.gfx.feature.feature_wizard.viewmodel.PinnedVariable
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardState
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardViewModel
+import com.basitce.gfx.feature.feature_wizard.viewmodel.UiComponentType
 
 @Composable
 fun StepEdit(
@@ -66,6 +81,7 @@ fun StepEdit(
     var searchQuery by remember { mutableStateOf("") }
     var showDiffPreview by remember { mutableStateOf(false) }
     var showPinSheetFor by remember { mutableStateOf<ConfigNode?>(null) }
+    var editingNodeId by remember { mutableStateOf<String?>(null) }
     val spacing = OmniTheme.spacing
 
     val filteredNodes = remember(state.configNodes, searchQuery) {
@@ -209,12 +225,16 @@ fun StepEdit(
                         DetectedFormat.INI,
                         DetectedFormat.PLAIN_TEXT
                     ),
+                    isEditing = editingNodeId == node.id,
+                    pinnedVariable = state.pinnedVariables[node.path],
                     onValueChange = { viewModel.updateNodeValue(node.id, it) },
                     onPinClick = { showPinSheetFor = node },
                     onDelete = { viewModel.deleteNode(node.id) },
                     onMoveUp = { viewModel.moveNode(node.id, MoveDirection.UP) },
                     onMoveDown = { viewModel.moveNode(node.id, MoveDirection.DOWN) },
                     onAddBelow = { viewModel.addNodeAfter(node.id) },
+                    onStartEdit = { editingNodeId = node.id },
+                    onEndEdit = { editingNodeId = null },
                     modifier = Modifier.animateItem()
                 )
             }
@@ -264,38 +284,43 @@ fun StepEdit(
 }
 
 /**
- * Config satırı: veri öğesi olduğu için 8dp ve kenarlıksız zemin. Kenarlık yalnızca
- * durumu anlatır — sabitlenmiş = petrol, değişmiş = pirinç. Satır içi eylemler
- * ikinci satırda metin butonu olarak durur ki dokunma hedefleri ≥48dp kalsın.
+ * Config satırı = Değer Okuması (İMZA ANI 1). Sayısal değerler alet okuması olarak
+ * çizilir: anahtar solda, eski değer üstü çizili + yeni değer pirinç, altında tik rayı.
+ * Okumaya dokununca satır yerinde düzenleme alanına dönüşür. Sıralama/silme gibi
+ * yapısal eylemler her kartta tekrarlanan metin dizisi yerine taşma menüsündedir.
  */
 @Composable
 private fun ConfigLineItem(
     node: ConfigNode,
     structuralEnabled: Boolean,
+    isEditing: Boolean,
+    pinnedVariable: PinnedVariable?,
     onValueChange: (String) -> Unit,
     onPinClick: () -> Unit,
     onDelete: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onAddBelow: () -> Unit,
+    onStartEdit: () -> Unit,
+    onEndEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var localValue by remember(node.value) { mutableStateOf(node.value) }
     val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
 
-    val isPinned = node.isPinned
-    val isCommentOrBlank = node.type == NodeType.COMMENT ||
-        node.type == NodeType.BLANK ||
-        node.type == NodeType.SECTION_HEADER
+    val isKeyValue = node.type == NodeType.KEY_VALUE
+    val isNumeric = isKeyValue && node.value.toFloatOrNull() != null
+    val changed = isKeyValue && node.originalValue.isNotEmpty() &&
+        node.originalValue != node.value
 
     val borderColor = when {
-        isPinned -> MaterialTheme.colorScheme.primary
-        node.isModified -> MaterialTheme.colorScheme.secondary
+        node.isPinned -> colors.primary
+        node.isModified -> colors.secondary
         else -> null
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = colors.surfaceContainerLow,
         shape = RoundedCornerShape(OmniRadius.sm),
         modifier = modifier
             .fillMaxWidth()
@@ -315,40 +340,26 @@ private fun ConfigLineItem(
                 Text(
                     text = "${node.lineNumber}",
                     style = OmniTheme.mono.micro,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.width(28.dp)
                 )
 
-                if (!isCommentOrBlank) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = node.key,
-                            style = OmniTheme.mono.key,
-                            color = if (isPinned) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        OutlinedTextField(
-                            value = localValue,
-                            onValueChange = {
-                                localValue = it
-                                onValueChange(it)
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = OmniTheme.mono.key,
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                focusedBorderColor = if (isPinned) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            shape = RoundedCornerShape(OmniRadius.sm)
+                if (isKeyValue) {
+                    Text(
+                        text = node.key,
+                        style = OmniTheme.mono.key,
+                        color = if (node.isPinned) colors.primary else colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onPinClick) {
+                        Icon(
+                            imageVector = if (node.isPinned) Icons.Filled.PushPin
+                                else Icons.Outlined.PushPin,
+                            contentDescription = if (node.isPinned) "Sabiti kaldır" else "Sabitle",
+                            tint = if (node.isPinned) colors.primary else colors.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 } else {
@@ -356,66 +367,250 @@ private fun ConfigLineItem(
                         text = node.rawLine.ifBlank { "Boş satır" },
                         style = OmniTheme.mono.key,
                         color = when (node.type) {
-                            NodeType.COMMENT -> MaterialTheme.colorScheme.onSurfaceVariant
-                            NodeType.SECTION_HEADER -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            NodeType.COMMENT -> colors.onSurfaceVariant
+                            NodeType.SECTION_HEADER -> colors.primary
+                            else -> colors.onSurfaceVariant.copy(alpha = 0.5f)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = spacing.sm),
+                        modifier = Modifier.weight(1f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                IconButton(onClick = onPinClick) {
-                    Icon(
-                        imageVector = if (isPinned) Icons.Filled.PushPin
-                            else Icons.Outlined.PushPin,
-                        contentDescription = if (isPinned) "Sabiti kaldır" else "Sabitle",
-                        tint = if (isPinned) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                if (structuralEnabled) {
+                    RowActionsMenu(
+                        onMoveUp = onMoveUp,
+                        onMoveDown = onMoveDown,
+                        onAddBelow = onAddBelow,
+                        onDelete = onDelete
                     )
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = spacing.xxs),
-                horizontalArrangement = Arrangement.End
-            ) {
-                RowAction("Yukarı", structuralEnabled, onMoveUp)
-                RowAction("Aşağı", structuralEnabled, onMoveDown)
-                RowAction("Altına ekle", structuralEnabled, onAddBelow)
-                RowAction("Sil", structuralEnabled, onDelete, destructive = true)
+            if (isKeyValue) {
+                if (isEditing) {
+                    ValueEditor(
+                        node = node,
+                        onValueChange = onValueChange,
+                        onEndEdit = onEndEdit
+                    )
+                } else {
+                    ValueReadoutRow(
+                        node = node,
+                        isNumeric = isNumeric,
+                        changed = changed,
+                        pinnedVariable = pinnedVariable,
+                        onStartEdit = onStartEdit
+                    )
+                }
             }
         }
     }
 }
 
+/** Salt okunur Değer Okuması: eski → yeni + tik rayı. Dokununca düzenleme açılır. */
 @Composable
-private fun RowAction(
-    text: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    destructive: Boolean = false
+private fun ValueReadoutRow(
+    node: ConfigNode,
+    isNumeric: Boolean,
+    changed: Boolean,
+    pinnedVariable: PinnedVariable?,
+    onStartEdit: () -> Unit
 ) {
-    TextButton(
-        onClick = onClick,
-        enabled = enabled,
-        contentPadding = PaddingValues(horizontal = OmniTheme.spacing.sm, vertical = OmniTheme.spacing.xs),
-        modifier = Modifier.heightIn(min = OmniTheme.spacing.touchTarget)
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+    val semantic = OmniTheme.semantic
+
+    val fraction = if (
+        isNumeric &&
+        pinnedVariable != null &&
+        pinnedVariable.uiComponentType == UiComponentType.SLIDER &&
+        pinnedVariable.max > pinnedVariable.min
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = when {
-                !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                destructive -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
+        ((node.value.toFloatOrNull() ?: pinnedVariable.min) - pinnedVariable.min) /
+            (pinnedVariable.max - pinnedVariable.min)
+    } else null
+
+    val readoutDescription = buildString {
+        append(node.key)
+        append(": ")
+        if (changed) {
+            append(node.originalValue)
+            append(" yerine ")
+        }
+        append(node.value)
+        append(". Düzenlemek için dokun.")
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(OmniRadius.xs))
+            .clickable(onClick = onStartEdit)
+            .semantics { contentDescription = readoutDescription }
+            .padding(top = spacing.xxs)
+    ) {
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+        ) {
+            if (changed) {
+                Text(
+                    text = node.originalValue,
+                    style = OmniTheme.mono.key,
+                    color = semantic.readoutMuted,
+                    textDecoration = TextDecoration.LineThrough,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "›",
+                    style = OmniTheme.mono.key,
+                    color = colors.onSurfaceVariant
+                )
             }
+            Text(
+                text = node.value.ifBlank { "—" },
+                style = if (isNumeric) OmniTheme.mono.readout else OmniTheme.mono.value,
+                color = if (changed) colors.secondary else colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+        }
+
+        if (isNumeric) {
+            OmniTickRail(
+                fraction = fraction,
+                highlight = changed,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = spacing.xxs)
+                    .height(14.dp)
+            )
+        }
+    }
+}
+
+/** Yerinde düzenleme: okuma alanı metin alanına dönüşür, onay/vazgeç ile kapanır. */
+@Composable
+private fun ValueEditor(
+    node: ConfigNode,
+    onValueChange: (String) -> Unit,
+    onEndEdit: () -> Unit
+) {
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+    val focusRequester = remember { FocusRequester() }
+    var startValue by remember(node.id) { mutableStateOf(node.value) }
+    var draft by remember(node.id) { mutableStateOf(node.value) }
+
+    LaunchedEffect(node.id) {
+        startValue = node.value
+        draft = node.value
+        focusRequester.requestFocus()
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = spacing.xxs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = draft,
+            onValueChange = {
+                draft = it
+                onValueChange(it)
+            },
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            textStyle = OmniTheme.mono.value,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onEndEdit() }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = colors.surface,
+                unfocusedContainerColor = colors.surface,
+                focusedBorderColor = colors.primary,
+                unfocusedBorderColor = colors.outline,
+                focusedTextColor = colors.onSurface,
+                unfocusedTextColor = colors.onSurface
+            ),
+            shape = RoundedCornerShape(OmniRadius.sm)
+        )
+        IconButton(onClick = onEndEdit) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = "Değeri kaydet",
+                tint = colors.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        IconButton(
+            onClick = {
+                draft = startValue
+                onValueChange(startValue)
+                onEndEdit()
+            }
+        ) {
+            Icon(
+                Icons.Outlined.Close,
+                contentDescription = "Vazgeç",
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/** Yapısal eylemler tek taşma menüsünde: kart başına 4 metin düğmesi tekrarı yok. */
+@Composable
+private fun RowActionsMenu(
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onAddBelow: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
+
+    IconButton(onClick = { expanded = true }) {
+        Icon(
+            Icons.Outlined.MoreVert,
+            contentDescription = "Satır işlemleri",
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        shape = RoundedCornerShape(OmniRadius.md),
+        containerColor = colors.surfaceContainer
+    ) {
+        DropdownMenuItem(
+            text = { Text("Yukarı taşı", style = MaterialTheme.typography.bodyMedium) },
+            onClick = { onMoveUp(); expanded = false }
+        )
+        DropdownMenuItem(
+            text = { Text("Aşağı taşı", style = MaterialTheme.typography.bodyMedium) },
+            onClick = { onMoveDown(); expanded = false }
+        )
+        DropdownMenuItem(
+            text = { Text("Altına satır ekle", style = MaterialTheme.typography.bodyMedium) },
+            onClick = { onAddBelow(); expanded = false }
+        )
+        DropdownMenuItem(
+            text = {
+                Text(
+                    "Sil",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.error
+                )
+            },
+            onClick = { onDelete(); expanded = false }
         )
     }
 }

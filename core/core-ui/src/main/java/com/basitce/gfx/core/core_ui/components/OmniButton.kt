@@ -41,7 +41,10 @@ fun OmniPrimaryButton(
     enabled: Boolean = true,
     icon: ImageVector? = null,
     fillWidth: Boolean = true,
-    loading: Boolean = false
+    loading: Boolean = false,
+    /** Kart içi ikincil konumdaki birincil eylem (ör. profil "Uygula"): 36dp gövde.
+     *  Dokunma hedefi kartın tamamı tarafından ≥48dp olarak karşılanır. */
+    compact: Boolean = false
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -57,7 +60,7 @@ fun OmniPrimaryButton(
         enabled = enabled && !loading,
         interactionSource = interaction,
         shape = RoundedCornerShape(radius),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = if (compact) 8.dp else 14.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -66,7 +69,7 @@ fun OmniPrimaryButton(
         ),
         modifier = modifier
             .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-            .heightIn(min = OmniTheme.spacing.touchTarget)
+            .heightIn(min = if (compact) 36.dp else OmniTheme.spacing.touchTarget)
     ) {
         if (loading) {
             Row(

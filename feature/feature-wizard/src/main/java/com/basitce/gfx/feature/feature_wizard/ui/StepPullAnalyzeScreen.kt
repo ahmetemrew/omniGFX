@@ -1,6 +1,7 @@
 package com.basitce.gfx.feature.feature_wizard.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Warning
@@ -26,6 +29,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,12 +40,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.basitce.gfx.core.core_engine.FileMetadata
 import com.basitce.gfx.core.core_ui.components.OmniCard
 import com.basitce.gfx.core.core_ui.components.OmniCodeBlock
 import com.basitce.gfx.core.core_ui.components.OmniErrorCard
 import com.basitce.gfx.core.core_ui.components.OmniLoading
 import com.basitce.gfx.core.core_ui.components.OmniPrimaryButton
+import com.basitce.gfx.core.core_ui.components.OmniStatusChip
 import com.basitce.gfx.core.core_ui.components.OmniTextButton
+import com.basitce.gfx.core.core_ui.components.OmniTone
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_wizard.viewmodel.SetupWizardState
@@ -85,31 +95,35 @@ private fun SuccessContent(
 ) {
     val spacing = OmniTheme.spacing
 
+    // Ara adım: dev hero kutusu yok. Kompakt durum satırı + bilgi kartları;
+    // mühür/hero yalnızca final adımında (Dosya uygulandı) kullanılır.
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(RoundedCornerShape(OmniRadius.xl))
-                .background(OmniTheme.semantic.successContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Outlined.CheckCircle,
-                contentDescription = null,
-                tint = OmniTheme.semantic.onSuccessContainer,
-                modifier = Modifier.size(48.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(spacing.xxl))
-
         Text(
             text = "Dosya çekildi",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(spacing.xxl))
+        Spacer(modifier = Modifier.height(spacing.md))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+        ) {
+            Icon(
+                Icons.Outlined.CheckCircle,
+                contentDescription = null,
+                tint = OmniTheme.semantic.success,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = "Dosya okundu · ${formatFileSize(state.fileSizeBytes)} · ${state.configNodes.size} satır",
+                style = MaterialTheme.typography.titleSmall,
+                color = OmniTheme.semantic.success
+            )
+        }
+
+        Spacer(modifier = Modifier.height(spacing.lg))
 
         InfoCard(
             icon = Icons.AutoMirrored.Outlined.InsertDriveFile,
@@ -124,16 +138,7 @@ private fun SuccessContent(
 
         state.fileMetadata?.let { meta ->
             Spacer(modifier = Modifier.height(spacing.listItem))
-            InfoCard(
-                icon = Icons.Outlined.Fingerprint,
-                title = "Dosya kimliği",
-                note = "Yazma sırasında bu bilgiler korunur.",
-                items = listOfNotNull(
-                    "Sahip" to "${meta.uid ?: "?"}:${meta.gid ?: "?"}",
-                    "İzinler" to (meta.mode ?: "?"),
-                    meta.seContext?.let { "Güvenlik etiketi" to it }
-                )
-            )
+            FileIdentityCard(meta = meta)
         }
 
         if (state.isGameRunning) {
@@ -347,5 +352,88 @@ private fun formatFileSize(bytes: Long): String {
         bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${bytes / 1024} KB"
         else -> "${bytes / (1024 * 1024)} MB"
+    }
+}
+
+/**
+ * Dosya kimliği: varsayılan görünüm insani ve güven verici — "korunuyor" rozeti.
+ * Ham UID/izin/SELinux değerleri yalnızca teknik detay isteyene açılır;
+ * son kullanıcı bu terimleri bilmez (BRIEF copy kuralı).
+ */
+@Composable
+private fun FileIdentityCard(meta: FileMetadata) {
+    val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
+    var expanded by remember { mutableStateOf(false) }
+
+    OmniCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+        ) {
+            Icon(
+                Icons.Outlined.Fingerprint,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = "Dosya kimliği",
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            OmniStatusChip(text = "Korunuyor", tone = OmniTone.Success)
+        }
+        Spacer(modifier = Modifier.height(spacing.xs))
+        Text(
+            text = "Orijinal dosya izinleri ve güvenlik kimliği yedeklendi — yazma sırasında korunur.",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(spacing.xs))
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(OmniRadius.sm))
+                .clickable { expanded = !expanded }
+                .padding(vertical = spacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.xs)
+        ) {
+            Text(
+                text = if (expanded) "Teknik detayları gizle" else "Teknik detayları göster",
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceVariant
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+        if (expanded) {
+            Spacer(modifier = Modifier.height(spacing.xs))
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
+                Text(
+                    text = "Sahip: ${meta.uid ?: "?"}:${meta.gid ?: "?"}",
+                    style = OmniTheme.mono.micro,
+                    color = colors.onSurfaceVariant
+                )
+                Text(
+                    text = "İzinler: ${meta.mode ?: "?"}",
+                    style = OmniTheme.mono.micro,
+                    color = colors.onSurfaceVariant
+                )
+                meta.seContext?.let {
+                    Text(
+                        text = "Güvenlik etiketi: $it",
+                        style = OmniTheme.mono.micro,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }

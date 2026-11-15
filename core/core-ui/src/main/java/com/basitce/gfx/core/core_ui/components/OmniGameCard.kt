@@ -64,7 +64,8 @@ private fun Drawable.toBitmap(): Bitmap {
 
 /**
  * Oyun satırı. Mor gradyan placeholder gitti: uygulama ikonu yoksa nötr bir
- * oyun simgesi, yüzey adımıyla ayrışan kutuda. Aktif profil bir çip olarak görünür.
+ * oyun simgesi, yüzey adımıyla ayrışan kutuda. Profil özeti ("1 profil · Dengeli")
+ * mikro bilgi satırı olarak görünür — kart, oyunun durumunu tek bakışta anlatır.
  */
 @Composable
 fun OmniGameCard(
@@ -72,7 +73,7 @@ fun OmniGameCard(
     packageName: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    activeProfileName: String? = null,
+    profileSummary: String? = null,
     iconUri: String? = null
 ) {
     val iconBitmap = rememberIconBitmap(iconUri, packageName)
@@ -131,10 +132,13 @@ fun OmniGameCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            if (activeProfileName != null) {
-                OmniStatusChip(
-                    text = activeProfileName,
-                    tone = OmniTone.Success
+            if (profileSummary != null) {
+                Text(
+                    text = profileSummary,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

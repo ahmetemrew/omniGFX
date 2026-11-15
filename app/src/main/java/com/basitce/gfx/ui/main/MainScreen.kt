@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 import com.basitce.gfx.feature.feature_home.ui.HomeScreen
 import com.basitce.gfx.ui.profile.ProfileListScreen
@@ -67,14 +69,17 @@ fun MainScreen(
         containerColor = colors.background,
         floatingActionButton = {
             if (selectedTab == MainTab.Games && !gamesEmpty) {
+                // Stadium (fiziksel alet tuşu) + container tonu: FAB, oyun kartının
+                // önüne geçen parlak bir blok değil, sakin bir tamamlayıcı eylem.
                 ExtendedFloatingActionButton(
                     onClick = onAddGame,
                     icon = {
                         Icon(Icons.Filled.Add, contentDescription = null)
                     },
                     text = { Text("Oyun ekle", style = MaterialTheme.typography.labelLarge) },
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
+                    shape = RoundedCornerShape(OmniRadius.full),
+                    containerColor = colors.primaryContainer,
+                    contentColor = colors.onPrimaryContainer
                 )
             }
         },

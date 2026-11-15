@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.basitce.gfx.core.core_database.dao.GameDao
+import com.basitce.gfx.core.core_database.dao.ProfileDao
 import com.basitce.gfx.core.core_database.entity.GameEntity
 import com.basitce.gfx.core.core_engine.shizuku.ShizukuConnectionState
 import com.basitce.gfx.core.core_engine.shizuku.ShizukuStateManager
@@ -24,10 +25,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+/** Oyun kartındaki mikro bilgi: kaç profil + en son profilin adı. */
+data class GameProfileInfo(val count: Int, val latestName: String)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gameDao: GameDao,
+    profileDao: ProfileDao,
     private val shizukuStateManager: ShizukuStateManager
 ) : ViewModel() {
 
@@ -36,6 +41,18 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    val gameProfiles: StateFlow<Map<String, GameProfileInfo>> = profileDao.getAllProfilesWithSchema()
+        .map { profiles ->
+            profiles.groupBy { it.gameId }.mapValues { (_, list) ->
+                GameProfileInfo(count = list.size, latestName = list.first().profile.name)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
 
     val shizukuState: StateFlow<ShizukuUiState> = shizukuStateManager.uiState
 

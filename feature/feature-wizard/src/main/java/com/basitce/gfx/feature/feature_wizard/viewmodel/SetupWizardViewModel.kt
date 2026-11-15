@@ -17,6 +17,7 @@ import com.basitce.gfx.core.core_engine.rollback.RollbackResult
 import com.basitce.gfx.core.core_engine.shizuku.GameProcessManager
 import com.basitce.gfx.core.core_engine.shizuku.RemoteFileBrowser
 import com.basitce.gfx.core.core_engine.shizuku.RemoteFileSystemEntry
+import com.basitce.gfx.core.core_engine.shizuku.ShizukuConnectionState
 import com.basitce.gfx.core.core_engine.shizuku.ShizukuPathProbe
 import com.basitce.gfx.core.core_engine.shizuku.ShizukuStateManager
 import com.basitce.gfx.core.core_engine.verification.PmpVerifier
@@ -121,11 +122,16 @@ class SetupWizardViewModel @Inject constructor(
             _browserPath.value = path
             try {
                 val result = remoteFileBrowser.list(path)
-                if (result.error != null) {
+                val rawError = result.error
+                if (rawError != null) {
+                    val friendly = rawError.replace(
+                        "Shizuku process oluşturulamadı.",
+                        "Shizuku servisi yanıt vermedi."
+                    )
                     _state.update {
                         it.copy(
                             isBrowsing = false,
-                            browserError = "Dizin okunamadı: ${result.error}"
+                            browserError = "Dizin okunamadı: $friendly"
                         )
                     }
                     _browserEntries.value = emptyList()
@@ -150,6 +156,21 @@ class SetupWizardViewModel @Inject constructor(
     fun browseUp() {
         val parent = remoteFileBrowser.parentPath(_browserPath.value)
         if (parent != null) browseTo(parent)
+    }
+
+    /** Dosya gezgini Shizuku istiyor: izin gerekiyorsa iste, değilse Shizuku'yu aç. */
+    fun connectShizuku() {
+        if (shizukuState.value.connectionState == ShizukuConnectionState.PERMISSION_REQUIRED) {
+            shizukuStateManager.requestPermission()
+            return
+        }
+        val launchIntent = context.packageManager
+            .getLaunchIntentForPackage("moe.shizuku.privileged.api")
+        if (launchIntent != null) {
+            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            runCatching { context.startActivity(launchIntent) }
+        }
+        shizukuStateManager.refreshStatus()
     }
 
     fun selectFile(path: String) {

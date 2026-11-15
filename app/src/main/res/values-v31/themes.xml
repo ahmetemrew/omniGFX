@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Android 12+ açılış ekranı: marka ikonu + marka zemini.
+      Android 12+ açılış ekranı: marka kilidi (kalibrasyon kadranı + wordmark)
+      marka zemininde. Daire arka plan YOK — kilit tam görünür, kırpılmaz.
       API 26-30 için values/themes.xml içindeki windowBackground geçerli.
     -->
     <style name="Theme.OmniGFX" parent="Theme.OmniGFX.Base">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/brand_graphite</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_brand</item>
     </style>
 </resources>

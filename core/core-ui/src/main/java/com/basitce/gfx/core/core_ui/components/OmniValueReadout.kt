@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,6 +49,9 @@ fun OmniValueReadout(
     unit: String? = null,
     /** Tik rayındaki konum, 0..1. Verilmezse ray yalnızca ölçek çizgisi olarak kalır. */
     fraction: Float? = null,
+    /** Rayın sol/sağ uçlarına yazılan ölçek sınırları (ör. "0" – "120"). */
+    minLabel: String? = null,
+    maxLabel: String? = null,
     compact: Boolean = false
 ) {
     val semantic = OmniTheme.semantic
@@ -142,6 +146,22 @@ fun OmniValueReadout(
                     .fillMaxWidth()
                     .height(if (compact) 14.dp else 20.dp)
             )
+
+            if (minLabel != null || maxLabel != null) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = minLabel.orEmpty(),
+                        style = OmniTheme.mono.micro,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = maxLabel.orEmpty(),
+                        style = OmniTheme.mono.micro,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

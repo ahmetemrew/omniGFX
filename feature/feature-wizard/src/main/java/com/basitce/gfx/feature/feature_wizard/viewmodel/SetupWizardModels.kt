@@ -39,6 +39,8 @@ data class ConfigNode(
     val path: String = "",
     val key: String = "",
     val value: String = "",
+    /** Dosyadan çekilen ilk değer — Değer Okuması'ndaki üstü çizili "eski" taraf. */
+    val originalValue: String = "",
     val rawLine: String = "",
     val isPinned: Boolean = false,
     val pinnedVariableId: String? = null,

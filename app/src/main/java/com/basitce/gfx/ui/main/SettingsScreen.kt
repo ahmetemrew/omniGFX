@@ -2,8 +2,10 @@ package com.basitce.gfx.ui.main
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.basitce.gfx.BuildConfig
 import com.basitce.gfx.core.core_ui.components.OmniListRow
 import com.basitce.gfx.core.core_ui.components.OmniSectionHeader
-import com.basitce.gfx.core.core_ui.components.OmniTopBar
+import com.basitce.gfx.core.core_ui.components.OmniTabHeader
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
 
@@ -47,7 +49,11 @@ fun SettingsScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        OmniTopBar(title = "Ayarlar")
+        OmniTabHeader(
+            title = "Ayarlar",
+            subtitle = "Bağlantı, araçlar ve rehber"
+        )
+        Spacer(modifier = Modifier.height(spacing.xl))
 
         Column(
             modifier = Modifier

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -67,6 +68,7 @@ fun SetupWizardScreen(
             .statusBarsPadding()
             .background(MaterialTheme.colorScheme.background)
             .navigationBarsPadding()
+            .imePadding()
     ) {
         WizardTopBar(
             currentStep = state.currentStep,
@@ -135,7 +137,7 @@ private fun WizardTopBar(
             )
         }
         Spacer(modifier = Modifier.width(spacing.xs))
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = currentStep.title,
                 style = MaterialTheme.typography.titleLarge,
@@ -149,6 +151,12 @@ private fun WizardTopBar(
                 )
             }
         }
+        Text(
+            text = "${currentStep.order} / ${SetupWizardStep.entries.size - 1}",
+            style = OmniTheme.mono.micro,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(end = spacing.sm)
+        )
     }
 }
 
@@ -168,7 +176,7 @@ private fun StepRail(currentStep: SetupWizardStep) {
             .fillMaxWidth()
             .padding(horizontal = spacing.screen)
             .semantics {
-                contentDescription = "Adım ${currentStep.order + 1} / ${steps.size}: ${currentStep.title}"
+                contentDescription = "Adım ${currentStep.order} / ${steps.size}: ${currentStep.title}"
             },
         horizontalArrangement = Arrangement.spacedBy(spacing.xs),
         verticalAlignment = Alignment.CenterVertically
@@ -189,7 +197,7 @@ private fun StepRail(currentStep: SetupWizardStep) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(if (active) 5.dp else 3.dp)
+                    .height(if (active) 4.dp else 2.dp)
                     .clip(RoundedCornerShape(OmniRadius.xs))
                     .background(segmentColor)
             )
