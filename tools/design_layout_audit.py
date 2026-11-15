@@ -38,12 +38,12 @@ EXPECTED = {
     "19": ["Ayarlar"],
     "20": ["Rehber"],
     "21": ["Dosya çekildi", "Dosya bilgisi"],
-    "22": ["biçimi", "Değişkenleri ayarla"],
-    "23": ["Dosya uygulandı", "Uygulama özeti"],
+    "22": ["biçimi", "Değişkenleri ayarla", "FPSLimit"],
+    "23": ["Dosya uygulandı", "Uygulama özeti", "90"],
     "24": ["Oyunlar", "Bağlantı hazır"],
     "24b": ["Oyunlar", "Settings"],
-    "25": ["Profiller", "Dengeli 60 FPS"],
-    "26": ["Yedekler", "omnigfx"],
+    "25": ["Profiller", "Dengeli 60 FPS", "Uygula"],
+    "26": ["Yedekler", ".bak", "Geri yükle"],
 }
 
 
@@ -64,12 +64,20 @@ def audit(path, scale):
         txt = t.group(1) if t else ""
         d = re.search(r'content-desc="([^"]*)"', s)
         desc = d.group(1) if d else ""
-        parsed.append((x1, y1, x2, y2, txt, desc, 'clickable="true"' in s))
+        # Baştaki boşluk şart: long-clickable="true" (drag handle) clickable
+        # sanılıp sahte hedef üretiyordu.
+        parsed.append((x1, y1, x2, y2, txt, desc, ' clickable="true"' in s))
     # Viewport kesiği imzası: satır LazyColumn görünür alanının alt kenarında
     # kesilince metin glifi de düğümle aynı alt kenarda kesik görünür (<10dp).
-    # Tam boyut kodda heightIn(min=48dp) ile garanti; dilim sahte pozitiftir.
-    cut = [(tx1, tx2, ty2) for tx1, ty1, tx2, ty2, ttxt, _, _ in parsed
-           if ttxt and (ty2 - ty1) < 10 * scale]
+    # Tam boyut kodda heightIn(min=48dp) / IconButton 48dp ile garanti; dilim
+    # sahte pozitiftir. content-desc düğümleri de kesik imzası taşır (ikonlar).
+    cut = [(tx1, tx2, ty2) for tx1, ty1, tx2, ty2, ttxt, ddesc, _ in parsed
+           if (ttxt or ddesc) and (ty2 - ty1) < 10 * scale]
+    # Yatay kesiş imzası: LazyRow/breadcrumb kaydırmasında kenarda kalan dilim.
+    # İçteki düğümün görünür genişliği <10dp ve clickable ebeveynin kenarına
+    # yapışıksa dilimdir; tam boyut kodda heightIn + padding ile garanti.
+    hcut = [(tx1, tx2) for tx1, ty1, tx2, ty2, _, _, _ in parsed
+            if (tx2 - tx1) < 10 * scale]
     for x1, y1, x2, y2, txt, desc, clickable in parsed:
         if x1 < 0 or y1 < 0 or x2 > W or y2 > H:
             problems.append(f"CLIP [{x1},{y1}][{x2},{y2}]")
@@ -82,7 +90,14 @@ def audit(path, scale):
                 continue
             if any(tx1 >= x1 and tx2 <= x2 and ty2 == y2 for tx1, tx2, ty2 in cut):
                 continue
+            if any(tx1 >= x1 and tx2 <= x2 and (tx1 == x1 or tx2 == x2)
+                   for tx1, tx2 in hcut):
+                continue
             wdp, hdp = (x2 - x1) / scale, (y2 - y1) / scale
+            # Dejenere semantik düğüm (0x0, 3x3 "Close sheet" gibi): gerçek dokunma
+            # hedefi değil, Compose semantics artefaktı; eşik denetimine girmez.
+            if wdp < 5 or hdp < 5:
+                continue
             if wdp < 47.5 or hdp < 47.5:
                 problems.append(f"KUCUK_HEDEF {(txt or desc or '?')[:24]} {wdp:.0f}x{hdp:.0f}dp")
         if len(txt) >= 24 and abs((x1 + x2) / 2 - W / 2) > 40:

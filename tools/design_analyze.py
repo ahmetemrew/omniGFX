@@ -24,6 +24,9 @@ DARK = {
     "error": (242, 131, 122), "onError": (58, 10, 6),
     "errorC": (92, 31, 25), "onErrorC": (251, 213, 208),
     "outline": (100, 118, 115), "outlineVar": (46, 59, 58),
+    # Modal katman: %65 siyah scrim'in token zeminler üzerindeki türevleri
+    # (DESIGN.md P0-4). Palet dışı değil, anlamsal katman.
+    "scrimBg": (6, 9, 9), "scrimSurface": (8, 11, 11), "scrimScLow": (9, 13, 13),
 }
 LIGHT = {
     "bg": (244, 247, 246), "surface": (255, 255, 255), "scLow": (240, 244, 243),
@@ -90,7 +93,9 @@ def targets_mode(paths, density):
         small = []
         for m in re.finditer(r'<node[^>]*>', xml):
             s = m.group(0)
-            if 'clickable="true"' not in s:
+            # Baştaki boşluk şart: long-clickable="true" substring'ı clickable
+            # sanılıp drag handle gibi jest öğeleri sahte hedef üretiyordu.
+            if ' clickable="true"' not in s:
                 continue
             b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', s)
             if not b:

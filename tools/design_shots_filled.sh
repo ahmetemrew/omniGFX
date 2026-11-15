@@ -14,6 +14,9 @@ trap 'rm -rf "$TMP"' EXIT
 adb wait-for-device
 adb shell wm size reset >/dev/null 2>&1
 adb shell wm density reset >/dev/null 2>&1
+# Kardeş/önceki koşudan kalma büyük font düzeni kaydırır (satır needle'ları
+# farklı y'lere düşer); dolu oturum daima 1.0 ölçekle başlar.
+adb shell settings put system font_scale 1.0
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
@@ -172,26 +175,44 @@ dismiss_ime() { # IME açıksa kapat; değilse BACK gezinmeyi bozmasın
   fi
 }
 
-# ── Shizuku izni (servis çalışıyor, izin verilmemiş olabilir) ──
-start_app
-tap "Ayarlar"
-tap "Dosya erişimi için gerekli"
-wait_quiet "Tekrar denetle" 20
-if grep -q "İzin iste" "$TMP/ui.xml" 2>/dev/null; then
-  tap "İzin iste"
-  sleep 2
-  tap_optional "Allow" "İzin ver" "ALLOW"
-  sleep 2
-  # İzin diyaloğu Shizuku uygulamasının task'inde açılır; Allow sonrası
-  # OmniGFX'e deterministik dön (force-stop + relaunch + aynı ekran).
-  start_app
-  tap "Ayarlar"
-  tap "Dosya erişimi için gerekli"
-  wait_quiet "Tekrar denetle" 20
-  tap_optional "Tekrar denetle"
-fi
-wait_quiet "Shizuku hazır" 15
-back
+# ── Shizuku izni: ana ekranda "Bağlantı hazır" DOĞRULANANA dek en çok 3 deneme ──
+# İzin diyaloğu Shizuku uygulamasının task'inde açılır; Allow sonrası OmniGFX'e
+# force-stop + relaunch ile deterministik dönülür. Kurulum ekranının bağlantı
+# denetimi yavaş olabilir (30 s); ara denemeler MISS sayacını kirletmez.
+grant_shizuku() {
+  local attempt
+  for attempt in 1 2 3; do
+    start_app
+    tap "Ayarlar"
+    tap "Dosya erişimi için gerekli"
+    if ! wait_quiet "Tekrar denetle" 30; then
+      echo "GRANT: kurulum ekranı açılmadı (deneme $attempt)"
+      back
+      continue
+    fi
+    if grep -q "İzin iste" "$TMP/ui.xml" 2>/dev/null; then
+      tap "İzin iste"
+      if wait_quiet "Allow" 15 || wait_quiet "İzin ver" 5; then
+        tap_any "Allow" "İzin ver" "ALLOW"
+        sleep 3
+      else
+        echo "GRANT: izin diyaloğu görünmedi (deneme $attempt)"
+      fi
+    else
+      tap_optional "Tekrar denetle"
+      sleep 3
+    fi
+    start_app
+    if wait_quiet "Bağlantı hazır" 20; then
+      echo "SHIZUKU PERMISSION OK (deneme $attempt)"
+      return 0
+    fi
+    echo "GRANT: bağlantı hazır değil (deneme $attempt)"
+  done
+  echo "SHIZUKU PERMISSION FAIL"
+  return 1
+}
+grant_shizuku || { echo "FILLED_TAP_MISS_COUNT=$MISSES"; exit 1; }
 
 # ── 24: Oyunlar — Shizuku hazır (before/24 ile aynı durum: boş liste + hazır
 # bağlantı). Dolu liste sihirbazdan sonra 24b'de görüntülenir. ──
@@ -216,24 +237,58 @@ wait_for "Dosya çekildi" 25
 shot 21-cek-analiz-koyu
 tap "Düzenleyiciye geç"
 wait_for "biçimi" 10
-shot 22-duzenleyici-koyu
-# Değer değişikliği (Brightness 80 → 75): içerik değişmezse pipeline NoChange
-# yolundan döner; dosya yazılmaz, yedek oluşmaz ve 26 boş kalır. rawLine
-# değişmediği için profil "Dinamik" kalır (structuralChange=false).
-tap_scroll "80"
-adb shell input keyevent KEYCODE_MOVE_END
-adb shell input keyevent KEYCODE_DEL
-adb shell input keyevent KEYCODE_DEL
-adb shell input text "75"
-sleep 1
 dismiss_ime
-wait_for "75" 5
+# Değer Okuması: değere dokun → yerinde düzenleme alanı açılır. İki gerçek
+# değişiklik: FPSLimit 60→90 (üstte) ve Brightness 80→75 (altta). İçerik
+# değişmezse pipeline NoChange yolundan döner; dosya yazılmaz, yedek oluşmaz
+# ve 26 boş kalır. FPSLimit değişimi başarı ekranındaki eski→yeni okumasını
+# (60→90) da görünür kılar.
+# Kapatma, klavyenin örttüğü onay ikonuna dokunmakla DEĞİL IME Done (ENTER)
+# ile yapılır: singleLine + ImeAction.Done → onEndEdit. Deterministik.
+edit_value() { # $1 = eski değer (needle), $2 = yeni değer
+  local try
+  for try in 1 2; do
+    tap_scroll "$1"
+    wait_quiet "Değeri kaydet" 6 && break
+    echo "EDIT: düzenleme açılmadı, tekrar ($1)"
+  done
+  adb shell input keyevent KEYCODE_MOVE_END
+  adb shell input keyevent KEYCODE_DEL
+  adb shell input keyevent KEYCODE_DEL
+  adb shell input text "$2"
+  sleep 1
+  adb shell input keyevent KEYCODE_ENTER
+  sleep 1.5
+  dump_ui
+  if grep -q "Değeri kaydet" "$TMP/ui.xml" 2>/dev/null; then
+    adb shell input keyevent KEYCODE_ENTER
+    sleep 1.5
+  fi
+  wait_for "$2" 8
+}
+edit_value "60" "90"
+edit_value "80" "75"
+dismiss_ime
+sleep 1
+# Görüntü için listenin başına dön: FPSLimit 60→90 okuması + tik rayları görünür.
+adb shell input swipe 540 900 540 2000 300
+sleep 1
+adb shell input swipe 540 900 540 2000 300
+sleep 1
+shot 22-duzenleyici-koyu
+dismiss_ime
 # Adım 4: önce profil adı (alan üstte), sonra FPSLimit pin'i. Pin sayfasının
 # "Değişkeni kaydet" düğmesi ekran dışında kalabilir → tap_scroll sayfa içinde
 # kaydırarak bulur. Editördeki ilk "Sabitle" eşleşmesi bölüm başlığı satırına
 # ait olduğundan pin oradan değil, adım 4'ün anahtar satırından yapılır.
 tap "Değişkenleri ayarla"
-wait_for "Profil adı" 10
+if ! wait_quiet "Profil adı" 12; then
+  # CTA klavye altında kaldıysa kapat ve bir kez daha dene.
+  dismiss_ime
+  sleep 1
+  tap "Değişkenleri ayarla"
+  wait_for "Profil adı" 12
+fi
 tap "Profil adı"
 adb shell input text "Dengeli%s60%sFPS"
 sleep 1
@@ -262,7 +317,7 @@ shot 25-profiller-dolu-koyu
 start_app
 tap "Profiller"
 tap "Diğer işlemler"; sleep 1; tap "Yedekler"
-wait_for "omnigfx" 15
+wait_for "Geri yükle" 15
 shot 26-yedekler-dolu-koyu
 
 # ── temizlik ──

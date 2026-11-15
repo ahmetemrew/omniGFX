@@ -22,6 +22,7 @@ done
 # üst bar dokunuşlarını kaydırabiliyor.)
 adb shell wm size reset >/dev/null 2>&1
 adb shell wm density reset >/dev/null 2>&1
+adb shell settings put system font_scale 1.0
 sleep 3
 
 adb install -r -g "$APK" || { echo "INSTALL FAIL"; exit 1; }
@@ -87,6 +88,14 @@ MISSES=0
 
 back() { adb shell input keyevent KEYCODE_BACK; sleep 1.2; }
 start_app() { adb shell am force-stop "$PKG"; adb shell am start -n "$PKG/.MainActivity" >/dev/null; sleep 6; }
+tab() { # $1 = sekme/satır needle, $2 = hedef ekran belirteci; geçiş DOĞRULANIR
+  tap "$1"
+  if ! wait_quiet "$2" 6; then
+    # Geçici bounds/ön plan kaybında dokunuş boşa düşebilir: taze dump ile tekrar.
+    tap "$1"
+    wait_for "$2" 8
+  fi
+}
 
 # ── KOYU TEMA ──
 adb shell cmd uimode night yes
@@ -95,6 +104,9 @@ start_app
 shot 01-oyunlar-bos-koyu
 tap "Profiller"
 shot 02-profiller-bos-koyu
+# İlk overflow erişimi de deterministik olmalı: start_app + sekme olmadan
+# ön plan kaybında (launcher) MISS üreyip 03 geçersiz olabiliyor.
+start_app; tap "Profiller"
 tap "Diğer işlemler"; sleep 1; tap "Yedekler"
 shot 03-yedekler-bos-koyu
 start_app; tap "Profiller"
