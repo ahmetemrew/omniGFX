@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
@@ -33,12 +34,18 @@ fun OmniEmptyState(
     action: @Composable (() -> Unit)? = null
 ) {
     val spacing = OmniTheme.spacing
+    // Büyük fontta (>%115) davet bloğu sıkılaşır: tek eylem ilk ekranda tam
+    // görünür, kaydırma yine de mümkün (tur 2 P0-2).
+    val largeFont = LocalDensity.current.fontScale > 1.15f
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = spacing.xxl, vertical = spacing.xxxl),
+            .padding(
+                horizontal = spacing.xxl,
+                vertical = if (largeFont) spacing.lg else spacing.xxxl
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.md)
+        verticalArrangement = Arrangement.spacedBy(if (largeFont) spacing.sm else spacing.md)
     ) {
         Icon(
             imageVector = icon,
@@ -64,7 +71,7 @@ fun OmniEmptyState(
 
         action?.let {
             androidx.compose.foundation.layout.Spacer(
-                modifier = Modifier.padding(top = spacing.sm)
+                modifier = Modifier.padding(top = if (largeFont) spacing.xs else spacing.sm)
             )
             it()
         }

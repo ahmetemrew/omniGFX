@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -61,14 +62,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.basitce.gfx.core.core_ui.components.OmniTopBar
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
@@ -150,6 +154,8 @@ fun GuideScreen(onBack: () -> Unit) {
     val expandedSections = remember { mutableStateOf(emptySet<String>()) }
     val listState = rememberLazyListState()
     val spacing = OmniTheme.spacing
+    val motion = OmniTheme.motion
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -196,6 +202,15 @@ fun GuideScreen(onBack: () -> Unit) {
                             current.remove(section.id)
                         } else {
                             current.add(section.id)
+                            // Açılan kart görünür alana girer: içerik alt kenarda
+                            // kesik başlamaz (tur 2 P0-3). Hero item 0 → index+1.
+                            scope.launch {
+                                if (motion.reduced) {
+                                    listState.scrollToItem(index + 1)
+                                } else {
+                                    listState.animateScrollToItem(index + 1)
+                                }
+                            }
                         }
                         expandedSections.value = current
                     }
@@ -215,12 +230,15 @@ fun GuideScreen(onBack: () -> Unit) {
 @Composable
 private fun HeroSection() {
     val spacing = OmniTheme.spacing
+    // Büyük fontta hero kompaktlaşır: bölüm kartları ilk ekranda tam görünür
+    // (tur 2 P0-3). İçerik aynı kalır, yalnız boşluk sıkılaşır.
+    val largeFont = LocalDensity.current.fontScale > 1.15f
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(OmniRadius.lg))
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(spacing.xl)
+            .padding(if (largeFont) spacing.lg else spacing.xl)
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -252,7 +270,7 @@ private fun HeroSection() {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(spacing.lg))
+            Spacer(modifier = Modifier.height(if (largeFont) spacing.sm else spacing.lg))
             Text(
                 text = "Bu rehber, oyunu hiç bilmeyen bir kullanıcının bile adım adım ilerleyebilmesi için hazırlandı. Her bölüm kendi içinde bağımsızdır; istediğin yerden başlayabilirsin. İleri düzey konular da ayrı başlıklar altında detaylıca anlatıldı.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -305,7 +323,9 @@ private fun SectionCard(
                 text = "%02d".format(number),
                 style = OmniTheme.mono.micro,
                 color = colors.onSurfaceVariant,
-                modifier = Modifier.width(24.dp)
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.widthIn(min = 24.dp)
             )
             Box(
                 modifier = Modifier

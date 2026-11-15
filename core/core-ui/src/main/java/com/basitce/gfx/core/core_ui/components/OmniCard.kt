@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
 import com.basitce.gfx.core.core_ui.theme.OmniTheme
@@ -74,6 +75,9 @@ fun OmniSectionHeader(
     count: Int? = null,
     action: @Composable (() -> Unit)? = null
 ) {
+    // Başlık + sayaç TEK sol grupta (tur 2 P0-5): eskiden başlık ve Spacer ayrı
+    // weight(1f) alınca kalan genişlik yarı yarıya bölünüyor, başlık iki satıra
+    // kırılıp sayaç ortada yüzüyordu. Sayaç başlığa 8dp yapışık, eylem sağda.
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -81,21 +85,29 @@ fun OmniSectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(OmniTheme.spacing.sm)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f, fill = false)
-        )
-        if (count != null) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(OmniTheme.spacing.sm)
+        ) {
             Text(
-                text = count.toString(),
-                style = OmniTheme.mono.key,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
             )
+            if (count != null) {
+                Text(
+                    text = count.toString(),
+                    style = OmniTheme.mono.key,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
         }
         if (action != null) {
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
             action()
         }
     }

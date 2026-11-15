@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -244,15 +245,25 @@ fun StepEdit(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = spacing.screen, vertical = spacing.md)
-                    .navigationBarsPadding()
-            ) {
-                OmniPrimaryButton(
-                    text = "Değişkenleri ayarla",
-                    onClick = { viewModel.proceedToStep4() }
+            Column {
+                // Tam opak zemin + 1dp üst sınır: listenin alt kenardaki dilimi
+                // barın altında "yarım kart" gibi değil, bilinçli kesit gibi okunur.
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = spacing.screen, vertical = spacing.lg)
+                        .navigationBarsPadding()
+                ) {
+                    OmniPrimaryButton(
+                        text = "Değişkenleri ayarla",
+                        onClick = { viewModel.proceedToStep4() }
+                    )
+                }
             }
         }
     }
@@ -421,14 +432,28 @@ private fun ValueReadoutRow(
     val colors = MaterialTheme.colorScheme
     val semantic = OmniTheme.semantic
 
-    val fraction = if (
-        isNumeric &&
-        pinnedVariable != null &&
+    // Ölçek: pinli SLIDER'ın gerçek aralığı; pinsiz sayısal satırlarda değerden
+    // türetilmiş yuvarlak tavan. Ray her iki durumda da canlı iğne + min/max taşır
+    // (tur 2 P1-6: düzenleyici ile uygulama özeti aynı Değer Okuması şablonu).
+    val numericValue = if (isNumeric) node.value.toFloatOrNull() else null
+    val scaleMin: Float?
+    val scaleMax: Float?
+    if (pinnedVariable != null &&
         pinnedVariable.uiComponentType == UiComponentType.SLIDER &&
         pinnedVariable.max > pinnedVariable.min
     ) {
-        ((node.value.toFloatOrNull() ?: pinnedVariable.min) - pinnedVariable.min) /
-            (pinnedVariable.max - pinnedVariable.min)
+        scaleMin = pinnedVariable.min
+        scaleMax = pinnedVariable.max
+    } else if (numericValue != null) {
+        val ceiling = derivedScaleMax(numericValue)
+        scaleMin = if (numericValue < 0f) -ceiling else 0f
+        scaleMax = ceiling
+    } else {
+        scaleMin = null
+        scaleMax = null
+    }
+    val fraction = if (numericValue != null && scaleMin != null && scaleMax != null) {
+        ((numericValue - scaleMin) / (scaleMax - scaleMin)).coerceIn(0f, 1f)
     } else null
 
     val readoutDescription = buildString {
@@ -457,7 +482,7 @@ private fun ValueReadoutRow(
             if (changed) {
                 Text(
                     text = node.originalValue,
-                    style = OmniTheme.mono.key,
+                    style = OmniTheme.mono.readoutPrevious,
                     color = semantic.readoutMuted,
                     textDecoration = TextDecoration.LineThrough,
                     maxLines = 1,
@@ -465,7 +490,7 @@ private fun ValueReadoutRow(
                 )
                 Text(
                     text = "›",
-                    style = OmniTheme.mono.key,
+                    style = OmniTheme.mono.readoutPrevious,
                     color = colors.onSurfaceVariant
                 )
             }
@@ -488,9 +513,45 @@ private fun ValueReadoutRow(
                     .padding(top = spacing.xxs)
                     .height(14.dp)
             )
+            if (scaleMin != null && scaleMax != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = spacing.xxs)
+                ) {
+                    Text(
+                        text = formatScaleLabel(scaleMin),
+                        style = OmniTheme.mono.micro,
+                        color = colors.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = formatScaleLabel(scaleMax),
+                        style = OmniTheme.mono.micro,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
+
+/** Pinsiz sayısal satırlar için yuvarlak ölçek tavanı (2→4, 90→100, 75→80…). */
+private fun derivedScaleMax(value: Float): Float {
+    val abs = kotlin.math.abs(value)
+    val steps = floatArrayOf(
+        4f, 8f, 10f, 16f, 20f, 32f, 50f, 60f, 80f, 100f, 120f, 144f, 240f, 480f, 1000f
+    )
+    for (step in steps) {
+        if (step >= abs) return step
+    }
+    var ceiling = 1000f
+    while (ceiling < abs) ceiling *= 10f
+    return ceiling
+}
+
+private fun formatScaleLabel(value: Float): String =
+    if (value == value.toLong().toFloat()) value.toLong().toString() else value.toString()
 
 /** Yerinde düzenleme: okuma alanı metin alanına dönüşür, onay/vazgeç ile kapanır. */
 @Composable

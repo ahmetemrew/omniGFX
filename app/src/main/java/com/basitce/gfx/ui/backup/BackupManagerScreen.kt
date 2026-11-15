@@ -1,6 +1,8 @@
 package com.basitce.gfx.ui.backup
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -154,7 +156,8 @@ fun BackupManagerScreen(
 /**
  * Yedek kartı: birincil başlık insanca tarih/saat; sistem dosya adı değil.
  * Hedef yol ikinci satır, kısaltılmış yedek kimliği üçüncü satır mikro metin.
- * Silme eylemi sağ üst köşede hizalı — kartın ortasında yüzmez.
+ * Alt aksiyon satırı dengeli: Sil solda ikon buton, Geri yükle sağda birincil;
+ * arada 1dp ayraç (tur 2 P0-5: sol alt çukur kalmasın).
  */
 @Composable
 private fun BackupRow(
@@ -172,39 +175,50 @@ private fun BackupRow(
     val backupId = fileName.substringAfter(".omnigfx.", "").substringBeforeLast(".bak")
 
     OmniCard(modifier = modifier) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = timestamp?.let { dateFormat.format(Date(it)) } ?: fileName,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                    ),
-                    color = colors.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = timestamp?.let { dateFormat.format(Date(it)) } ?: fileName,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                ),
+                color = colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(spacing.xxs))
+            Text(
+                text = targetPath,
+                style = OmniTheme.mono.key,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (backupId.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(spacing.xxs))
                 Text(
-                    text = targetPath,
-                    style = OmniTheme.mono.key,
-                    color = colors.onSurfaceVariant,
+                    text = "#$backupId · .bak",
+                    style = OmniTheme.mono.micro,
+                    color = colors.outline,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (backupId.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(spacing.xxs))
-                    Text(
-                        text = "#$backupId · .bak",
-                        style = OmniTheme.mono.micro,
-                        color = colors.outline,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
+        }
+
+        Spacer(modifier = Modifier.height(spacing.md))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(colors.outlineVariant)
+        )
+        Spacer(modifier = Modifier.height(spacing.sm))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
@@ -213,15 +227,6 @@ private fun BackupRow(
                     modifier = Modifier.size(20.dp)
                 )
             }
-        }
-
-        Spacer(modifier = Modifier.height(spacing.md))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
             OmniPrimaryButton(
                 text = "Geri yükle",
                 onClick = onRestore,

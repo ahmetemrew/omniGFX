@@ -268,7 +268,7 @@ private fun SuccessContent(
             SummaryRow("Dosya kimliği", "İzinler ve sahiplik korundu", isHighlighted = true)
         }
 
-        VariableReadouts(state = state)
+        VariableReadouts(state = state, applied = true)
 
         Spacer(modifier = Modifier.height(spacing.xxxl))
 
@@ -392,7 +392,7 @@ private fun IdleContent(
             SummaryRow("Boyut", "${state.fileContent.length} karakter")
         }
 
-        VariableReadouts(state = state)
+        VariableReadouts(state = state, applied = false)
 
         Spacer(modifier = Modifier.height(spacing.xxxl))
 
@@ -411,7 +411,7 @@ private fun IdleContent(
  * sınırları (min–max) mikro etiketle yazılır.
  */
 @Composable
-private fun VariableReadouts(state: SetupWizardState) {
+private fun VariableReadouts(state: SetupWizardState, applied: Boolean) {
     val spacing = OmniTheme.spacing
 
     if (state.profileType != ProfileType.DYNAMIC || state.pinnedVariables.isEmpty()) return
@@ -434,7 +434,8 @@ private fun VariableReadouts(state: SetupWizardState) {
             previousValue = previous,
             fraction = fraction,
             minLabel = if (isSlider) formatScale(variable.min) else null,
-            maxLabel = if (isSlider) formatScale(variable.max) else null
+            maxLabel = if (isSlider) formatScale(variable.max) else null,
+            trailingLabel = if (applied) "Uygulandı" else null
         )
         Spacer(modifier = Modifier.height(spacing.sm))
     }

@@ -10,11 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,6 +48,9 @@ fun OmniValueReadout(
     /** Rayın sol/sağ uçlarına yazılan ölçek sınırları (ör. "0" – "120"). */
     minLabel: String? = null,
     maxLabel: String? = null,
+    /** Başlık satırının sağında mikro etiket (ör. uygulama sonrası "Uygulandı").
+     *  Özet ekranında düzenleme kalemi YOK: işlem bitmiştir, okuma salt okunurdur. */
+    trailingLabel: String? = null,
     compact: Boolean = false
 ) {
     val semantic = OmniTheme.semantic
@@ -97,12 +96,12 @@ fun OmniValueReadout(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                if (changed) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Değiştirildi",
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(14.dp)
+                if (trailingLabel != null) {
+                    Text(
+                        text = trailingLabel,
+                        style = OmniTheme.mono.micro,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
                     )
                 }
             }
@@ -114,11 +113,16 @@ fun OmniValueReadout(
                 if (changed) {
                     Text(
                         text = previousValue.orEmpty(),
-                        style = if (compact) OmniTheme.mono.value else OmniTheme.mono.readout,
+                        style = if (compact) OmniTheme.mono.value else OmniTheme.mono.readoutPrevious,
                         color = semantic.readoutMuted,
                         textDecoration = TextDecoration.LineThrough,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "›",
+                        style = if (compact) OmniTheme.mono.value else OmniTheme.mono.readoutPrevious,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Text(

@@ -2,6 +2,7 @@ package com.basitce.gfx.core.core_ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,10 +39,11 @@ sealed class ShizukuStatus {
  * İMZA ANI 2 — Bağlantı Göstergesi.
  *
  * Nokta + meta dizisi yerine kalibrasyon segmentleri + sade dilde durum + tek eylem.
- * Üç eşit segment (4×16dp) bir alet panelinin ölçek gözleri gibidir: dolu segment
- * erişim seviyesini, renk durumu anlatır. Hazır şebeke ikonu DEĞİL — telefon sinyali
- * çağrışımı yapan artan boyutlu çubuklar yerine eşit boyutlu kalibrasyon gözleri.
- * Teknik ayrıntı (UID, ADB/shell) son kullanıcıya gösterilmez.
+ * Üç Kademeli göz (10/14/18dp, alt hizalı) bir alet panelinin ölçek yuvası gibidir:
+ * dolu segment erişim seviyesini, renk durumu anlatır. Eşit boyutlu çubuklar tur 2'de
+ * "Duraklat (⏸)" ikonuna benzediği için kademeli boyuta geçildi; pasif gözler zeminle
+ * kaybolmasın diye surfaceContainerHighest dolgu + 1dp outline çerçeve taşır —
+ * yuva her zaman "3 gözlü" okunur. Teknik ayrıntı (UID, ADB/shell) gösterilmez.
  */
 @Composable
 fun OmniShizukuBar(
@@ -86,10 +88,9 @@ fun OmniShizukuBar(
         ShizukuStatus.NotRunning -> colors.error
         ShizukuStatus.Unknown -> colors.onSurfaceVariant
     }
-    val idleColor = when (status) {
-        ShizukuStatus.NotRunning -> colors.errorContainer
-        else -> colors.outlineVariant
-    }
+    // Pasif gözler zeminde kaybolmamalı: bir yüzey adımı yukarıda dolgu + outline
+    // çerçeve (tur 2 P1-7). errorContainer türevi koyu zeminde 1.25:1 kalıyordu.
+    val idleColor = colors.surfaceContainerHighest
 
     val animatedActive by animateColorAsState(
         targetValue = activeColor,
@@ -119,7 +120,12 @@ fun OmniShizukuBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(spacing.md)
     ) {
-        CalibrationGauge(filled = filled, active = animatedActive, idle = animatedIdle)
+        CalibrationGauge(
+            filled = filled,
+            active = animatedActive,
+            idle = animatedIdle,
+            idleBorder = colors.outline
+        )
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -152,25 +158,29 @@ fun OmniShizukuBar(
     }
 }
 
-/** Üç eşit kalibrasyon segmenti — alet panelindeki bağlantı gözleri. */
+/** Üç kademeli kalibrasyon gözü (10/14/18dp, alt hizalı) — alet paneli ölçek yuvası. */
 @Composable
 private fun CalibrationGauge(
     filled: Int,
     active: Color,
-    idle: Color
+    idle: Color,
+    idleBorder: Color
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.height(16.dp)
+        verticalAlignment = Alignment.Bottom,
+        modifier = Modifier.height(18.dp)
     ) {
         repeat(3) { index ->
+            val isFilled = index < filled
+            val shape = RoundedCornerShape(2.dp)
             Box(
                 modifier = Modifier
-                    .width(4.dp)
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (index < filled) active else idle)
+                    .width(4.5.dp)
+                    .height((10 + index * 4).dp)
+                    .clip(shape)
+                    .background(if (isFilled) active else idle)
+                    .border(1.dp, if (isFilled) active else idleBorder, shape)
             )
         }
     }

@@ -22,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.BuildConfig
 import com.basitce.gfx.core.core_ui.components.OmniListRow
@@ -43,6 +44,9 @@ fun SettingsScreen(
 ) {
     val spacing = OmniTheme.spacing
     val colors = MaterialTheme.colorScheme
+    // Büyük fontta gruplar arası boşluk sıkılaşır; içerik zaten kaydırılabilir
+    // ve alt barın üstünde ≥24dp pay bırakır (tur 2 P0-2).
+    val largeFont = LocalDensity.current.fontScale > 1.15f
 
     Column(
         modifier = modifier
@@ -53,14 +57,16 @@ fun SettingsScreen(
             title = "Ayarlar",
             subtitle = "Bağlantı, araçlar ve rehber"
         )
-        Spacer(modifier = Modifier.height(spacing.xl))
+        Spacer(modifier = Modifier.height(if (largeFont) spacing.md else spacing.xl))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = spacing.screen)
                 .padding(bottom = spacing.section),
-            verticalArrangement = Arrangement.spacedBy(spacing.betweenSections)
+            verticalArrangement = Arrangement.spacedBy(
+                if (largeFont) spacing.lg else spacing.betweenSections
+            )
         ) {
             SettingsGroup(title = "Bağlantı") {
                 OmniListRow(

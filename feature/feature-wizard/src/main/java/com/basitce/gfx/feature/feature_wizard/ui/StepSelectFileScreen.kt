@@ -9,16 +9,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -43,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -367,6 +372,7 @@ private fun BreadcrumbRow(
 ) {
     val parts = viewModel.getBreadcrumb()
     val spacing = OmniTheme.spacing
+    val colors = MaterialTheme.colorScheme
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
     // Yol derinleşince son segment görünür kalsın: açılışta en sağa odaklan.
@@ -376,33 +382,94 @@ private fun BreadcrumbRow(
         }
     }
 
-    LazyRow(
-        state = listState,
+    // Kök görünür alandan çıktıysa başa "…" gelir; satır asla çıplak "›" ile
+    // başlamaz (tur 2 P0-4). Örtü genişliği sabit değil, kısmi ilk öğenin sağ
+    // ucuna kadar dinamik uzar: sabit genişlik, kaydırma konumuna göre kırpık
+    // kök glifi sızdırıyordu (tur 3). layoutInfo koordinatları LazyRow'ın kendi
+    // viewport'una göredir; örtü dış Box'ın solundan başladığı için LazyRow'ın
+    // yatay padding'i (spacing.md) genişliğe eklenir (tur 3 devamı).
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val startPadPx = with(density) { spacing.md.toPx() }
+    val coverWidth by remember(listState, startPadPx) {
+        androidx.compose.runtime.derivedStateOf {
+            val info = listState.layoutInfo
+            val first = info.visibleItemsInfo.firstOrNull()
+            if (first != null &&
+                (first.index > 0 || first.offset < info.beforeContentPadding)
+            ) {
+                (startPadPx + first.offset + first.size).coerceAtLeast(0f)
+            } else {
+                0f
+            }
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(OmniRadius.md))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = spacing.md, vertical = spacing.sm),
-        verticalAlignment = Alignment.CenterVertically
+            .background(colors.surface)
     ) {
-        items(parts) { (name, fullPath) ->
-            TextButton(
-                onClick = { viewModel.browseTo(fullPath) },
-                contentPadding = PaddingValues(horizontal = spacing.xs, vertical = spacing.xs)
+        LazyRow(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = spacing.md, vertical = spacing.xs),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            itemsIndexed(parts) { index, (name, fullPath) ->
+                // TextButton'un 58dp asgari genişliği kısa segmentlerde ("data")
+                // anlamsız boşluk üretiyordu: eşit 4dp padding'li düz hedef.
+                // Asgari 48dp dokunma hedefi korunur (kısa segmentte ~7dp merkezleme).
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(OmniRadius.xs))
+                        .clickable { viewModel.browseTo(fullPath) }
+                        .heightIn(min = spacing.touchTarget)
+                        .widthIn(min = spacing.touchTarget)
+                        .padding(horizontal = spacing.xs),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = name,
+                        style = OmniTheme.mono.micro,
+                        color = if (fullPath == path) colors.primary else colors.onSurfaceVariant,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+                // Ayraç sonda: örtüden sonra gelen ilk şey daima segment adıdır,
+                // çıplak "›" değil (tur 3).
+                if (index < parts.lastIndex) {
+                    Text(
+                        text = "›",
+                        style = OmniTheme.mono.micro,
+                        color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = spacing.xxs)
+                    )
+                }
+            }
+        }
+        // "…" örtüsü kısmi ilk öğeyi tamamen kapatır: genişlik öğenin sağ ucu,
+        // yükseklik satırın tamamı; kesik harf kalmaz (tur 2 P0-4, tur 3).
+        if (coverWidth > 0f) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(with(density) { coverWidth.toDp() })
+                    .fillMaxHeight()
+                    .clipToBounds()
+                    .background(colors.surface)
             ) {
                 Text(
-                    text = name,
+                    text = "…",
                     style = OmniTheme.mono.micro,
-                    color = if (fullPath == path) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = colors.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (fullPath != path) {
-                Text(
-                    text = "›",
-                    style = OmniTheme.mono.micro,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = spacing.md)
                 )
             }
         }

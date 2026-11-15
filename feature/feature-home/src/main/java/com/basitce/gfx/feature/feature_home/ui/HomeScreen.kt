@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -66,68 +64,76 @@ fun HomeScreen(
             subtitle = stringResource(R.string.home_subtitle)
         )
 
-        Column(modifier = Modifier.padding(horizontal = spacing.screen)) {
-            Spacer(modifier = Modifier.height(spacing.xl))
-
-            OmniShizukuBar(
-                status = shizukuStatus,
-                connectionDetail = when (shizukuState.privilegeLevel) {
-                    ShizukuPrivilegeLevel.ADB_SHELL -> stringResource(R.string.shizuku_access_limited)
-                    ShizukuPrivilegeLevel.ROOT -> stringResource(R.string.shizuku_access_full)
-                    else -> stringResource(R.string.shizuku_access_unknown)
-                },
-                limitedAccess = shizukuState.privilegeLevel == ShizukuPrivilegeLevel.ADB_SHELL,
-                onClick = { viewModel.onShizukuBarClick() }
-            )
-
-            Spacer(modifier = Modifier.height(spacing.betweenSections))
+        // Tek kaydırılabilir gövde: boş durum da büyük fontta alt barın altında
+        // kesilmez (tur 2 P0-2). Alt pay ≥24dp; dolu listede FAB yüksekliği kadar.
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(
+                start = spacing.screen,
+                end = spacing.screen,
+                top = spacing.xl,
+                bottom = if (games.isEmpty()) spacing.xxl else spacing.section + spacing.xxxl
+            ),
+            verticalArrangement = Arrangement.spacedBy(spacing.listItem)
+        ) {
+            item(key = "shizuku") {
+                OmniShizukuBar(
+                    status = shizukuStatus,
+                    connectionDetail = when (shizukuState.privilegeLevel) {
+                        ShizukuPrivilegeLevel.ADB_SHELL -> stringResource(R.string.shizuku_access_limited)
+                        ShizukuPrivilegeLevel.ROOT -> stringResource(R.string.shizuku_access_full)
+                        else -> stringResource(R.string.shizuku_access_unknown)
+                    },
+                    limitedAccess = shizukuState.privilegeLevel == ShizukuPrivilegeLevel.ADB_SHELL,
+                    onClick = { viewModel.onShizukuBarClick() },
+                    modifier = Modifier.padding(bottom = spacing.md)
+                )
+            }
 
             if (games.isEmpty()) {
-                OmniEmptyState(
-                    title = stringResource(R.string.home_empty_title),
-                    description = stringResource(R.string.home_empty_description),
-                    icon = Icons.Outlined.SportsEsports,
-                    action = {
-                        // Shizuku çalışmıyken birincil vurgu bağlantı kartındaki
-                        // "Bağla" eyleminde kalır; oyun ekleme ikincil seviyeye çekilir.
-                        if (shizukuStatus == ShizukuStatus.Connected) {
-                            OmniPrimaryButton(
-                                text = stringResource(R.string.home_add_game),
-                                onClick = onAddGameClick
-                            )
-                        } else {
-                            OmniSecondaryButton(
-                                text = stringResource(R.string.home_add_game),
-                                onClick = onAddGameClick
-                            )
+                item(key = "empty") {
+                    OmniEmptyState(
+                        title = stringResource(R.string.home_empty_title),
+                        description = stringResource(R.string.home_empty_description),
+                        icon = Icons.Outlined.SportsEsports,
+                        action = {
+                            // Shizuku çalışmıyken birincil vurgu bağlantı kartındaki
+                            // "Bağla" eyleminde kalır; oyun ekleme ikincil seviyeye çekilir.
+                            if (shizukuStatus == ShizukuStatus.Connected) {
+                                OmniPrimaryButton(
+                                    text = stringResource(R.string.home_add_game),
+                                    onClick = onAddGameClick
+                                )
+                            } else {
+                                OmniSecondaryButton(
+                                    text = stringResource(R.string.home_add_game),
+                                    onClick = onAddGameClick
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(bottom = spacing.section),
-                    verticalArrangement = Arrangement.spacedBy(spacing.listItem)
-                ) {
-                    item(key = "header") {
-                        OmniSectionHeader(
-                            title = stringResource(R.string.home_my_games),
-                            count = games.size
-                        )
-                    }
-                    items(items = games, key = { it.id }) { game ->
-                        val profileInfo = gameProfiles[game.id]
-                        OmniGameCard(
-                            name = game.name,
-                            packageName = game.packageName,
-                            iconUri = game.iconUri,
-                            profileSummary = profileInfo?.let {
-                                "${it.count} profil · ${it.latestName}"
-                            },
-                            onClick = { onGameClick(game.id) },
-                            modifier = Modifier.animateItem()
-                        )
-                    }
+                item(key = "header") {
+                    OmniSectionHeader(
+                        title = stringResource(R.string.home_my_games),
+                        count = games.size
+                    )
+                }
+                items(items = games, key = { it.id }) { game ->
+                    val profileInfo = gameProfiles[game.id]
+                    OmniGameCard(
+                        name = game.name,
+                        packageName = game.packageName,
+                        iconUri = game.iconUri,
+                        profileSummary = profileInfo?.let {
+                            "${it.count} profil · ${it.latestName}"
+                        },
+                        onClick = { onGameClick(game.id) },
+                        modifier = Modifier.animateItem()
+                    )
                 }
             }
         }

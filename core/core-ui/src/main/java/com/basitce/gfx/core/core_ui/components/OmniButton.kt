@@ -65,7 +65,10 @@ fun OmniPrimaryButton(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            // Pasif birincil de ikincil gibi %38 metin taşır (tur 3): gri zemin +
+            // soluk metin ikili olarak "şu an kullanılamaz" okunur; ikincil
+            // butonun pasif diliyle tutarlı (tur 2 P1-8).
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
         ),
         modifier = modifier
             .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
@@ -104,10 +107,19 @@ fun OmniSecondaryButton(
         enabled = enabled,
         shape = RoundedCornerShape(OmniRadius.full),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
-        border = ButtonDefaults.outlinedButtonBorder(enabled),
+        // Pasifken de çerçeve görünür kalır (outlineVariant); metin %38'e iner.
+        // Boş "İçe aktar" aktif gibi parlamaz (tur 2 P1-8).
+        border = if (enabled) {
+            ButtonDefaults.outlinedButtonBorder(enabled)
+        } else {
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant
+            )
+        },
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
         ),
         modifier = modifier
             .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)

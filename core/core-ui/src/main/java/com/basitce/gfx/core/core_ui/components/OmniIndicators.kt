@@ -1,11 +1,13 @@
 package com.basitce.gfx.core.core_ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,9 +17,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.basitce.gfx.core.core_ui.theme.OmniRadius
@@ -126,7 +131,26 @@ fun OmniErrorCard(
             color = MaterialTheme.colorScheme.onErrorContainer
         )
         if (actionLabel != null && onAction != null) {
-            OmniTextButton(text = actionLabel, onClick = onAction)
+            // Hata zemininde petrol metin renk semantiğini bozuyordu (tur 2 P0-4):
+            // eylem onErrorContainer metin + error %35 çerçeveli 36dp hap.
+            OutlinedButton(
+                onClick = onAction,
+                shape = RoundedCornerShape(OmniRadius.full),
+                contentPadding = PaddingValues(
+                    horizontal = spacing.lg,
+                    vertical = spacing.sm
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ),
+                modifier = Modifier.heightIn(min = 36.dp)
+            ) {
+                Text(text = actionLabel, style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }
@@ -178,6 +202,9 @@ fun OmniListRow(
 ) {
     val spacing = OmniTheme.spacing
     val colors = MaterialTheme.colorScheme
+    // Büyük fontta satır içi dikey pay sıkılaşır: daha çok satır ilk ekranda
+    // tam görünür (tur 2 P0-2). Dokunma hedefi heightIn ile ≥48dp kalır.
+    val largeFont = LocalDensity.current.fontScale > 1.15f
 
     Row(
         modifier = modifier
@@ -186,7 +213,10 @@ fun OmniListRow(
                 if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
             )
             .heightIn(min = spacing.touchTarget)
-            .padding(horizontal = spacing.lg, vertical = spacing.md),
+            .padding(
+                horizontal = spacing.lg,
+                vertical = if (largeFont) spacing.sm else spacing.md
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(spacing.md)
     ) {

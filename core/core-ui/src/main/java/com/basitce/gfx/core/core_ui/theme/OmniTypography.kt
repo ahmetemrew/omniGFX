@@ -138,6 +138,16 @@ object OmniMonoType {
         letterSpacing = (-0.5).sp
     )
 
+    /** Okumadaki eski değer: üstü çizili, yeni değerden bir kademe küçük.
+     *  Düzenleyici ve uygulama özeti aynı şablonu kullanır (tur 2 P1-6). */
+    val readoutPrevious = TextStyle(
+        fontFamily = OmniMono,
+        fontWeight = FontWeight.Medium,
+        fontSize = 19.sp,
+        lineHeight = 24.sp,
+        letterSpacing = (-0.2).sp
+    )
+
     /** Satır içi değer (slider yanında, diff hücresinde). */
     val value = TextStyle(
         fontFamily = OmniMono,

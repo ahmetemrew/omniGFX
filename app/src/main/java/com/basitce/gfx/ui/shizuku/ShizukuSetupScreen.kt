@@ -172,15 +172,27 @@ fun ShizukuSetupScreen(
                                 OmniLoading(label = "Bağlantı denetleniyor")
                             } else {
                                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
-                                    OmniSecondaryButton(
-                                        text = "Tekrar denetle",
-                                        onClick = { viewModel.check() },
-                                        fillWidth = false
-                                    )
+                                    // Servis çalışmıyorken izin istenemez: birincil
+                                    // vurgu "Tekrar denetle"de, "İzin iste" servis
+                                    // kalkana dek pasif (tur 2 P1-8).
+                                    if (state.shizukuAvailable) {
+                                        OmniSecondaryButton(
+                                            text = "Tekrar denetle",
+                                            onClick = { viewModel.check() },
+                                            fillWidth = false
+                                        )
+                                    } else {
+                                        OmniPrimaryButton(
+                                            text = "Tekrar denetle",
+                                            onClick = { viewModel.check() },
+                                            fillWidth = false
+                                        )
+                                    }
                                     if (!state.permissionGranted) {
                                         OmniPrimaryButton(
                                             text = "İzin iste",
                                             onClick = { viewModel.requestPermission() },
+                                            enabled = state.shizukuAvailable,
                                             fillWidth = false
                                         )
                                     }
